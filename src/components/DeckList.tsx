@@ -6,6 +6,13 @@ interface Deck {
   id: string;
   name: string;
   cardsCount: number;
+  status: 'importing' | 'enriching' | 'ready';
+  enrichmentProgress?: {
+    totalCards: number;
+    processedCards: number;
+    currentCard?: string;
+    currentOperation?: string;
+  };
   updatedAt: string;
 }
 
@@ -22,6 +29,16 @@ export default function DeckList({ onSelectDeck }: DeckListProps) {
   useEffect(() => {
     fetchDecks();
   }, []);
+  
+  useEffect(() => {
+    // Poll for deck updates every 2 seconds if any deck is importing/enriching
+    const hasNonReadyDecks = decks.some(d => d.status !== 'ready');
+    
+    if (hasNonReadyDecks) {
+      const interval = setInterval(fetchDecks, 2000);
+      return () => clearInterval(interval);
+    }
+  }, [decks]);
   
   const fetchDecks = async () => {
     try {
@@ -53,13 +70,15 @@ export default function DeckList({ onSelectDeck }: DeckListProps) {
       const response = await fetch(`/api/decks/${deckId}/re-enrich`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ force: isForce }),
+        body: JSON.stringify({ force: isForce, sessionId: `session-${Date.now()}` }),
       });
       
       const data = await response.json();
       
       if (response.ok) {
-        alert(`Re-enrichment complete!\n\nTotal cards checked: ${data.totalCards}\nCards updated: ${data.enrichedCount}`);
+        console.log(`Re-enrichment job queued: ${data.jobId}`);
+        // Refresh decks to show the updated status
+        await fetchDecks();
       } else {
         alert(`Re-enrichment failed: ${data.error}`);
       }
@@ -116,18 +135,26 @@ export default function DeckList({ onSelectDeck }: DeckListProps) {
         {decks.map((deck) => (
         <div
           key={deck.id}
-          onClick={() => onSelectDeck(deck.id)}
-          className="border border-gray-800 rounded-lg p-4 hover:border-gray-700 cursor-pointer transition-colors"
+          className="border border-gray-800 rounded-lg p-4 transition-colors"
         >
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center mb-2">
             <div>
-              <h3 className="font-semibold">{deck.name}</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold">{deck.name}</h3>
+                {deck.status !== 'ready' && (
+                  <span className={`text-xs px-2 py-0.5 rounded ${
+                    deck.status === 'importing' ? 'bg-blue-900 text-blue-300' : 'bg-yellow-900 text-yellow-300'
+                  }`}>
+                    {deck.status}
+                  </span>
+                )}
+              </div>
               <p className="text-sm text-gray-400">{deck.cardsCount} cards</p>
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={(e) => handleDelete(e, deck.id, deck.name)}
-                disabled={deletingDeck === deck.id}
+                disabled={deletingDeck === deck.id || deck.status !== 'ready'}
                 className="px-3 py-1 text-xs bg-red-900/50 hover:bg-red-800/50 rounded transition-colors disabled:opacity-50 cursor-pointer"
                 title="Delete deck"
               >
@@ -135,7 +162,7 @@ export default function DeckList({ onSelectDeck }: DeckListProps) {
               </button>
               <button
                 onClick={(e) => handleReEnrich(e, deck.id)}
-                disabled={enrichingDeck === deck.id}
+                disabled={enrichingDeck === deck.id || deck.status !== 'ready'}
                 className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded transition-colors disabled:opacity-50 cursor-pointer"
                 title="Re-enrich missing images/audio (Shift+click to force update ALL)"
               >
@@ -150,11 +177,41 @@ export default function DeckList({ onSelectDeck }: DeckListProps) {
                   </svg>
                 )}
               </button>
-              <button className="text-violet-400 hover:text-violet-300 cursor-pointer">
+              <button 
+                onClick={() => deck.status === 'ready' && onSelectDeck(deck.id)}
+                disabled={deck.status !== 'ready'}
+                className={`${
+                  deck.status === 'ready' 
+                    ? 'text-violet-400 hover:text-violet-300 cursor-pointer' 
+                    : 'text-gray-600 cursor-not-allowed'
+                }`}
+              >
                 Study →
               </button>
             </div>
           </div>
+          
+          {deck.status !== 'ready' && deck.enrichmentProgress && (
+            <div className="mt-3 space-y-2">
+              <div className="flex justify-between text-xs text-gray-400">
+                <span>{deck.enrichmentProgress.currentOperation || 'Processing...'}</span>
+                <span>{deck.enrichmentProgress.processedCards}/{deck.enrichmentProgress.totalCards}</span>
+              </div>
+              <div className="w-full bg-gray-800 rounded-full h-1.5">
+                <div 
+                  className="bg-violet-600 h-1.5 rounded-full transition-all duration-300"
+                  style={{ 
+                    width: `${(deck.enrichmentProgress.processedCards / deck.enrichmentProgress.totalCards) * 100}%` 
+                  }}
+                />
+              </div>
+              {deck.enrichmentProgress.currentCard && (
+                <p className="text-xs text-gray-500">
+                  Current: {deck.enrichmentProgress.currentCard}
+                </p>
+              )}
+            </div>
+          )}
         </div>
         ))}
       </div>

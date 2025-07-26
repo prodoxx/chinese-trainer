@@ -8,9 +8,13 @@
     "start": "next start",
     "lint": "next lint",
     "load-dict": "bun run scripts/load-cedict.ts",
-    "clean-db": "bun run scripts/clean-database.ts"
+    "clean-db": "bun run scripts/clean-database.ts",
+    "worker": "bun run src/lib/queue/start-workers.ts",
+    "empty-queues": "bun run scripts/empty-queues.ts"
   },
   "dependencies": {
+    "bullmq": "^5.56.7",
+    "ioredis": "^5.6.1",
     "mongodb": "^6.18.0",
     "mongoose": "^8.16.5",
     "next": "15.4.4",

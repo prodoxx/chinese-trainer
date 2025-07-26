@@ -124,11 +124,8 @@ export async function generateTTSAudio(text: string): Promise<TTSResult> {
     // Check cache first
     const cachedUrl = await checkAudioCache(bucket, cacheKey);
     if (cachedUrl) {
-      console.log(`TTS cache hit for: ${text}`);
       return { audioUrl: cachedUrl, cached: true };
     }
-    
-    console.log(`Generating TTS for: ${text}`);
     
     // Generate new audio
     const audioBuffer = await generateSpeech(text, voice);

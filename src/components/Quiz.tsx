@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { playBuzzSound } from '@/lib/audio/buzz';
 
 interface Card {
   id: string;
@@ -145,11 +146,24 @@ export default function Quiz({ cards, onComplete, onExit }: QuizProps) {
       setTimedOut(true);
     }
     
-    // Play audio for the selected answer if available
-    if (answerId) {
-      const selectedCard = questions[currentQuestion].options.find(opt => opt.id === answerId);
-      if (selectedCard?.audioUrl) {
-        const audio = new Audio(selectedCard.audioUrl);
+    // Handle audio feedback
+    if (answerId && !isCorrect) {
+      // Wrong answer: play buzz, then correct audio after delay
+      playBuzzSound();
+      
+      // Play correct audio after buzz
+      setTimeout(() => {
+        const correctCard = questions[currentQuestion].correctCard;
+        if (correctCard.audioUrl) {
+          const audio = new Audio(correctCard.audioUrl);
+          audio.play().catch(err => console.error('Failed to play correct audio:', err));
+        }
+      }, 400); // Wait for buzz to finish
+    } else if (isCorrect) {
+      // Correct answer: play the audio immediately
+      const correctCard = questions[currentQuestion].correctCard;
+      if (correctCard.audioUrl) {
+        const audio = new Audio(correctCard.audioUrl);
         audio.play().catch(err => console.error('Failed to play audio:', err));
       }
     }

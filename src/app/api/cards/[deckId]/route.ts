@@ -11,17 +11,13 @@ export async function GET(
     await connectDB();
     
     const { deckId } = await context.params;
-    const cached = request.nextUrl.searchParams.get('cached') === 'true';
     
     // Find all card associations for this deck
-    const deckCards = await DeckCard.find({ deckId }).populate('cardId');
+    const deckCards = await DeckCard.find({ deckId });
+    const cardIds = deckCards.map(dc => dc.cardId);
     
-    // Extract the cards and filter by cached status if needed
-    let cards = deckCards.map(dc => dc.cardId).filter(card => card);
-    
-    if (cached) {
-      cards = cards.filter(card => (card as any).cached === true);
-    }
+    // Fetch the actual cards
+    let cards = await Card.find({ _id: { $in: cardIds } });
     
     // Limit to 50 cards
     cards = cards.slice(0, 50);

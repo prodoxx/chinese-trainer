@@ -1,7 +1,9 @@
 import mongoose from 'mongoose';
+import { GridFSBucket } from 'mongodb';
 import Deck from '../src/lib/db/models/Deck';
 import Card from '../src/lib/db/models/Card';
 import Review from '../src/lib/db/models/Review';
+import DeckCard from '../src/lib/db/models/DeckCard';
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/chinese_app';
 
@@ -39,6 +41,10 @@ async function cleanDatabase() {
     await Review.deleteMany({});
     console.log('✓ Reviews deleted');
     
+    // Delete all deck-card associations
+    await DeckCard.deleteMany({});
+    console.log('✓ Deck-Card associations deleted');
+    
     // Delete all cards
     await Card.deleteMany({});
     console.log('✓ Cards deleted');
@@ -46,6 +52,25 @@ async function cleanDatabase() {
     // Delete all decks
     await Deck.deleteMany({});
     console.log('✓ Decks deleted');
+    
+    // Clean up GridFS files
+    const db = mongoose.connection.db;
+    const imagesBucket = new GridFSBucket(db, { bucketName: 'images' });
+    const audiosBucket = new GridFSBucket(db, { bucketName: 'audios' });
+    
+    // Delete all images
+    const imageFiles = await imagesBucket.find({}).toArray();
+    for (const file of imageFiles) {
+      await imagesBucket.delete(file._id);
+    }
+    console.log(`✓ ${imageFiles.length} images deleted from GridFS`);
+    
+    // Delete all audio files
+    const audioFiles = await audiosBucket.find({}).toArray();
+    for (const file of audioFiles) {
+      await audiosBucket.delete(file._id);
+    }
+    console.log(`✓ ${audioFiles.length} audio files deleted from GridFS`);
     
     console.log('\n✅ Database cleaned successfully!');
     console.log('\nYou can now re-import your decks with the improved enrichment system.');

@@ -53,11 +53,6 @@ export async function POST(request: NextRequest) {
         card.imageSourceId = image.sourceId;
         card.imageAttribution = image.attribution;
         card.imageAttributionUrl = image.attributionUrl;
-        
-        // Keep backward compatibility
-        if (image.source === 'unsplash') {
-          card.unsplashImageId = image.sourceId;
-        }
       } else {
         // Clear any existing image data for skipped images
         card.imageUrl = '';

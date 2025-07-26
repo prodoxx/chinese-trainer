@@ -20,6 +20,7 @@ export default function DeckImport({ onImportComplete }: DeckImportProps) {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('name', file.name.replace('.csv', ''));
+    formData.append('sessionId', `session-${Date.now()}`);
     
     try {
       const response = await fetch('/api/decks/import', {
@@ -37,17 +38,15 @@ export default function DeckImport({ onImportComplete }: DeckImportProps) {
         console.warn('Import errors:', data.errors);
       }
       
-      // Start enrichment process
-      await fetch('/api/cards/enrich', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ deckId: data.deck.id, limit: 50 }),
-      });
+      // Import job has been queued
+      console.log(`Import job queued: ${data.jobId}`);
       
+      // Deck created successfully
       onImportComplete();
+      setIsImporting(false);
+      
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Import failed');
-    } finally {
       setIsImporting(false);
     }
   };
@@ -78,7 +77,7 @@ export default function DeckImport({ onImportComplete }: DeckImportProps) {
         </div>
         
         {isImporting && (
-          <div className="text-sm text-gray-400">Importing and enriching cards...</div>
+          <div className="text-sm text-gray-400">Importing deck...</div>
         )}
         
         {error && (

@@ -14,6 +14,8 @@ export async function GET() {
         name: deck.name,
         slug: deck.slug,
         cardsCount: deck.cardsCount,
+        status: deck.status || 'ready',
+        enrichmentProgress: deck.enrichmentProgress,
         updatedAt: deck.updatedAt,
       }))
     });

@@ -28,20 +28,23 @@ export default function FlashSession({ deckId, onExit }: FlashSessionProps) {
   const [currentBlockSize, setCurrentBlockSize] = useState(0);
   const [currentBlockStartIndex, setCurrentBlockStartIndex] = useState(0);
   
-  // New states for the enhanced flash system
-  const [viewPhase, setViewPhase] = useState<'character' | 'image1' | 'pinyin' | 'image2' | 'flash' | 'transition'>('character');
-  const [cycleCount, setCycleCount] = useState(0);
-  const [flashCount, setFlashCount] = useState(0);
+  // New states for the segmented flash system
+  const [viewPhase, setViewPhase] = useState<'orthographic' | 'phonological' | 'semantic' | 'retrieval' | 'blank' | 'consolidation'>('orthographic');
+  const [currentBlock, setCurrentBlock] = useState(1); // Track which block we're in (1, 2, or 3)
   const [isPaused, setIsPaused] = useState(false);
+  const [isFlashing, setIsFlashing] = useState(false);
+  const [flashState, setFlashState] = useState<'black' | 'white'>('black');
   
-  // Timing constants - much slower for better learning
-  const CHARACTER_VIEW_TIME = 2000; // 2s - Show character with audio
-  const IMAGE_VIEW_TIME = 2000; // 2s - Show image alone
-  const PINYIN_VIEW_TIME = 2000; // 2s - Show pinyin with audio
-  const FLASH_TIME = 800; // 800ms per flash
-  const TRANSITION_TIME = 500; // 500ms between views
-  const CYCLES_PER_CARD = 3; // Repeat each card 3 times
-  const FLASH_REPETITIONS = 3; // Flash 3 times after cycles
+  // Timing constants - slower for better learning
+  const ORTHOGRAPHIC_TIME = 800; // 800ms - Show character alone (was 200ms)
+  const ORTHOGRAPHIC_BLANK = 200; // 200ms blank after orthographic (was 100ms)
+  const PHONOLOGICAL_TIME = 2000; // 2s - Character + pinyin + audio (was 800ms)
+  const PHONOLOGICAL_BLANK = 300; // 300ms blank after phonological (was 100ms)
+  const SEMANTIC_TIME = 2000; // 2s - Image + meaning (was 800ms)
+  const SEMANTIC_BLANK = 500; // 500ms blank after semantic
+  const RETRIEVAL_TIME = 1500; // 1.5s - Character alone for retrieval check (was 500ms)
+  const BETWEEN_CARDS = 300; // Gap between cards (was 100ms)
+  const BETWEEN_BLOCKS = 5000; // 5s consolidation period between blocks (2s + 3s flash)
   
   useEffect(() => {
     fetchCards();
@@ -49,23 +52,28 @@ export default function FlashSession({ deckId, onExit }: FlashSessionProps) {
   
   const fetchCards = async () => {
     try {
-      const response = await fetch(`/api/cards/${deckId}?cached=true`);
+      // First try to get cards with audio and images
+      const response = await fetch(`/api/cards/${deckId}`);
       const data = await response.json();
       
+      console.log('API Response:', data);
       console.log('Fetched cards:', data.cards?.length, 'cards');
       console.log('Sample card:', data.cards?.[0]);
       
-      if (data.cards && data.cards.length > 0) {
-        setCards(data.cards);
+      // Filter for cards that have at least audio (required for flash sessions)
+      const cardsWithAudio = data.cards?.filter((card: Card) => card.audioUrl) || [];
+      console.log('Cards with audio:', cardsWithAudio.length);
+      
+      if (cardsWithAudio.length > 0) {
+        setCards(cardsWithAudio);
         const blockSize = Math.floor(Math.random() * 3) + 4; // 4, 5, or 6
         setCurrentBlockSize(blockSize);
-        setBlockCards(data.cards.slice(0, blockSize));
-        setCycleCount(0);
-        setFlashCount(0);
-        setViewPhase('character');
+        setBlockCards(cardsWithAudio.slice(0, blockSize));
+        setCurrentBlock(1);
+        setViewPhase('orthographic');
         setPhase('flash');
       } else {
-        alert('No cached cards available. Please wait for enrichment to complete.');
+        alert('No cards with audio available yet. Please wait for enrichment to complete.');
         onExit();
       }
     } catch (error) {
@@ -88,16 +96,11 @@ export default function FlashSession({ deckId, onExit }: FlashSessionProps) {
         setQuizResults([]);
         setCurrentBlockSize(0);
         setCurrentBlockStartIndex(0);
-        setCycleCount(0);
-        setFlashCount(0);
-        setViewPhase('character');
+        setCurrentBlock(1);
+        setViewPhase('orthographic');
         // Refetch cards and start over
         fetchCards();
       }
-    } else if (e.key === ' ' && phase === 'flash') {
-      e.preventDefault();
-      // Skip to next card
-      nextCard();
     } else if (e.key.toLowerCase() === 'p' && phase === 'flash') {
       // Toggle pause
       setIsPaused(!isPaused);
@@ -109,81 +112,128 @@ export default function FlashSession({ deckId, onExit }: FlashSessionProps) {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [handleKeyPress]);
   
-  // New flash logic with separate views and cycles
+  // New segmented flash logic based on research
   useEffect(() => {
     if (phase === 'flash' && currentIndex < blockCards.length && !isPaused) {
       let timer: NodeJS.Timeout;
       
-      switch (viewPhase) {
-        case 'character':
-          // Character + audio -> Image1 (or skip to pinyin if no image)
-          timer = setTimeout(() => {
-            setViewPhase('transition');
-            const nextPhase = blockCards[currentIndex]?.imageUrl ? 'image1' : 'pinyin';
-            setTimeout(() => setViewPhase(nextPhase), TRANSITION_TIME);
-          }, CHARACTER_VIEW_TIME);
-          break;
-          
-        case 'image1':
-          // Image1 -> Pinyin
-          timer = setTimeout(() => {
-            setViewPhase('transition');
-            setTimeout(() => setViewPhase('pinyin'), TRANSITION_TIME);
-          }, IMAGE_VIEW_TIME);
-          break;
-          
-        case 'pinyin':
-          // Pinyin + audio -> Image2 (or back to character if no image)
-          timer = setTimeout(() => {
-            if (blockCards[currentIndex]?.imageUrl) {
-              // Has image: go to image2
-              setViewPhase('transition');
-              setTimeout(() => setViewPhase('image2'), TRANSITION_TIME);
-            } else {
-              // No image: check if we've completed all cycles
-              if (cycleCount + 1 >= CYCLES_PER_CARD) {
-                setViewPhase('flash');
-                setFlashCount(0);
-              } else {
-                setCycleCount(cycleCount + 1);
-                setViewPhase('transition');
-                setTimeout(() => setViewPhase('character'), TRANSITION_TIME);
-              }
-            }
-          }, PINYIN_VIEW_TIME);
-          break;
-          
-        case 'image2':
-          // Image2 -> Character (next cycle) or Flash
-          timer = setTimeout(() => {
-            if (cycleCount + 1 >= CYCLES_PER_CARD) {
-              setViewPhase('flash');
-              setFlashCount(0);
-            } else {
-              setCycleCount(cycleCount + 1);
-              setViewPhase('transition');
-              setTimeout(() => setViewPhase('character'), TRANSITION_TIME);
-            }
-          }, IMAGE_VIEW_TIME);
-          break;
-          
-        case 'flash':
-          // Flash the complete card
-          timer = setTimeout(() => {
-            if (flashCount + 1 >= FLASH_REPETITIONS) {
-              // Move to next card
+      // Block 1: Full segmented approach (orthographic, phonological, semantic)
+      if (currentBlock === 1) {
+        switch (viewPhase) {
+          case 'orthographic':
+            // Show character alone (orthographic focus)
+            timer = setTimeout(() => {
+              setViewPhase('blank');
+              setTimeout(() => setViewPhase('phonological'), ORTHOGRAPHIC_BLANK);
+            }, ORTHOGRAPHIC_TIME);
+            break;
+            
+          case 'phonological':
+            // Show character + pinyin + audio (phonological focus)
+            timer = setTimeout(() => {
+              setViewPhase('blank');
+              setTimeout(() => {
+                // Only show semantic if we have an image
+                if (blockCards[currentIndex]?.imageUrl) {
+                  setViewPhase('semantic');
+                } else {
+                  // Skip semantic, go straight to retrieval
+                  setViewPhase('retrieval');
+                }
+              }, PHONOLOGICAL_BLANK);
+            }, PHONOLOGICAL_TIME);
+            break;
+            
+          case 'semantic':
+            // Show image + meaning (semantic/visual focus)
+            timer = setTimeout(() => {
+              setViewPhase('blank');
+              setTimeout(() => setViewPhase('retrieval'), SEMANTIC_BLANK);
+            }, SEMANTIC_TIME);
+            break;
+            
+          case 'retrieval':
+            // Show character alone for mini-retrieval check
+            timer = setTimeout(() => {
+              // Add a blank between cards
+              setViewPhase('blank');
+              setTimeout(() => nextCard(), BETWEEN_CARDS);
+            }, RETRIEVAL_TIME);
+            break;
+        }
+      }
+      
+      // Block 2: Combined phonology + semantics in single exposure
+      else if (currentBlock === 2) {
+        switch (viewPhase) {
+          case 'orthographic':
+            // Skip orthographic in block 2, go straight to combined
+            setViewPhase('phonological');
+            break;
+            
+          case 'phonological':
+            // Show everything together for longer in block 2
+            timer = setTimeout(() => {
               nextCard();
-            } else {
-              setFlashCount(flashCount + 1);
-            }
-          }, FLASH_TIME);
-          break;
+            }, 2000); // 2s combined exposure (was 1s)
+            break;
+        }
+      }
+      
+      // Block 3: Quick recognition check
+      else if (currentBlock === 3) {
+        switch (viewPhase) {
+          case 'orthographic':
+            // Show character for recognition
+            timer = setTimeout(() => {
+              setViewPhase('phonological');
+            }, 1000); // 1s character (was 500ms)
+            break;
+            
+          case 'phonological':
+            // Flash of full info
+            timer = setTimeout(() => {
+              nextCard();
+            }, 1500); // 1.5s full info (was 500ms)
+            break;
+        }
+      }
+      
+      // Handle consolidation phase
+      if (viewPhase === 'consolidation' && !isFlashing) {
+        // Show text for 2 seconds, then start flashing
+        timer = setTimeout(() => {
+          setIsFlashing(true);
+        }, 2000); // Wait 2s before starting flash
       }
       
       return () => clearTimeout(timer);
     }
-  }, [currentIndex, phase, blockCards.length, viewPhase, cycleCount, flashCount, isPaused]);
+  }, [currentIndex, phase, blockCards.length, viewPhase, isPaused, currentBlock, isFlashing]);
   
+  // Handle flashing animation during consolidation
+  useEffect(() => {
+    if (isFlashing) {
+      let flashCount = 0;
+      const flashInterval = setInterval(() => {
+        // Toggle between black and white
+        setFlashState(prev => prev === 'black' ? 'white' : 'black');
+        flashCount++;
+        
+        if (flashCount >= 4) { // 4 transitions over 3 seconds (slower)
+          clearInterval(flashInterval);
+          setIsFlashing(false);
+          setFlashState('black'); // Reset to black
+          // Move to next block
+          setCurrentBlock(prev => prev + 1);
+          setCurrentIndex(0);
+          setViewPhase('orthographic');
+        }
+      }, 750); // Toggle every 750ms (was 500ms)
+      
+      return () => clearInterval(flashInterval);
+    }
+  }, [isFlashing]);
   
   // Preload next card's assets
   useEffect(() => {
@@ -206,16 +256,19 @@ export default function FlashSession({ deckId, onExit }: FlashSessionProps) {
   }, [currentIndex, blockCards]);
   
   const nextCard = () => {
-    // Reset all states for the next card
-    setCycleCount(0);
-    setFlashCount(0);
-    setViewPhase('character');
-    
     if (currentIndex + 1 >= blockCards.length) {
-      // Start quiz for this block
-      setPhase('quiz');
+      // Check if we should move to next block or start quiz
+      if (currentBlock < 3) {
+        // Show consolidation screen before next block
+        setViewPhase('consolidation');
+      } else {
+        // Start quiz after all 3 blocks
+        setPhase('quiz');
+      }
     } else {
+      // Move to next card in current block
       setCurrentIndex(currentIndex + 1);
+      setViewPhase('orthographic');
     }
   };
   
@@ -231,9 +284,8 @@ export default function FlashSession({ deckId, onExit }: FlashSessionProps) {
       setCurrentBlockStartIndex(nextBlockStart);
       setBlockCards(cards.slice(nextBlockStart, nextBlockStart + actualBlockSize));
       setCurrentIndex(0);
-      setCycleCount(0);
-      setFlashCount(0);
-      setViewPhase('character');
+      setCurrentBlock(1);
+      setViewPhase('orthographic');
       setPhase('flash');
     } else {
       // Session complete
@@ -261,60 +313,118 @@ export default function FlashSession({ deckId, onExit }: FlashSessionProps) {
     );
   }
   
-  // Show transition screen
-  if (viewPhase === 'transition') {
+  const currentCard = blockCards[currentIndex];
+  
+  // Show blank screen
+  if (viewPhase === 'blank') {
+    return <div className="fixed inset-0 bg-black" />;
+  }
+  
+  // Show consolidation screen between blocks
+  if (viewPhase === 'consolidation') {
     return (
-      <div className="fixed inset-0 bg-black">
-        <div className="fixed bottom-8 right-8 text-sm text-gray-500">
-          Cycle {cycleCount + 1} of {CYCLES_PER_CARD}
-        </div>
+      <div className={`fixed inset-0 transition-colors duration-200 flex items-center justify-center ${
+        isFlashing ? (flashState === 'white' ? 'bg-white' : 'bg-black') : 'bg-black'
+      }`}>
+        {!isFlashing && (
+          <div className="text-center">
+            <div className="w-2 h-2 bg-gray-600 rounded-full mx-auto mb-8" />
+            <div className="text-gray-500 text-sm">
+              Block {currentBlock} complete
+            </div>
+            <div className="text-gray-600 text-xs mt-2">
+              Consolidating...
+            </div>
+          </div>
+        )}
       </div>
     );
   }
   
   // Render different views based on current phase
-  const currentCard = blockCards[currentIndex];
-  
   return (
-    <div className={`fixed inset-0 flex items-center justify-center transition-colors duration-300 ${
-      viewPhase === 'flash' && flashCount % 2 === 1 ? 'bg-white' : 'bg-black'
-    }`}>
+    <div className="fixed inset-0 bg-black flex items-center justify-center">
       <div className="text-center">
-        {viewPhase === 'character' && (
+        {/* Orthographic focus - character alone */}
+        {viewPhase === 'orthographic' && (
           <div className="text-9xl font-bold text-white">{currentCard.hanzi}</div>
         )}
         
-        {(viewPhase === 'image1' || viewPhase === 'image2') && currentCard.imageUrl && (
-          <div className="w-96 h-96 mx-auto">
-            <img
-              src={currentCard.imageUrl}
-              alt={currentCard.hanzi}
-              className="w-full h-full object-cover rounded-lg"
-            />
+        {/* Phonological focus - varies by block */}
+        {viewPhase === 'phonological' && (
+          <div className="space-y-4">
+            {/* Block 1: Character + pinyin + audio */}
+            {currentBlock === 1 && (
+              <>
+                <div className="text-8xl font-bold text-white">{currentCard.hanzi}</div>
+                <div className="text-6xl text-gray-300">{currentCard.pinyin}</div>
+              </>
+            )}
+            
+            {/* Block 2: Combined view - everything together */}
+            {currentBlock === 2 && (
+              <>
+                <div className="text-7xl font-bold text-white">{currentCard.hanzi}</div>
+                <div className="text-5xl text-gray-300">{currentCard.pinyin}</div>
+                {currentCard.imageUrl && (
+                  <div className="w-64 h-64 mx-auto my-4">
+                    <img
+                      src={currentCard.imageUrl}
+                      alt={currentCard.hanzi}
+                      className="w-full h-full object-cover rounded-lg"
+                    />
+                  </div>
+                )}
+                <div className="text-3xl text-gray-300">{currentCard.meaning}</div>
+              </>
+            )}
+            
+            {/* Block 3: Quick full info flash */}
+            {currentBlock === 3 && (
+              <>
+                <div className="text-6xl font-bold text-white">{currentCard.hanzi}</div>
+                <div className="text-4xl text-gray-300">{currentCard.pinyin}</div>
+                <div className="text-3xl text-gray-400">{currentCard.meaning}</div>
+              </>
+            )}
           </div>
         )}
         
-        {viewPhase === 'pinyin' && (
+        {/* Semantic/visual focus - image + meaning */}
+        {viewPhase === 'semantic' && currentCard.imageUrl && (
           <div className="space-y-4">
-            <div className="text-6xl text-white">{currentCard.pinyin}</div>
+            <div className="w-96 h-96 mx-auto mb-4">
+              <img
+                src={currentCard.imageUrl}
+                alt={currentCard.hanzi}
+                className="w-full h-full object-cover rounded-lg"
+              />
+            </div>
             <div className="text-4xl text-gray-300">{currentCard.meaning}</div>
           </div>
         )}
         
-        {viewPhase === 'flash' && (
-          <div className={`space-y-8 ${flashCount % 2 === 1 ? 'text-black' : 'text-white'}`}>
-            <div className="text-9xl font-bold">{currentCard.hanzi}</div>
-            <div className="text-4xl">{currentCard.pinyin}</div>
-            <div className="text-3xl">{currentCard.meaning}</div>
-          </div>
+        {/* Retrieval check - character alone for mental recall */}
+        {viewPhase === 'retrieval' && (
+          <div className="text-9xl font-bold text-white">{currentCard.hanzi}</div>
         )}
       </div>
       
-      <div className={`fixed bottom-8 right-8 text-sm ${
-        viewPhase === 'flash' && flashCount % 2 === 1 ? 'text-gray-600' : 'text-gray-500'
-      }`}>
-        Press SPACE to skip • P to {isPaused ? 'resume' : 'pause'} • R to restart • Q/ESC to exit
+      {/* Status indicators */}
+      <div className="fixed bottom-8 right-8 text-sm text-gray-500">
+        Block {currentBlock}/3 • Card {currentIndex + 1}/{blockCards.length}
       </div>
+      
+      <div className="fixed bottom-8 left-8 text-sm text-gray-500">
+        Press P to {isPaused ? 'resume' : 'pause'} • R to restart • Q/ESC to exit
+      </div>
+      
+      {/* Block indicator for second and third passes */}
+      {currentBlock > 1 && (
+        <div className="fixed top-8 left-8 text-sm text-gray-500">
+          Pass {currentBlock} - {currentBlock === 2 ? 'Reinforcement' : 'Final consolidation'}
+        </div>
+      )}
       
       {/* Pause indicator */}
       {isPaused && (
@@ -323,8 +433,8 @@ export default function FlashSession({ deckId, onExit }: FlashSessionProps) {
         </div>
       )}
       
-      {/* Play audio for character and pinyin phases */}
-      {(viewPhase === 'character' || viewPhase === 'pinyin') && currentCard.audioUrl && !isPaused && (
+      {/* Play audio only during phonological phase, but not in block 3 (too fast) */}
+      {viewPhase === 'phonological' && currentBlock !== 3 && currentCard.audioUrl && !isPaused && (
         <audio src={currentCard.audioUrl} autoPlay />
       )}
     </div>

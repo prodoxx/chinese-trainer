@@ -26,7 +26,7 @@ const CardSchema = new Schema<ICard>(
     meaning: { type: String, default: '' },
     pinyin: { type: String, default: '' },
     imageUrl: { type: String },
-    imageSource: { type: String, enum: ['unsplash', 'pexels', 'placeholder'] },
+    imageSource: { type: String, enum: ['unsplash', 'pexels', 'placeholder', 'dalle'] },
     imageSourceId: { type: String },
     imageFileId: { type: String },
     audioFileId: { type: String },

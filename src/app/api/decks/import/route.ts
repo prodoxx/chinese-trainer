@@ -1,35 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db/mongodb';
 import Deck from '@/lib/db/models/Deck';
-import Card from '@/lib/db/models/Card';
-import DeckCard from '@/lib/db/models/DeckCard';
-import Review from '@/lib/db/models/Review';
+import { deckImportQueue } from '@/lib/queue/queues';
 
 export async function POST(request: NextRequest) {
   try {
-    await connectDB();
-    
+    // Parse multipart form data
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const deckName = formData.get('name') as string;
+    const sessionId = formData.get('sessionId') as string;
     
-    if (!file || !deckName) {
-      return NextResponse.json({ error: 'File and deck name required' }, { status: 400 });
+    if (!file || !deckName || !sessionId) {
+      return NextResponse.json(
+        { error: 'Missing required fields' }, 
+        { status: 400 }
+      );
     }
     
+    // Read file content
     const text = await file.text();
     const lines = text.trim().split('\n');
     
     if (lines.length === 0 || !lines[0].toLowerCase().includes('hanzi')) {
-      return NextResponse.json({ error: 'CSV must have "hanzi" header' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'CSV must have "hanzi" header' }, 
+        { status: 400 }
+      );
     }
     
+    // Parse CSV
     const hanziList: string[] = [];
     const errors: { row: number; error: string }[] = [];
     
     for (let i = 1; i < lines.length; i++) {
       const hanzi = lines[i].trim();
-      
       if (!hanzi) continue;
       
       if (!/^[\u4e00-\u9fff]+$/.test(hanzi)) {
@@ -37,7 +42,6 @@ export async function POST(request: NextRequest) {
         continue;
       }
       
-      // Optionally limit word length (e.g., max 4 characters)
       if (hanzi.length > 4) {
         errors.push({ row: i + 1, error: 'Word too long (max 4 characters)' });
         continue;
@@ -46,59 +50,64 @@ export async function POST(request: NextRequest) {
       hanziList.push(hanzi);
     }
     
-    const slug = deckName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    if (hanziList.length === 0) {
+      return NextResponse.json(
+        { error: 'No valid characters found in CSV' }, 
+        { status: 400 }
+      );
+    }
     
+    // Connect to DB and create deck
+    await connectDB();
+    
+    const slug = deckName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     const deck = await Deck.findOneAndUpdate(
       { slug },
-      { name: deckName, slug, cardsCount: hanziList.length },
+      { 
+        name: deckName, 
+        slug, 
+        cardsCount: hanziList.length,
+        status: 'importing',
+        enrichmentProgress: {
+          totalCards: hanziList.length,
+          processedCards: 0,
+          currentOperation: 'Importing characters...'
+        }
+      },
       { upsert: true, new: true }
     );
     
-    let newCardsCount = 0;
-    let existingCardsCount = 0;
-    
-    const cardPromises = hanziList.map(async (hanzi) => {
-      // Find or create the card (shared across all decks)
-      let card = await Card.findOne({ hanzi });
-      
-      if (!card) {
-        // New character - create it
-        card = await Card.create({ hanzi });
-        newCardsCount++;
-        
-        // Create review record for new card
-        await Review.create({ cardId: card._id });
-      } else {
-        existingCardsCount++;
+    // Queue import job
+    const job = await deckImportQueue.add(
+      `import-${deck._id}`,
+      {
+        deckId: deck._id.toString(),
+        deckName,
+        hanziList,
+        sessionId,
       }
-      
-      // Link card to this deck (many-to-many relationship)
-      await DeckCard.findOneAndUpdate(
-        { deckId: deck._id, cardId: card._id },
-        { deckId: deck._id, cardId: card._id },
-        { upsert: true }
-      );
-      
-      return card;
-    });
+    );
     
-    await Promise.all(cardPromises);
-    
+    // Return response
     return NextResponse.json({
       deck: {
-        id: deck._id,
+        id: deck._id.toString(),
         name: deck.name,
         slug: deck.slug,
         cardsCount: deck.cardsCount,
+        status: deck.status,
       },
-      imported: hanziList.length,
-      newCards: newCardsCount,
-      existingCards: existingCardsCount,
+      jobId: job.id,
+      status: 'importing',
+      message: `Deck created. Importing ${hanziList.length} characters...`,
       errors,
     });
     
   } catch (error) {
     console.error('Import error:', error);
-    return NextResponse.json({ error: 'Import failed' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Import failed' }, 
+      { status: 500 }
+    );
   }
 }
