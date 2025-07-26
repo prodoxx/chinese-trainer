@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:7
+    container_name: chinese-app-mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_DATABASE: chinese_app
+    volumes:
+      - mongo-data:/data/db
+    ports:
+      - "27017:27017"
+
+volumes:
+  mongo-data:
