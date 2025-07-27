@@ -1,5 +1,5 @@
-import { GridFSBucket } from 'mongodb';
-import { getMongoClient } from '@/lib/db/mongodb';
+import mongoose from 'mongoose';
+import connectDB from '@/lib/db/mongodb';
 import crypto from 'crypto';
 
 // Azure Cognitive Services Text-to-Speech configuration
@@ -27,7 +27,7 @@ function generateCacheKey(text: string, voice: string): string {
 /**
  * Check if audio exists in GridFS cache
  */
-async function checkAudioCache(bucket: GridFSBucket, cacheKey: string): Promise<string | null> {
+async function checkAudioCache(bucket: mongoose.mongo.GridFSBucket, cacheKey: string): Promise<string | null> {
   try {
     const files = await bucket.find({ filename: `tts_${cacheKey}.mp3` }).toArray();
     if (files.length > 0) {
@@ -82,7 +82,7 @@ async function generateSpeech(text: string, voice: string): Promise<Buffer> {
  * Store audio in GridFS
  */
 async function storeAudioInGridFS(
-  bucket: GridFSBucket, 
+  bucket: mongoose.mongo.GridFSBucket, 
   audioBuffer: Buffer, 
   cacheKey: string
 ): Promise<string> {
@@ -113,9 +113,12 @@ async function storeAudioInGridFS(
  */
 export async function generateTTSAudio(text: string): Promise<TTSResult> {
   try {
-    const client = await getMongoClient();
-    const db = client.db();
-    const bucket = new GridFSBucket(db, { bucketName: 'audio' });
+    await connectDB();
+    const db = mongoose.connection.db;
+    if (!db) {
+      throw new Error('Database not connected');
+    }
+    const bucket = new mongoose.mongo.GridFSBucket(db, { bucketName: 'audio' });
     
     // Use primary voice
     const voice = VOICE_NAME;

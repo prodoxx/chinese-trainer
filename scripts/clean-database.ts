@@ -55,6 +55,10 @@ async function cleanDatabase() {
     
     // Clean up GridFS files
     const db = mongoose.connection.db;
+    if (!db) {
+      console.log('⚠️  GridFS cleanup skipped - database not connected');
+      return;
+    }
     const imagesBucket = new GridFSBucket(db, { bucketName: 'images' });
     const audiosBucket = new GridFSBucket(db, { bucketName: 'audios' });
     

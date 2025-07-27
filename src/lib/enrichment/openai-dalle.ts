@@ -1,6 +1,6 @@
 import OpenAI from "openai";
-import { GridFSBucket } from "mongodb";
-import { getMongoClient } from "@/lib/db/mongodb";
+import mongoose from 'mongoose';
+import connectDB from '@/lib/db/mongodb';
 import crypto from "crypto";
 
 const openai = process.env.OPENAI_API_KEY
@@ -33,7 +33,7 @@ function generateCacheKey(
  * Check if image exists in GridFS cache
  */
 async function checkImageCache(
-	bucket: GridFSBucket,
+	bucket: mongoose.mongo.GridFSBucket,
 	cacheKey: string,
 ): Promise<string | null> {
 	try {
@@ -82,7 +82,7 @@ function generateLearningPrompt(
  * Download image from URL and store in GridFS
  */
 async function storeImageInGridFS(
-	bucket: GridFSBucket,
+	bucket: mongoose.mongo.GridFSBucket,
 	imageUrl: string,
 	cacheKey: string,
 ): Promise<string> {
@@ -130,9 +130,12 @@ export async function generateDALLEImage(
 	}
 
 	try {
-		const client = await getMongoClient();
-		const db = client.db();
-		const bucket = new GridFSBucket(db, { bucketName: "images" });
+		await connectDB();
+		const db = mongoose.connection.db;
+		if (!db) {
+			throw new Error('Database not connected');
+		}
+		const bucket = new mongoose.mongo.GridFSBucket(db, { bucketName: "images" });
 
 		// Use custom prompt if provided, otherwise generate one
 		const prompt =
@@ -169,7 +172,7 @@ export async function generateDALLEImage(
 			style: "natural", // Natural style for educational purposes
 		});
 
-		const imageUrl = response.data[0]?.url;
+		const imageUrl = response.data?.[0]?.url;
 		if (!imageUrl) {
 			throw new Error("No image URL returned from DALL-E");
 		}

@@ -263,10 +263,10 @@ export const deckEnrichmentWorker = new Worker<DeckEnrichmentJobData>(
                 await card.save();
                 console.log(`   ✓ Image generated${imageResult.cached ? ' (cached)' : ''}`);
               }
-            } catch (imageError: any) {
+            } catch (imageError) {
               console.error(`   ✗ Image generation failed:`, imageError);
               // If rate limited, wait and retry
-              if (imageError?.code === 'rate_limit_exceeded') {
+              if (imageError && typeof imageError === 'object' && 'code' in imageError && imageError.code === 'rate_limit_exceeded') {
                 console.log(`   ⏳ Rate limited, waiting 60 seconds...`);
                 await new Promise(resolve => setTimeout(resolve, 60000));
                 try {

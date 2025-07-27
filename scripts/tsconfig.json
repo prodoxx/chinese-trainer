@@ -1,0 +1,10 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "skipLibCheck": true,
+    "module": "commonjs",
+    "target": "es2017"
+  },
+  "include": ["./**/*.ts"],
+  "exclude": ["../node_modules", "../src", "../.next"]
+}

@@ -1,13 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server';
-
-// Store active connections
-const connections = new Map<string, ReadableStreamDefaultController>();
+import { NextRequest } from 'next/server';
+import { getConnections } from '@/lib/events/sse';
 
 export async function GET(
   request: NextRequest,
   context: { params: Promise<{ sessionId: string }> }
 ) {
   const { sessionId } = await context.params;
+  const connections = getConnections();
   
   const stream = new ReadableStream({
     start(controller) {
@@ -31,13 +30,4 @@ export async function GET(
       'Connection': 'keep-alive',
     },
   });
-}
-
-// Helper function to send events to a specific session
-export function sendEvent(sessionId: string, event: any) {
-  const controller = connections.get(sessionId);
-  if (controller) {
-    const encoder = new TextEncoder();
-    controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
-  }
 }

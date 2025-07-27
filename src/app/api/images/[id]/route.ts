@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GridFSBucket, ObjectId } from 'mongodb';
-import { getMongoClient } from '@/lib/db/mongodb';
+import mongoose from 'mongoose';
+import connectDB from '@/lib/db/mongodb';
 
 export async function GET(
   request: NextRequest,
@@ -9,11 +9,14 @@ export async function GET(
   try {
     const { id } = await context.params;
     
-    const client = await getMongoClient();
-    const db = client.db();
-    const bucket = new GridFSBucket(db, { bucketName: 'images' });
+    await connectDB();
+    const db = mongoose.connection.db;
+    if (!db) {
+      return NextResponse.json({ error: 'Database not connected' }, { status: 500 });
+    }
+    const bucket = new mongoose.mongo.GridFSBucket(db, { bucketName: 'images' });
     
-    const fileId = new ObjectId(id);
+    const fileId = new mongoose.Types.ObjectId(id);
     
     // Check if file exists
     const files = await bucket.find({ _id: fileId }).toArray();

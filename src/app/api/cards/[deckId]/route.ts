@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db/mongodb';
 import Card from '@/lib/db/models/Card';
 import DeckCard from '@/lib/db/models/DeckCard';
+import Review from '@/lib/db/models/Review';
 
 export async function GET(
   request: NextRequest,
@@ -18,6 +19,18 @@ export async function GET(
     
     // Fetch the actual cards
     let cards = await Card.find({ _id: { $in: cardIds } });
+    
+    // Get reviews to filter out studied cards
+    const reviews = await Review.find({ 
+      cardId: { $in: cardIds },
+      firstStudiedAt: { $exists: true }
+    }).select('cardId');
+    
+    // Create set of studied card IDs
+    const studiedCardIds = new Set(reviews.map(r => r.cardId.toString()));
+    
+    // Filter out cards that have been studied
+    cards = cards.filter(card => !studiedCardIds.has(card._id.toString()));
     
     // Limit to 50 cards
     cards = cards.slice(0, 50);

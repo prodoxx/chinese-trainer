@@ -3,7 +3,8 @@
  */
 export function playBuzzSound() {
   try {
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    const audioContext = new AudioContextClass();
     
     // Create oscillator for buzz sound
     const oscillator = audioContext.createOscillator();

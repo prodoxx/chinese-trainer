@@ -2,6 +2,18 @@
 
 import { useEffect, useState } from 'react';
 
+interface DeckStats {
+  totalCards: number;
+  newCards: number;
+  dueToday: number;
+  overdue: number;
+  learning: number;
+  mature: number;
+  averageEase: number;
+  averageStrength: number;
+  nextReviewDate: Date | null;
+}
+
 interface Deck {
   id: string;
   name: string;
@@ -13,11 +25,12 @@ interface Deck {
     currentCard?: string;
     currentOperation?: string;
   };
+  stats?: DeckStats;
   updatedAt: string;
 }
 
 interface DeckListProps {
-  onSelectDeck: (deckId: string) => void;
+  onSelectDeck: (deckId: string, mode: 'new' | 'review' | 'practice') => void;
 }
 
 export default function DeckList({ onSelectDeck }: DeckListProps) {
@@ -25,6 +38,28 @@ export default function DeckList({ onSelectDeck }: DeckListProps) {
   const [loading, setLoading] = useState(true);
   const [enrichingDeck, setEnrichingDeck] = useState<string | null>(null);
   const [deletingDeck, setDeletingDeck] = useState<string | null>(null);
+  
+  const formatTimeUntilReview = (nextReviewDate: Date | string | null): string => {
+    if (!nextReviewDate) return '';
+    
+    const now = new Date();
+    const reviewDate = new Date(nextReviewDate);
+    const diffMs = reviewDate.getTime() - now.getTime();
+    
+    if (diffMs <= 0) return 'Review available now';
+    
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffHours / 24);
+    
+    if (diffDays > 0) {
+      return `Next review in ${diffDays} day${diffDays === 1 ? '' : 's'}`;
+    } else if (diffHours > 0) {
+      return `Next review in ${diffHours} hour${diffHours === 1 ? '' : 's'}`;
+    } else {
+      const diffMinutes = Math.floor(diffMs / (1000 * 60));
+      return `Next review in ${diffMinutes} minute${diffMinutes === 1 ? '' : 's'}`;
+    }
+  };
   
   useEffect(() => {
     fetchDecks();
@@ -44,7 +79,27 @@ export default function DeckList({ onSelectDeck }: DeckListProps) {
     try {
       const response = await fetch('/api/decks');
       const data = await response.json();
-      setDecks(data.decks || []);
+      const decksData = data.decks || [];
+      
+      // Fetch stats for ready decks
+      const decksWithStats = await Promise.all(
+        decksData.map(async (deck: Deck) => {
+          if (deck.status === 'ready') {
+            try {
+              const statsResponse = await fetch(`/api/decks/${deck.id}/stats`);
+              if (statsResponse.ok) {
+                const statsData = await statsResponse.json();
+                return { ...deck, stats: statsData.stats };
+              }
+            } catch (error) {
+              console.error(`Failed to fetch stats for deck ${deck.id}:`, error);
+            }
+          }
+          return deck;
+        })
+      );
+      
+      setDecks(decksWithStats);
     } catch (error) {
       console.error('Failed to fetch decks:', error);
     } finally {
@@ -150,6 +205,37 @@ export default function DeckList({ onSelectDeck }: DeckListProps) {
                 )}
               </div>
               <p className="text-sm text-gray-400">{deck.cardsCount} cards</p>
+              {deck.stats && (
+                <>
+                  <div className="flex gap-4 text-xs mt-1">
+                    {deck.stats.newCards > 0 && (
+                      <span className="text-blue-400">
+                        {deck.stats.newCards} new
+                      </span>
+                    )}
+                    {deck.stats.overdue > 0 && (
+                      <span className="text-red-400">
+                        {deck.stats.overdue} overdue
+                      </span>
+                    )}
+                    {deck.stats.dueToday > 0 && (
+                      <span className="text-yellow-400">
+                        {deck.stats.dueToday} due today
+                      </span>
+                    )}
+                    {deck.stats.totalCards - deck.stats.newCards > 0 && (
+                      <span className="text-gray-500">
+                        {Math.round(deck.stats.averageStrength * 100)}% retention
+                      </span>
+                    )}
+                  </div>
+                  {deck.stats.nextReviewDate && deck.stats.overdue === 0 && deck.stats.dueToday === 0 && (
+                    <div className="text-xs text-gray-400 mt-1">
+                      {formatTimeUntilReview(deck.stats.nextReviewDate)}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -177,17 +263,33 @@ export default function DeckList({ onSelectDeck }: DeckListProps) {
                   </svg>
                 )}
               </button>
-              <button 
-                onClick={() => deck.status === 'ready' && onSelectDeck(deck.id)}
-                disabled={deck.status !== 'ready'}
-                className={`${
-                  deck.status === 'ready' 
-                    ? 'text-violet-400 hover:text-violet-300 cursor-pointer' 
-                    : 'text-gray-600 cursor-not-allowed'
-                }`}
-              >
-                Study →
-              </button>
+              {deck.status === 'ready' && deck.stats && deck.stats.newCards > 0 && (
+                <button 
+                  onClick={() => onSelectDeck(deck.id, 'new')}
+                  className="px-3 py-1 text-xs bg-blue-900/50 hover:bg-blue-800/50 text-blue-300 rounded transition-colors cursor-pointer"
+                  title={`Study ${deck.stats.newCards} new cards`}
+                >
+                  Study New ({deck.stats.newCards})
+                </button>
+              )}
+              {deck.status === 'ready' && deck.stats && (deck.stats.overdue > 0 || deck.stats.dueToday > 0) && (
+                <button 
+                  onClick={() => onSelectDeck(deck.id, 'review')}
+                  className="px-3 py-1 text-xs bg-yellow-900/50 hover:bg-yellow-800/50 text-yellow-300 rounded transition-colors cursor-pointer"
+                  title={`Review ${deck.stats.overdue + deck.stats.dueToday} due cards`}
+                >
+                  Review ({deck.stats.overdue + deck.stats.dueToday})
+                </button>
+              )}
+              {deck.status === 'ready' && deck.stats && deck.stats.totalCards > deck.stats.newCards && (
+                <button 
+                  onClick={() => onSelectDeck(deck.id, 'practice')}
+                  className="px-3 py-1 text-xs bg-purple-900/50 hover:bg-purple-800/50 text-purple-300 rounded transition-colors cursor-pointer"
+                  title={`Practice quiz on all ${deck.stats.totalCards - deck.stats.newCards} studied cards`}
+                >
+                  Practice Quiz ({deck.stats.totalCards - deck.stats.newCards})
+                </button>
+              )}
             </div>
           </div>
           
