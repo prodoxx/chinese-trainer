@@ -427,48 +427,48 @@ export default function DeckList({ onSelectDeck }: DeckListProps) {
 										)}
 									</button>
 								</div>
-								{/* Study buttons */}
-								<div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-800">
-									{deck.status === "ready" &&
-										deck.stats &&
-										deck.stats.newCards > 0 && (
-											<button
-												onClick={() => onSelectDeck(deck.id, "new")}
-												className="flex-1 min-w-[120px] px-4 py-2.5 bg-gradient-to-r from-blue-600/20 to-blue-500/20 hover:from-blue-600/30 hover:to-blue-500/30 text-blue-300 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 border border-blue-800/50 hover:border-blue-700/50 group cursor-pointer"
-												title={`Study ${deck.stats.newCards} new cards`}
-											>
-												<Sparkles className="w-4 h-4 group-hover:scale-110 transition-transform" />
-												<span className="text-sm font-medium">Study New ({deck.stats.newCards})</span>
-											</button>
-										)}
-									{deck.status === "ready" &&
-										deck.stats &&
-										(deck.stats.overdue > 0 || deck.stats.dueToday > 0) && (
-											<button
-												onClick={() => onSelectDeck(deck.id, "review")}
-												className="flex-1 min-w-[120px] px-4 py-2.5 bg-gradient-to-r from-yellow-600/20 to-orange-500/20 hover:from-yellow-600/30 hover:to-orange-500/30 text-yellow-300 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 border border-yellow-800/50 hover:border-yellow-700/50 group cursor-pointer"
-												title={`Review ${deck.stats.overdue + deck.stats.dueToday} due cards`}
-											>
-												<Zap className="w-4 h-4 group-hover:scale-110 transition-transform" />
-												<span className="text-sm font-medium">Review ({deck.stats.overdue + deck.stats.dueToday})</span>
-											</button>
-										)}
-									{deck.status === "ready" &&
-										deck.stats &&
-										deck.stats.totalCards > deck.stats.newCards && (
-											<button
-												onClick={() => onSelectDeck(deck.id, "practice")}
-												className="flex-1 min-w-[120px] px-4 py-2.5 bg-gradient-to-r from-purple-600/20 to-pink-500/20 hover:from-purple-600/30 hover:to-pink-500/30 text-purple-300 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 border border-purple-800/50 hover:border-purple-700/50 group cursor-pointer"
-												title={`Practice quiz on all ${deck.stats.totalCards - deck.stats.newCards} studied cards`}
-											>
-												<Brain className="w-4 h-4 group-hover:scale-110 transition-transform" />
-												<span className="text-sm font-medium">Practice ({deck.stats.totalCards - deck.stats.newCards})</span>
-											</button>
-										)}
-								</div>
+								{/* Study buttons or enrichment progress */}
+								{deck.status === "ready" ? (
+									<div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-800">
+										{deck.stats &&
+											deck.stats.newCards > 0 && (
+												<button
+													onClick={() => onSelectDeck(deck.id, "new")}
+													className="flex-1 min-w-[120px] px-4 py-2.5 bg-gradient-to-r from-blue-600/20 to-blue-500/20 hover:from-blue-600/30 hover:to-blue-500/30 text-blue-300 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 border border-blue-800/50 hover:border-blue-700/50 group cursor-pointer"
+													title={`Study ${deck.stats.newCards} new cards`}
+												>
+													<Sparkles className="w-4 h-4 group-hover:scale-110 transition-transform" />
+													<span className="text-sm font-medium">Study New ({deck.stats.newCards})</span>
+												</button>
+											)}
+										{deck.stats &&
+											(deck.stats.overdue > 0 || deck.stats.dueToday > 0) && (
+												<button
+													onClick={() => onSelectDeck(deck.id, "review")}
+													className="flex-1 min-w-[120px] px-4 py-2.5 bg-gradient-to-r from-yellow-600/20 to-orange-500/20 hover:from-yellow-600/30 hover:to-orange-500/30 text-yellow-300 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 border border-yellow-800/50 hover:border-yellow-700/50 group cursor-pointer"
+													title={`Review ${deck.stats.overdue + deck.stats.dueToday} due cards`}
+												>
+													<Zap className="w-4 h-4 group-hover:scale-110 transition-transform" />
+													<span className="text-sm font-medium">Review ({deck.stats.overdue + deck.stats.dueToday})</span>
+												</button>
+											)}
+										{deck.stats &&
+											deck.stats.totalCards > deck.stats.newCards && (
+												<button
+													onClick={() => onSelectDeck(deck.id, "practice")}
+													className="flex-1 min-w-[120px] px-4 py-2.5 bg-gradient-to-r from-purple-600/20 to-pink-500/20 hover:from-purple-600/30 hover:to-pink-500/30 text-purple-300 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 border border-purple-800/50 hover:border-purple-700/50 group cursor-pointer"
+													title={`Practice quiz on all ${deck.stats.totalCards - deck.stats.newCards} studied cards`}
+												>
+													<Brain className="w-4 h-4 group-hover:scale-110 transition-transform" />
+													<span className="text-sm font-medium">Practice ({deck.stats.totalCards - deck.stats.newCards})</span>
+												</button>
+											)}
+									</div>
+								) : null}
 							</div>
 						</div>
-
+						
+						{/* Enrichment progress - full width */}
 						{deck.status !== "ready" && deck.enrichmentProgress && (
 							<div className="mt-4 p-4 bg-gray-800/30 rounded-xl border border-gray-800">
 								<div className="flex justify-between text-xs text-gray-400 mb-2">
@@ -497,6 +497,14 @@ export default function DeckList({ onSelectDeck }: DeckListProps) {
 								)}
 							</div>
 						)}
+						{deck.status !== "ready" && !deck.enrichmentProgress && (
+							<div className="mt-4 p-4 bg-gray-800/30 rounded-xl border border-gray-800">
+								<div className="text-sm text-gray-500 text-center">
+									{deck.status === "importing" ? "Importing cards..." : "Preparing deck..."}
+								</div>
+							</div>
+						)}
+
 					</div>
 				))}
 			</div>

@@ -173,7 +173,7 @@ export async function getSimilarCharacters(
   // Calculate similarity scores
   const similarities = similar.map(other => {
     let score = 0;
-    let reasons = [];
+    const reasons = [];
     
     if (other.semanticCategory === analysis.semanticCategory) {
       score += 0.4;

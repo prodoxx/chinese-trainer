@@ -351,7 +351,7 @@ function detectSemanticRadical(character: string): {
   category?: string;
 } {
   let count = 0;
-  let categories: Set<string> = new Set();
+  const categories: Set<string> = new Set();
   let hasSemantic = false;
   
   // For compound words, check each character separately

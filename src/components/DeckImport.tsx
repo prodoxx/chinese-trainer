@@ -130,7 +130,7 @@ export default function DeckImport({ onImportComplete }: DeckImportProps) {
             </div>
             <div className="flex items-center gap-1">
               <CheckCircle className="w-3 h-3" />
-              <span>"hanzi" header required</span>
+              <span>&quot;hanzi&quot; header required</span>
             </div>
           </div>
         </div>

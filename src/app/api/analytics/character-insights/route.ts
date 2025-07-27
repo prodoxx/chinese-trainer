@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
     try {
       const cachedAnalysis = await CharacterAnalysis.findOne({ character: card.hanzi });
       if (cachedAnalysis?.commonConfusions) {
-        confusionAnalysis = cachedAnalysis.commonConfusions.slice(0, 3).map(conf => ({
+        confusionAnalysis = cachedAnalysis.commonConfusions.slice(0, 3).map((conf: any) => ({
           character: conf.character,
           meaning: '', // We'll need to look this up if needed
           pinyin: '', // We'll need to look this up if needed
