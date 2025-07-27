@@ -31,7 +31,7 @@ No testing framework is currently configured. When implementing tests, check for
 This is a Next.js 15.4.4 application using the App Router, TypeScript with strict mode, React 19, and Tailwind CSS v4. The project is in initial state with only the Next.js starter template.
 
 ### Intended Architecture (from PRD)
-The application will be a Chinese Characters Flash-and-Review Trainer with these core components:
+The application will be a Traditional Chinese Characters Flash-and-Review Trainer for Taiwan Mandarin (臺灣國語) with these core components:
 
 1. **Frontend**: Next.js SPA for flash card presentations and quiz interactions
 2. **Local API**: Node.js service that handles enrichment, caching, and data access
@@ -64,5 +64,6 @@ Collections needed in MongoDB:
 - This is a local-only application - no user accounts or cloud deployment
 - All API keys must be kept server-side only
 - Internet required for enrichment, but sessions can run offline with cached data
-- Target users: Traditional Chinese learners (Taiwan focus)
-- UI in English, content in Traditional Chinese with pinyin tone marks
+- Target users: Taiwan Mandarin (臺灣國語) learners studying Traditional Chinese characters
+- UI in English, content in Traditional Chinese with Taiwan Mandarin pinyin tone marks
+- All linguistic analysis and vocabulary must be specific to Taiwan Mandarin, NOT Mainland Mandarin

@@ -4,10 +4,11 @@ import { useState, useEffect } from 'react';
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  Area, AreaChart, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar
+  Area, AreaChart
 } from 'recharts';
 import CharacterInsights from './CharacterInsights';
 import LearningInsights from './LearningInsights';
+import Header from './Header';
 
 interface AnalyticsData {
   summary: {
@@ -90,8 +91,9 @@ export default function Analytics({ onBack }: AnalyticsProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-950 text-white p-8">
-        <div className="max-w-7xl mx-auto">
+      <div className="min-h-screen bg-gray-950 text-white">
+        <Header onBack={onBack} showAnalyticsLink={false} />
+        <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
           <div className="animate-pulse">
             <div className="h-8 w-64 bg-gray-800 rounded mb-8"></div>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
@@ -107,8 +109,9 @@ export default function Analytics({ onBack }: AnalyticsProps) {
 
   if (!analytics || analytics.summary.totalCards === 0) {
     return (
-      <div className="min-h-screen bg-gray-950 text-white p-8">
-        <div className="max-w-7xl mx-auto">
+      <div className="min-h-screen bg-gray-950 text-white">
+        <Header onBack={onBack} showAnalyticsLink={false} />
+        <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
           <h1 className="text-3xl font-bold mb-8">Learning Analytics</h1>
           <div className="bg-gray-900 rounded-lg p-12 text-center">
             <svg className="w-24 h-24 mx-auto mb-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -134,26 +137,12 @@ export default function Analytics({ onBack }: AnalyticsProps) {
     return `${minutes}m ${seconds}s`;
   };
 
-  const COLORS = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
-
   return (
-    <div className="min-h-screen bg-gray-950 text-white p-4 sm:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gray-950 text-white">
+      <Header onBack={onBack} showAnalyticsLink={false} />
+      <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
         <div className="flex justify-between items-center mb-8">
-          <div className="flex items-center gap-4">
-            {onBack && (
-              <button
-                onClick={onBack}
-                className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors flex items-center gap-2"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-                Back to Home
-              </button>
-            )}
-            <h1 className="text-3xl font-bold">Learning Analytics</h1>
-          </div>
+          <h1 className="text-3xl font-bold">Learning Analytics</h1>
           <div className="flex gap-2">
             <button
               onClick={() => setTimeRange(7)}

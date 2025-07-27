@@ -9,6 +9,33 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY!,
 });
 
+export interface ComprehensiveCharacterAnalysis {
+  character: string;
+  pinyin: string;
+  semanticCategory: string;
+  semanticFields: string[];
+  conceptType: 'concrete' | 'abstract' | 'mixed';
+  radicals: Array<{
+    radical: string;
+    category: string;
+    position: string;
+  }>;
+  tonePattern: string;
+  toneDescription: string;
+  strokeCount: number;
+  componentCount: number;
+  visualComplexity: number;
+  etymology: string;
+  mnemonics: string[];
+  commonConfusions: Array<{
+    character: string;
+    reason: string;
+    similarity: number;
+  }>;
+  contextExamples: string[];
+  collocations: string[];
+}
+
 export interface DeepLinguisticAnalysis extends EnhancedCharacterComplexity {
   // Etymology and history
   etymology?: {
@@ -59,7 +86,9 @@ export async function analyzeCharacterWithOpenAI(
   
   try {
     // Create a comprehensive prompt for linguistic analysis
-    const prompt = `Analyze the Chinese character "${character}" (${baseAnalysis.pinyin}) with meanings: ${baseAnalysis.definitions.join(', ')}.
+    const prompt = `Analyze the Traditional Chinese character "${character}" (${baseAnalysis.pinyin}) with meanings: ${baseAnalysis.definitions.join(', ')} for Taiwan Mandarin (臺灣國語) learners.
+
+IMPORTANT: This is for Taiwan Mandarin, NOT Mainland Mandarin. Use Traditional Chinese characters and Taiwan-specific pronunciations, vocabulary, and cultural contexts.
 
 Provide a detailed linguistic analysis in JSON format with the following structure:
 
@@ -105,7 +134,7 @@ Focus on practical learning aids and common confusion points.`;
       messages: [
         {
           role: 'system',
-          content: 'You are a Chinese linguistics expert helping create comprehensive learning materials. Provide accurate, pedagogically sound analysis.',
+          content: 'You are a Taiwan Mandarin (臺灣國語) and Traditional Chinese linguistics expert helping create comprehensive learning materials. Provide accurate, pedagogically sound analysis specific to Taiwan Mandarin usage, pronunciation, and cultural context.',
         },
         {
           role: 'user',
@@ -214,7 +243,7 @@ Provide a structured learning path in JSON format:
       messages: [
         {
           role: 'system',
-          content: 'You are a Chinese language learning expert creating personalized study plans.',
+          content: 'You are a Taiwan Mandarin (臺灣國語) language learning expert creating personalized study plans for Traditional Chinese characters. Focus on Taiwan-specific usage and cultural contexts.',
         },
         {
           role: 'user',
@@ -291,7 +320,7 @@ Provide analysis in JSON format.`;
       messages: [
         {
           role: 'system',
-          content: 'You are an expert in Chinese character learning and error analysis.',
+          content: 'You are an expert in Taiwan Mandarin (臺灣國語) and Traditional Chinese character learning and error analysis. Focus on Taiwan-specific pronunciation, usage patterns, and common errors.',
         },
         {
           role: 'user',
@@ -361,7 +390,7 @@ Return as JSON array.`;
       messages: [
         {
           role: 'system',
-          content: 'You are a Chinese language teacher creating educational example sentences.',
+          content: 'You are a Taiwan Mandarin (臺灣國語) language teacher creating educational example sentences using Traditional Chinese characters. Use vocabulary and contexts relevant to Taiwan.',
         },
         {
           role: 'user',
@@ -378,5 +407,97 @@ Return as JSON array.`;
   } catch (error) {
     console.error('Failed to generate examples:', error);
     return [];
+  }
+}
+
+export async function analyzeCharacterComprehensively(
+  character: string,
+  pinyin: string,
+  meaning: string
+): Promise<ComprehensiveCharacterAnalysis> {
+  const prompt = `Analyze this Traditional Chinese character/word comprehensively for Taiwan Mandarin language learning:
+
+Character: ${character} (Traditional Chinese)
+Pinyin: ${pinyin} (Taiwan Mandarin pronunciation)
+Meaning: ${meaning}
+
+IMPORTANT: This is for Taiwan Mandarin (臺灣國語), NOT Mainland Mandarin. Use Traditional Chinese characters and Taiwan-specific pronunciations, vocabulary, and usage.
+
+Provide a detailed JSON analysis with these exact fields:
+{
+  "character": "${character}",
+  "pinyin": "${pinyin}",
+  "semanticCategory": "single most relevant category (e.g., emotion, nature, action, person, object, abstract concept)",
+  "semanticFields": ["array of related semantic domains"],
+  "conceptType": "concrete/abstract/mixed",
+  "radicals": [
+    {
+      "radical": "the radical character",
+      "category": "what this radical represents",
+      "position": "left/right/top/bottom/enclosure"
+    }
+  ],
+  "tonePattern": "e.g., 4-4 for two fourth tones",
+  "toneDescription": "e.g., falling + falling",
+  "strokeCount": number,
+  "componentCount": number of distinct components,
+  "visualComplexity": 0-1 scale,
+  "etymology": "brief explanation of character origin and development",
+  "mnemonics": ["memory aids for remembering this character"],
+  "commonConfusions": [
+    {
+      "character": "similar character",
+      "reason": "why they're confused",
+      "similarity": 0-1 scale
+    }
+  ],
+  "contextExamples": ["example sentences using this character"],
+  "collocations": ["common word combinations"]
+}
+
+Be accurate and educational. Focus on practical learning insights specific to Taiwan Mandarin usage.`;
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: "You are an expert in Taiwan Mandarin (臺灣國語) and Traditional Chinese linguistics. Provide accurate, detailed character analysis for learners studying Taiwan Mandarin specifically. Always use Traditional Chinese characters and Taiwan-specific pronunciations, vocabulary, and cultural contexts."
+        },
+        { role: "user", content: prompt }
+      ],
+      temperature: 0.3,
+      response_format: { type: "json_object" }
+    });
+
+    const response = completion.choices[0].message.content;
+    if (!response) throw new Error('No response from OpenAI');
+
+    return JSON.parse(response) as ComprehensiveCharacterAnalysis;
+  } catch (error) {
+    console.error('OpenAI character analysis error:', error);
+    // Return basic analysis as fallback
+    const tones = pinyin.match(/[1-5]/g);
+    const tonePattern = tones ? tones.join('-') : '';
+    
+    return {
+      character,
+      pinyin,
+      semanticCategory: 'unknown',
+      semanticFields: [],
+      conceptType: 'mixed',
+      radicals: [],
+      tonePattern,
+      toneDescription: 'unknown',
+      strokeCount: character.length * 10, // rough estimate
+      componentCount: character.length,
+      visualComplexity: 0.5,
+      etymology: 'Analysis unavailable',
+      mnemonics: [],
+      commonConfusions: [],
+      contextExamples: [],
+      collocations: []
+    };
   }
 }

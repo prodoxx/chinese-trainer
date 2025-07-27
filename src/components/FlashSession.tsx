@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Quiz from './Quiz';
+import { useAlert } from '@/hooks/useAlert';
 
 interface Card {
   id: string;
@@ -21,6 +22,7 @@ interface FlashSessionProps {
 }
 
 export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps) {
+  const { showAlert, showConfirm } = useAlert();
   const [cards, setCards] = useState<Card[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [phase, setPhase] = useState<'loading' | 'idle' | 'flash' | 'quiz' | 'countdown' | 'initial-countdown'>('loading');
@@ -56,6 +58,8 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
   const [showContinuePrompt, setShowContinuePrompt] = useState(false);
   const [showSessionSizeWarning, setShowSessionSizeWarning] = useState(false);
   const [totalAvailableCards, setTotalAvailableCards] = useState(0);
+  const [actualSessionCards, setActualSessionCards] = useState(0); // Track actual cards for this session
+  const [isInitialized, setIsInitialized] = useState(false); // Track if cards have been loaded
   
   // Cognitive load constants based on research
   const OPTIMAL_SESSION_SIZE = 7; // Working memory capacity
@@ -124,6 +128,8 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
       
       console.log('API Response:', data);
       console.log('Fetched cards:', data.cards?.length, 'cards');
+      console.log('Total cards from API:', data.totalCards);
+      console.log('Mode:', mode);
       console.log('Sample card:', data.cards?.[0]);
       
       // Filter for cards that have at least audio (required for flash sessions)
@@ -132,7 +138,10 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
       
       if (cardsWithAudio.length > 0) {
         // Store total available cards for reference
-        setTotalAvailableCards(cardsWithAudio.length);
+        // For review/practice modes, use the totalCards from API response if available
+        const apiTotalCards = data.totalCards ?? cardsWithAudio.length;
+        setTotalAvailableCards(apiTotalCards);
+        console.log('Setting totalAvailableCards to:', apiTotalCards);
         
         // Determine optimal session size based on mode and available cards
         let sessionCards = cardsWithAudio;
@@ -152,6 +161,9 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
         // Review mode uses all due cards as scheduled by spaced repetition
         
         setCards(sessionCards);
+        setActualSessionCards(sessionCards.length); // Set the actual number of cards for this session
+        setIsInitialized(true); // Mark as initialized
+        console.log('Setting actualSessionCards to:', sessionCards.length);
         
         // For practice mode, show mode selection first
         if (mode === 'practice') {
@@ -181,7 +193,7 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
         } else if (mode === 'practice') {
           message = 'No studied cards available for practice. Study some cards first!';
         }
-        alert(message);
+        showAlert(message, { type: 'info' });
         onExit();
       }
     } catch (error) {
@@ -190,13 +202,45 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
     }
   };
   
-  const handleKeyPress = useCallback((e: KeyboardEvent) => {
+  const handleKeyPress = useCallback(async (e: KeyboardEvent) => {
     if (e.key === 'Escape' || e.key.toLowerCase() === 'q') {
-      if (confirm('Are you sure you want to exit the flash session?')) {
+      // Pause the session before showing confirm
+      const wasPaused = isPaused;
+      if (!wasPaused && phase === 'flash') {
+        setIsPaused(true);
+        setPauseStartTime(Date.now());
+      }
+      
+      const confirmed = await showConfirm('Are you sure you want to exit the flash session?', {
+        type: 'warning',
+        confirmText: 'Exit',
+        cancelText: 'Continue'
+      });
+      
+      if (confirmed) {
         onExit();
+      } else if (!wasPaused && phase === 'flash') {
+        // Resume if we paused it
+        const pauseDuration = Date.now() - (pauseStartTime || Date.now());
+        setPausedTime(prev => prev + pauseDuration);
+        setPauseStartTime(null);
+        setIsPaused(false);
       }
     } else if (e.key.toLowerCase() === 'r') {
-      if (confirm('Are you sure you want to restart the flash session?')) {
+      // Pause the session before showing confirm
+      const wasPaused = isPaused;
+      if (!wasPaused && phase === 'flash') {
+        setIsPaused(true);
+        setPauseStartTime(Date.now());
+      }
+      
+      const confirmed = await showConfirm('Are you sure you want to restart the flash session?', {
+        type: 'warning',
+        confirmText: 'Restart',
+        cancelText: 'Continue'
+      });
+      
+      if (confirmed) {
         // Reset all state to initial values
         setCurrentIndex(0);
         setPhase('loading');
@@ -213,6 +257,12 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
         setRoundsCompleted(0);
         // Refetch cards and start over
         fetchCards();
+      } else if (!wasPaused && phase === 'flash') {
+        // Resume if we paused it
+        const pauseDuration = Date.now() - (pauseStartTime || Date.now());
+        setPausedTime(prev => prev + pauseDuration);
+        setPauseStartTime(null);
+        setIsPaused(false);
       }
     } else if (e.key.toLowerCase() === 'p' && phase === 'flash') {
       // Toggle pause
@@ -230,7 +280,7 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
         setIsPaused(true);
       }
     }
-  }, [phase, onExit, isPaused, pauseStartTime]);
+  }, [phase, onExit, isPaused, pauseStartTime, showConfirm]);
   
   useEffect(() => {
     window.addEventListener('keydown', handleKeyPress);
@@ -451,7 +501,10 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
         const percentage = totalAnswered > 0 ? Math.round((totalCorrect / totalAnswered) * 100) : 0;
         const completionMessage = `Quick practice complete!\n\nPracticed: ${totalAnswered} cards\nCorrect: ${totalCorrect}/${totalAnswered} (${percentage}%)\nTime: ${formatTime(elapsedTime)}`;
         
-        alert(completionMessage);
+        showAlert(completionMessage, { 
+          type: 'success', 
+          title: 'Quick Practice Complete!' 
+        });
         onExit();
         return;
       }
@@ -473,7 +526,10 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
         const percentage = totalAnswered > 0 ? Math.round((totalCorrect / totalAnswered) * 100) : 0;
         const completionMessage = `Practice quiz complete!\n\nPracticed: ${cards.length} cards\nCorrect: ${totalCorrect}/${totalAnswered} (${percentage}%)\nTime: ${formatTime(elapsedTime)}\n\n${missedCardIds.size > 0 ? `Reviewed ${missedCardIds.size} difficult cards` : 'Perfect score!'}`;
         
-        alert(completionMessage);
+        showAlert(completionMessage, { 
+          type: 'success', 
+          title: 'Practice Complete!' 
+        });
         onExit();
         return;
       }
@@ -490,10 +546,10 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
     // Check if we should prompt to continue
     // For new mode: always prompt after OPTIMAL_SESSION_SIZE
     // For other modes: prompt after every 3 rounds
-    if (mode === 'new' && newTotalStudied >= OPTIMAL_SESSION_SIZE && newTotalStudied < cards.length) {
+    if (mode === 'new' && newTotalStudied >= OPTIMAL_SESSION_SIZE && newTotalStudied < actualSessionCards) {
       setShowContinuePrompt(true);
       return;
-    } else if (mode !== 'new' && (roundsCompleted + 1) % 3 === 0 && newTotalStudied < cards.length) {
+    } else if (mode !== 'new' && (roundsCompleted + 1) % 3 === 0 && newTotalStudied < actualSessionCards) {
       setShowContinuePrompt(true);
       return;
     }
@@ -528,9 +584,12 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
       const finalScore = allResults.filter(r => r).length;
       const percentage = allResults.length > 0 ? Math.round((finalScore / allResults.length) * 100) : 0;
       
-      const completionMessage = `Session complete!\n\nStudied: ${cards.length} cards\nCorrect: ${finalScore}/${allResults.length} (${percentage}%)\nTime: ${formatTime(elapsedTime)}`;
+      const completionMessage = `Session complete!\n\nStudied: ${actualSessionCards} cards\nCorrect: ${finalScore}/${allResults.length} (${percentage}%)\nTime: ${formatTime(elapsedTime)}`;
       
-      alert(completionMessage);
+      showAlert(completionMessage, { 
+        type: 'success', 
+        title: 'Session Complete!' 
+      });
       onExit();
     }
   };
@@ -581,7 +640,10 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
     
     const completionMessage = `Session complete!\n\nStudied: ${totalCardsStudied} cards\nCorrect: ${finalScore}/${quizResults.length} (${percentage}%)\nTime: ${formatTime(elapsedTime)}`;
     
-    alert(completionMessage);
+    showAlert(completionMessage, { 
+      type: 'success', 
+      title: 'Session Complete!' 
+    });
     onExit();
   };
   
@@ -813,7 +875,7 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
               : 'Great progress!'}
           </h2>
           <p className="text-gray-300 mb-2">
-            You&apos;ve studied {totalCardsStudied} out of {cards.length} cards
+            You&apos;ve studied {totalCardsStudied} out of {actualSessionCards} cards
           </p>
           {quizResults.length > 0 && (
             <p className="text-green-400 mb-2">
@@ -1033,22 +1095,29 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
         )}
       </div>
       
-      {/* Progress and status indicators */}
-      <div className="fixed top-8 right-8 text-sm text-gray-500 text-right">
-        <div>Studied: {totalCardsStudied} / {cards.length} cards</div>
-        {quizResults.length > 0 && (
-          <div className="text-green-400">
-            Correct: {quizResults.filter(r => r).length} / {quizResults.length} 
-            ({Math.round((quizResults.filter(r => r).length / quizResults.length) * 100)}%)
+      {/* Progress and status indicators - only show during active phases */}
+      {(phase === 'flash' || phase === 'quiz' || phase === 'countdown' || phase === 'initial-countdown') && actualSessionCards > 0 && (
+        <div className="fixed top-8 right-8 text-sm text-gray-500 text-right">
+          <div className="text-violet-400 font-medium mb-1">
+            {mode === 'new' ? 'New Cards' : mode === 'review' ? 'Review Session' : 'Practice Mode'}
           </div>
-        )}
-        <div>Time: {formatTime(elapsedTime)}</div>
-      </div>
+          <div>Studied: {totalCardsStudied} / {actualSessionCards} cards</div>
+          {quizResults.length > 0 && (
+            <div className="text-green-400">
+              Correct: {quizResults.filter(r => r).length} / {quizResults.length} 
+              ({Math.round((quizResults.filter(r => r).length / quizResults.length) * 100)}%)
+            </div>
+          )}
+          <div>Time: {formatTime(elapsedTime)}</div>
+        </div>
+      )}
       
       {/* Status indicators */}
-      <div className="fixed bottom-8 right-8 text-sm text-gray-500">
-        Block {currentBlock}/3 • Card {currentIndex + 1}/{blockCards.length}
-      </div>
+      {phase === 'flash' && (
+        <div className="fixed bottom-8 right-8 text-sm text-gray-500">
+          Block {currentBlock}/3 • Card {currentIndex + 1}/{blockCards.length}
+        </div>
+      )}
       
       <div className="fixed bottom-8 left-8 text-sm text-gray-500">
         Press P to {isPaused ? 'resume' : 'pause'} • R to restart • Q/ESC to exit

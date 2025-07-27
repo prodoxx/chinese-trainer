@@ -88,9 +88,14 @@ export async function GET(
       return a.reviewInfo.strength - b.reviewInfo.strength;
     });
     
+    // Limit to optimal session size for better learning outcomes
+    const OPTIMAL_SESSION_SIZE = 7;
+    const sessionCards = enrichedCards.slice(0, OPTIMAL_SESSION_SIZE);
+    
     return NextResponse.json({
-      cards: enrichedCards,
+      cards: sessionCards,
       totalDue: cardsForReview.length,
+      totalCards: sessionCards.length
     });
   } catch (error) {
     console.error('Failed to get review cards:', error);

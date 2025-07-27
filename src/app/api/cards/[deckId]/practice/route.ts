@@ -24,7 +24,7 @@ export async function GET(
     
     if (cards.length === 0) {
       console.log('No cards found in deck:', deckId);
-      return NextResponse.json({ cards: [] });
+      return NextResponse.json({ cards: [], totalCards: 0 });
     }
     
     // Get all reviews for cards in this deck
@@ -58,7 +58,7 @@ export async function GET(
     
     if (reviewsWithSeen.length === 0) {
       console.log('No cards have been reviewed yet');
-      return NextResponse.json({ cards: [] });
+      return NextResponse.json({ cards: [], totalCards: 0 });
     }
     
     // Get cards that have been reviewed
@@ -81,12 +81,13 @@ export async function GET(
         imageAttributionUrl: card.imageAttributionUrl,
         audioUrl: card.audioUrl,
         cached: card.cached,
-      }))
+      })),
+      totalCards: shuffledCards.length
     });
     
   } catch (error) {
     console.error('Get practice cards error - full details:', error);
     // Return empty array instead of error to prevent UI issues
-    return NextResponse.json({ cards: [] });
+    return NextResponse.json({ cards: [], totalCards: 0 });
   }
 }

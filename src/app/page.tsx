@@ -4,10 +4,10 @@ import { useState } from 'react';
 import DeckImport from '@/components/DeckImport';
 import DeckList from '@/components/DeckList';
 import FlashSession from '@/components/FlashSession';
-import Analytics from '@/components/Analytics';
+import Header from '@/components/Header';
 
 export default function Home() {
-  const [view, setView] = useState<'home' | 'session' | 'analytics'>('home');
+  const [view, setView] = useState<'home' | 'session'>('home');
   const [selectedDeckId, setSelectedDeckId] = useState<string | null>(null);
   const [sessionMode, setSessionMode] = useState<'new' | 'review' | 'practice'>('new');
   const [refreshDecks, setRefreshDecks] = useState(0);
@@ -31,42 +31,47 @@ export default function Home() {
     return <FlashSession deckId={selectedDeckId} mode={sessionMode} onExit={handleExitSession} />;
   }
   
-  if (view === 'analytics') {
-    return <Analytics onBack={() => setView('home')} />;
-  }
-  
   return (
-    <div className="min-h-screen p-8">
-      <div className="max-w-4xl mx-auto">
-        <header className="mb-12">
-          <div className="flex justify-between items-start">
-            <div>
-              <h1 className="text-4xl font-bold mb-2">Chinese Character Trainer</h1>
-              <p className="text-gray-400">Learn Traditional Chinese characters with spaced repetition</p>
-            </div>
-            <button
-              onClick={() => setView('analytics')}
-              className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors flex items-center gap-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-              View Analytics
-            </button>
-          </div>
-        </header>
+    <div className="min-h-screen bg-black">
+      {/* Subtle gradient background */}
+      <div className="fixed inset-0 bg-gradient-to-br from-black via-gray-950 to-black opacity-50" />
+      
+      <div className="relative z-10 min-h-screen">
+        <Header />
         
-        <div className="grid md:grid-cols-2 gap-8">
-          <div>
-            <h2 className="text-2xl font-semibold mb-4">Your Decks</h2>
-            <DeckList key={refreshDecks} onSelectDeck={handleSelectDeck} />
+        {/* Main Content */}
+        <main className="max-w-7xl mx-auto px-8 py-12">
+          <div className="grid lg:grid-cols-3 gap-8">
+            {/* Decks Section - Takes up 2 columns */}
+            <div className="lg:col-span-2">
+              <div className="mb-6">
+                <h2 className="text-xl font-semibold text-white mb-2">Your Learning Decks</h2>
+                <p className="text-sm text-gray-500">Select a deck to begin your focused study session</p>
+              </div>
+              <DeckList key={refreshDecks} onSelectDeck={handleSelectDeck} />
+            </div>
+            
+            {/* Import Section - Takes up 1 column */}
+            <div>
+              <div className="mb-6">
+                <h2 className="text-xl font-semibold text-white mb-2">Add New Deck</h2>
+                <p className="text-sm text-gray-500">Import CSV files with Traditional Chinese characters</p>
+              </div>
+              <div className="bg-gray-900/50 backdrop-blur-sm rounded-2xl border border-gray-800 p-6">
+                <DeckImport onImportComplete={handleImportComplete} />
+              </div>
+            </div>
           </div>
-          
-          <div>
-            <h2 className="text-2xl font-semibold mb-4">Import New Deck</h2>
-            <DeckImport onImportComplete={handleImportComplete} />
+        </main>
+        
+        {/* Footer */}
+        <footer className="mt-auto border-t border-gray-900">
+          <div className="max-w-7xl mx-auto px-8 py-6">
+            <p className="text-center text-sm text-gray-600">
+              Focus mode learning environment • Optimized for retention
+            </p>
           </div>
-        </div>
+        </footer>
       </div>
     </div>
   );

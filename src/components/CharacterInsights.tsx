@@ -91,6 +91,48 @@ export default function CharacterInsights({ characterId, character, onClose }: C
     );
   };
 
+  const formatTonePattern = (pattern: string, pinyin: string) => {
+    if (!pattern) return 'No tones';
+    
+    // If pattern contains dash (e.g., "4-4"), it's already formatted
+    if (pattern.includes('-')) {
+      const toneNames = {
+        '1': 'high level',
+        '2': 'rising',
+        '3': 'dipping',
+        '4': 'falling',
+        '5': 'neutral'
+      };
+      
+      const tones = pattern.split('-');
+      return tones.map(t => `${t} (${toneNames[t as keyof typeof toneNames] || 'unknown'})`).join(' + ');
+    }
+    
+    // Legacy format without dashes
+    const toneNames = {
+      '1': '1st (high)',
+      '2': '2nd (rising)',
+      '3': '3rd (dipping)',
+      '4': '4th (falling)',
+      '5': 'neutral'
+    };
+    
+    // For compound words, show each syllable's tone
+    const syllables = pinyin.split(' ');
+    const tones = pattern.split('');
+    
+    if (syllables.length === tones.length) {
+      return syllables.map((syl, i) => {
+        const tone = tones[i];
+        const toneName = toneNames[tone as keyof typeof toneNames] || tone;
+        return `${syl} (${toneName})`;
+      }).join(' + ');
+    }
+    
+    // Fallback to just showing the pattern with descriptions
+    return tones.map(t => toneNames[t as keyof typeof toneNames] || t).join(' + ');
+  };
+
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
       <div className="bg-gray-900/95 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden border border-gray-800">
@@ -167,15 +209,19 @@ export default function CharacterInsights({ characterId, character, onClose }: C
                 <div className="mt-4 space-y-2">
                   <div className="flex justify-between">
                     <span className="text-gray-400">Semantic Category</span>
-                    <span className="text-violet-400">{insights.complexity.semanticCategory || 'None'}</span>
+                    <span className="text-violet-400 capitalize">{insights.complexity.semanticCategory || 'Not detected'}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Type</span>
-                    <span>{insights.complexity.concreteAbstract}</span>
+                    <span className="text-gray-400">Concept Type</span>
+                    <span className="capitalize">{
+                      insights.complexity.concreteAbstract === 'concrete' ? 'Concrete' :
+                      insights.complexity.concreteAbstract === 'abstract' ? 'Abstract' :
+                      'Mixed (Concrete & Abstract)'
+                    }</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-400">Tone Pattern</span>
-                    <span>{insights.complexity.tonePattern}</span>
+                    <span>{formatTonePattern(insights.complexity.tonePattern, insights.character.pinyin)}</span>
                   </div>
                 </div>
               </div>

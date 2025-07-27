@@ -10,6 +10,7 @@ import { generateTTSAudio } from '@/lib/enrichment/azure-tts';
 import { generateDALLEImage } from '@/lib/enrichment/openai-dalle';
 import { interpretChinese } from '@/lib/enrichment/openai-interpret';
 import { convertPinyinToneNumbersToMarks, hasToneMarks } from '@/lib/utils/pinyin';
+import { getCharacterAnalysisWithCache } from '@/lib/analytics/character-analysis-service';
 
 export const deckEnrichmentWorker = new Worker<DeckEnrichmentJobData>(
   'deck-enrichment',
@@ -287,6 +288,42 @@ export const deckEnrichmentWorker = new Worker<DeckEnrichmentJobData>(
             }
           } else {
             console.log(`   ✓ Image already exists`);
+          }
+          
+          // Perform linguistic analysis and cache it
+          await Deck.findByIdAndUpdate(deckId, {
+            enrichmentProgress: {
+              totalCards,
+              processedCards,
+              currentCard: card.hanzi,
+              currentOperation: 'Analyzing character...',
+            }
+          });
+          
+          try {
+            console.log(`   🧠 Analyzing character ${card.hanzi}...`);
+            const analysis = await getCharacterAnalysisWithCache(card.hanzi);
+            
+            // Save analysis data to card
+            card.semanticCategory = analysis.semanticCategory;
+            card.tonePattern = analysis.tonePattern;
+            card.strokeCount = analysis.strokeCount;
+            card.componentCount = analysis.componentCount;
+            card.visualComplexity = analysis.visualComplexity;
+            card.overallDifficulty = analysis.overallDifficulty;
+            
+            // Save additional data from CharacterAnalysis model if available
+            const fullAnalysis = await import('@/lib/db/models/CharacterAnalysis').then(m => m.default);
+            const cachedAnalysis = await fullAnalysis.findOne({ character: card.hanzi });
+            if (cachedAnalysis) {
+              card.mnemonics = cachedAnalysis.mnemonics;
+              card.etymology = cachedAnalysis.etymology;
+            }
+            
+            await card.save();
+            console.log(`   ✓ Character analyzed: ${analysis.semanticCategory} (${analysis.tonePattern})`);
+          } catch (analysisError) {
+            console.error(`   ✗ Character analysis failed:`, analysisError);
           }
           
           // Mark as cached

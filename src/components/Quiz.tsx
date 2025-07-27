@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { playBuzzSound } from '@/lib/audio/buzz';
+import { useAlert } from '@/hooks/useAlert';
 
 interface Card {
   id: string;
@@ -33,6 +34,7 @@ interface QuizResult {
 }
 
 export default function Quiz({ cards, deckId, onComplete, onExit }: QuizProps) {
+  const { showConfirm } = useAlert();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
@@ -127,13 +129,23 @@ export default function Quiz({ cards, deckId, onComplete, onExit }: QuizProps) {
     setQuestions(questions);
   };
   
-  const handleKeyPress = useCallback((e: KeyboardEvent) => {
+  const handleKeyPress = useCallback(async (e: KeyboardEvent) => {
     if (e.key === 'Escape' || e.key.toLowerCase() === 'q') {
-      if (confirm('Are you sure you want to exit the quiz?')) {
+      const confirmed = await showConfirm('Are you sure you want to exit the quiz?', {
+        type: 'warning',
+        confirmText: 'Exit',
+        cancelText: 'Continue'
+      });
+      if (confirmed) {
         onExit();
       }
     } else if (e.key.toLowerCase() === 'r') {
-      if (confirm('Are you sure you want to restart the entire flash session?')) {
+      const confirmed = await showConfirm('Are you sure you want to restart the entire flash session?', {
+        type: 'warning',
+        confirmText: 'Restart',
+        cancelText: 'Continue'
+      });
+      if (confirmed) {
         // Exit quiz and trigger restart from parent
         onExit();
       }
@@ -146,7 +158,7 @@ export default function Quiz({ cards, deckId, onComplete, onExit }: QuizProps) {
       e.preventDefault();
       nextQuestion();
     }
-  }, [showResult, currentQuestion, questions, onExit]);
+  }, [showResult, currentQuestion, questions, onExit, showConfirm]);
   
   useEffect(() => {
     window.addEventListener('keydown', handleKeyPress);

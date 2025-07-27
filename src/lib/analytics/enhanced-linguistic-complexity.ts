@@ -10,16 +10,16 @@ import connectDB from '@/lib/db/mongodb';
 const SEMANTIC_RADICALS: Record<string, string> = {
   '水': 'water', '氵': 'water',
   '火': 'fire', '灬': 'fire',
-  '木': 'wood/tree',
+  '木': 'nature/plant',
   '金': 'metal', '钅': 'metal',
   '土': 'earth',
   '人': 'person', '亻': 'person',
-  '心': 'heart/emotion', '忄': 'heart/emotion',
-  '手': 'hand', '扌': 'hand',
+  '心': 'emotion', '忄': 'emotion', '⺗': 'emotion',
+  '手': 'action', '扌': 'action',
   '口': 'mouth/speech',
   '目': 'eye/vision',
   '耳': 'ear/hearing',
-  '足': 'foot', '⻊': 'foot',
+  '足': 'foot/movement', '⻊': 'foot/movement',
   '言': 'speech', '讠': 'speech',
   '走': 'movement', '辶': 'movement',
   '食': 'food', '饣': 'food',
@@ -41,6 +41,64 @@ const SEMANTIC_RADICALS: Record<string, string> = {
   '田': 'field',
   '門': 'door', '门': 'door',
   '車': 'vehicle', '车': 'vehicle',
+  '疒': 'illness',
+  '頁': 'head', '页': 'head',
+  '馬': 'horse',
+  '鳥': 'bird',
+  '魚': 'fish',
+  '肉': 'body/flesh', '⺼': 'body/flesh',
+  '骨': 'bone',
+  '竹': 'bamboo',
+  '米': 'rice/grain',
+  '糸': 'silk/thread', '纟': 'silk/thread',
+  '貝': 'shell/money', '贝': 'shell/money',
+  '玉': 'jade/precious',
+  '禾': 'grain',
+  '示': 'spiritual', '礻': 'spiritual',
+  '立': 'standing',
+  '刀': 'knife', '刂': 'knife',
+  '力': 'strength',
+  '攵': 'action',
+  '欠': 'lacking',
+  '歹': 'death/bad',
+  '殳': 'weapon',
+  '气': 'air/breath',
+  '皮': 'skin',
+  '耒': 'plow',
+  '老': 'old', '耂': 'old',
+  '臣': 'minister',
+  '西': 'west',
+  '阜': 'hill', '阝': 'place',
+  '隹': 'bird',
+  '青': 'green/young',
+  '韋': 'leather', '韦': 'leather',
+  '酉': 'alcohol',
+  '豆': 'bean',
+  '谷': 'valley',
+  '豕': 'pig',
+  '貝': 'money', '贝': 'money',
+  '镸': 'long',
+  '門': 'door', '门': 'door',
+  '臼': 'mortar',
+  '鬼': 'ghost/spirit',
+  '革': 'leather/change',
+  '音': 'sound',
+  '頁': 'page/head', '页': 'page/head',
+  '髟': 'hair',
+  '鬥': 'fight', '斗': 'fight',
+  '高': 'tall',
+  '馬': 'horse', '马': 'horse',
+  '鹿': 'deer',
+  '麻': 'hemp',
+  '黃': 'yellow', '黄': 'yellow',
+  '黑': 'black',
+  '鼠': 'rat',
+  '鼻': 'nose',
+  '齊': 'even', '齐': 'even',
+  '齒': 'tooth', '齿': 'tooth',
+  '龍': 'dragon', '龙': 'dragon',
+  '龜': 'turtle', '龟': 'turtle',
+  '龠': 'flute'
 };
 
 // Tone patterns and their learning difficulty
@@ -293,18 +351,29 @@ function detectSemanticRadical(character: string): {
   category?: string;
 } {
   let count = 0;
-  let category: string | undefined;
+  let categories: Set<string> = new Set();
   let hasSemantic = false;
   
-  for (const [radical, cat] of Object.entries(SEMANTIC_RADICALS)) {
-    if (character.includes(radical)) {
-      count++;
-      hasSemantic = true;
-      // Prefer position-based radical (usually left or top)
-      if (character.startsWith(radical) || !category) {
-        category = cat;
+  // For compound words, check each character separately
+  const chars = character.split('');
+  
+  for (const char of chars) {
+    for (const [radical, cat] of Object.entries(SEMANTIC_RADICALS)) {
+      if (char.includes(radical)) {
+        count++;
+        hasSemantic = true;
+        categories.add(cat);
       }
     }
+  }
+  
+  // Return the most relevant category
+  // For emotions, prioritize emotion category
+  let category: string | undefined;
+  if (categories.has('emotion')) {
+    category = 'emotion';
+  } else if (categories.size > 0) {
+    category = Array.from(categories)[0];
   }
   
   return { count, hasSemantic, category };

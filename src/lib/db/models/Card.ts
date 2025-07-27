@@ -14,6 +14,15 @@ export interface ICard extends Document {
   imageAttributionUrl?: string;
   unsplashImageId?: string; // Keep for backward compatibility
   cached: boolean;
+  // Linguistic analysis fields
+  semanticCategory?: string;
+  tonePattern?: string;
+  strokeCount?: number;
+  componentCount?: number;
+  visualComplexity?: number;
+  overallDifficulty?: number;
+  mnemonics?: string[];
+  etymology?: string;
   createdAt: Date;
   updatedAt: Date;
   // Virtual field for deck associations
@@ -35,6 +44,15 @@ const CardSchema = new Schema<ICard>(
     imageAttributionUrl: { type: String },
     unsplashImageId: { type: String }, // Keep for backward compatibility
     cached: { type: Boolean, default: false },
+    // Linguistic analysis fields
+    semanticCategory: { type: String },
+    tonePattern: { type: String },
+    strokeCount: { type: Number },
+    componentCount: { type: Number },
+    visualComplexity: { type: Number },
+    overallDifficulty: { type: Number },
+    mnemonics: [{ type: String }],
+    etymology: { type: String },
   },
   { timestamps: true }
 );
