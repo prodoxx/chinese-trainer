@@ -6,6 +6,8 @@ import { calculateEnhancedConfusionProbability } from '@/lib/analytics/enhanced-
 import Review from '@/lib/db/models/Review';
 import Card from '@/lib/db/models/Card';
 import CharacterAnalysis from '@/lib/db/models/CharacterAnalysis';
+import Dictionary from '@/lib/db/models/Dictionary';
+import { convertPinyinToneNumbersToMarks, hasToneMarks } from '@/lib/utils/pinyin';
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
@@ -106,19 +108,158 @@ export async function POST(request: NextRequest) {
     try {
       const cachedAnalysis = await CharacterAnalysis.findOne({ character: card.hanzi });
       if (cachedAnalysis?.commonConfusions) {
-        confusionAnalysis = cachedAnalysis.commonConfusions.slice(0, 3).map((conf: any) => ({
-          character: conf.character,
-          meaning: '', // We'll need to look this up if needed
-          pinyin: '', // We'll need to look this up if needed
-          confusion: {
-            visual: conf.similarity,
-            semantic: 0,
-            phonetic: 0,
-            tonal: 0,
-            total: conf.similarity
+        // Filter out the character itself and get unique characters
+        const uniqueConfusions = cachedAnalysis.commonConfusions
+          .filter((conf: any) => conf.character !== card.hanzi)
+          .slice(0, 3);
+        
+        // Look up meaning and pinyin for each confused character
+        const confusionPromises = uniqueConfusions.map(async (conf: any) => {
+          const confusedCard = await Card.findOne({ hanzi: conf.character });
+          let meaning = confusedCard?.meaning || '';
+          let pinyin = confusedCard?.pinyin || '';
+          
+          // If no pinyin/meaning in Card, check Dictionary
+          if (!pinyin || !meaning) {
+            const dictEntry = await Dictionary.findOne({ traditional: conf.character });
+            if (dictEntry) {
+              pinyin = pinyin || dictEntry.pinyin || '';
+              meaning = meaning || dictEntry.definitions?.[0] || '';
+              
+              // Convert pinyin tone numbers to marks if needed
+              if (pinyin && !hasToneMarks(pinyin)) {
+                try {
+                  pinyin = convertPinyinToneNumbersToMarks(pinyin);
+                } catch (e) {
+                  // Keep original if conversion fails
+                }
+              }
+              
+              // Background: Create card for this character if it doesn't exist
+              if (!confusedCard && pinyin && meaning) {
+                Card.create({
+                  hanzi: conf.character,
+                  pinyin,
+                  meaning,
+                  cached: false // Will be enriched later
+                }).catch(err => {
+                  // Ignore duplicate key errors
+                  if (err.code !== 11000) {
+                    console.error('Error creating card for confusion character:', err);
+                  }
+                });
+              }
+            }
           }
-        }));
+          
+          return {
+            character: conf.character,
+            meaning,
+            pinyin,
+            confusion: {
+              visual: conf.similarity,
+              semantic: 0,
+              phonetic: 0,
+              tonal: 0,
+              total: conf.similarity
+            }
+          };
+        });
+        
+        confusionAnalysis = await Promise.all(confusionPromises);
       }
+      
+      // If no confusion data or only self-references, try to find similar characters
+      if (confusionAnalysis.length === 0 && card.hanzi) {
+        // For multi-character words, find other words with similar characters
+        if (card.hanzi.length > 1) {
+          // Find cards that share at least one character
+          const similarCards = await Card.find({
+            hanzi: { $ne: card.hanzi },
+            $or: card.hanzi.split('').map(char => ({ hanzi: new RegExp(char) }))
+          }).limit(3);
+          
+          confusionAnalysis = await Promise.all(similarCards.map(async similar => {
+            let meaning = similar.meaning || '';
+            let pinyin = similar.pinyin || '';
+            
+            // If no pinyin/meaning, check Dictionary
+            if (!pinyin || !meaning) {
+              const dictEntry = await Dictionary.findOne({ traditional: similar.hanzi });
+              if (dictEntry) {
+                pinyin = pinyin || dictEntry.pinyin || '';
+                meaning = meaning || dictEntry.definitions?.[0] || '';
+                
+                // Convert pinyin tone numbers to marks if needed
+                if (pinyin && !hasToneMarks(pinyin)) {
+                  try {
+                    pinyin = convertPinyinToneNumbersToMarks(pinyin);
+                  } catch (e) {
+                    // Keep original if conversion fails
+                  }
+                }
+              }
+            }
+            
+            return {
+              character: similar.hanzi,
+              meaning,
+              pinyin,
+              confusion: {
+                visual: 0.5, // Default medium confusion
+                semantic: 0.3,
+                phonetic: 0.2,
+                tonal: 0.1,
+                total: 0.5
+              }
+            };
+          }));
+        } else {
+          // For single characters, find visually similar ones
+          const visuallySimilar = ['生', '牛', '午', '半'].includes(card.hanzi) ? 
+            ['生', '牛', '午', '半'].filter(c => c !== card.hanzi) : [];
+          
+          if (visuallySimilar.length > 0) {
+            const similarCards = await Card.find({ hanzi: { $in: visuallySimilar } }).limit(3);
+            confusionAnalysis = await Promise.all(similarCards.map(async similar => {
+              let meaning = similar.meaning || '';
+              let pinyin = similar.pinyin || '';
+              
+              // If no pinyin/meaning, check Dictionary
+              if (!pinyin || !meaning) {
+                const dictEntry = await Dictionary.findOne({ traditional: similar.hanzi });
+                if (dictEntry) {
+                  pinyin = pinyin || dictEntry.pinyin || '';
+                  meaning = meaning || dictEntry.definitions?.[0] || '';
+                  
+                  // Convert pinyin tone numbers to marks if needed
+                  if (pinyin && !hasToneMarks(pinyin)) {
+                    try {
+                      pinyin = convertPinyinToneNumbersToMarks(pinyin);
+                    } catch (e) {
+                      // Keep original if conversion fails
+                    }
+                  }
+                }
+              }
+              
+              return {
+                character: similar.hanzi,
+                meaning,
+                pinyin,
+                confusion: {
+                  visual: 0.7,
+                  semantic: 0.1,
+                  phonetic: 0.1,
+                  tonal: 0.1,
+                  total: 0.6
+                }
+              };
+            }));
+          }
+        }
+      }
+      
       timings.totalConfusion = Date.now() - confusionStart;
     } catch (error) {
       console.error('Confusion analysis error:', error);

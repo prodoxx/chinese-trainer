@@ -45,6 +45,17 @@ The application will be a Traditional Chinese Characters Flash-and-Review Traine
 - Offline capability after initial enrichment
 - Local-only storage with no cloud sync
 
+### Flash Session Design (Science-Based)
+- **10-second countdown** for mental preparation
+- **Preview grid** showing upcoming characters (2s)
+- **Three-block system**:
+  - Block 1: Segmented (ortho→phono→semantic→self-test) with audio
+  - Block 2: Combined reinforcement (3s) with audio
+  - Block 3: Quick recognition WITHOUT audio (mental pronunciation)
+- **Optimized timing**: 800ms blanks between cards, 3s countdown between blocks
+- **Accessibility**: Reduce motion toggle, brightness control (70% dim option)
+- **No rapid flashing**: Epilepsy-safe design with gentle transitions
+
 ### Data Model
 Collections needed in MongoDB:
 - `decks`: Study deck metadata

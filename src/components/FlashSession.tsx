@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Quiz from './Quiz';
 import { useAlert } from '@/hooks/useAlert';
+import { Eye, EyeOff, Zap, ZapOff } from 'lucide-react';
 
 interface Card {
   id: string;
@@ -30,15 +31,16 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
   const [quizResults, setQuizResults] = useState<boolean[]>([]);
   const [currentBlockSize, setCurrentBlockSize] = useState(0);
   const [currentBlockStartIndex, setCurrentBlockStartIndex] = useState(0);
-  const [countdownSeconds, setCountdownSeconds] = useState(6);
+  const [countdownSeconds, setCountdownSeconds] = useState(10);
   
   // New states for the segmented flash system
-  const [viewPhase, setViewPhase] = useState<'orthographic' | 'phonological' | 'semantic' | 'retrieval' | 'blank' | 'consolidation' | 'flash-transition'>('orthographic');
+  const [viewPhase, setViewPhase] = useState<'preview' | 'orthographic' | 'phonological' | 'semantic' | 'self-test' | 'blank' | 'inter-block' | 'consolidation'>('orthographic');
   const [currentBlock, setCurrentBlock] = useState(1); // Track which block we're in (1, 2, or 3)
   const [isPaused, setIsPaused] = useState(false);
-  const [isFlashing, setIsFlashing] = useState(false);
-  const [flashState, setFlashState] = useState<'black' | 'white'>('black');
-  const [transitionFlashCount, setTransitionFlashCount] = useState(0);
+  const [showPreview, setShowPreview] = useState(true);
+  const [fadeIntensity, setFadeIntensity] = useState(1.0); // For accessibility
+  const [reduceMotion, setReduceMotion] = useState(false);
+  const [consolidationCountdown, setConsolidationCountdown] = useState(3); // Countdown between blocks
   
   // Practice mode states
   const [practiceRound, setPracticeRound] = useState(1);
@@ -64,15 +66,16 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
   // Cognitive load constants based on research
   const OPTIMAL_SESSION_SIZE = 7; // Working memory capacity
   
-  // Timing constants - slower for better learning
-  const ORTHOGRAPHIC_TIME = 800; // 800ms - Show character alone (was 200ms)
-  const ORTHOGRAPHIC_BLANK = 200; // 200ms blank after orthographic (was 100ms)
-  const PHONOLOGICAL_TIME = 2000; // 2s - Character + pinyin + audio (was 800ms)
-  const PHONOLOGICAL_BLANK = 300; // 300ms blank after phonological (was 100ms)
-  const SEMANTIC_TIME = 2000; // 2s - Image + meaning (was 800ms)
-  const SEMANTIC_BLANK = 500; // 500ms blank after semantic
-  const RETRIEVAL_TIME = 1500; // 1.5s - Character alone for retrieval check (was 500ms)
-  const BETWEEN_CARDS = 300; // Gap between cards (was 100ms)
+  // Optimized timing constants based on cognitive science (slower for better learning)
+  const PREVIEW_TIME = 2000; // 2s preview of upcoming characters
+  const ORTHOGRAPHIC_TIME = 800; // 800ms - Character alone
+  const PHONOLOGICAL_TIME = 2000; // 2s - Character + pinyin + audio
+  const SEMANTIC_TIME = 2000; // 2s - Image + meaning
+  const SELF_TEST_TIME = 1500; // 1.5s - Character alone for retrieval
+  const BETWEEN_CARDS_BLANK = 800; // 800ms blank between different cards (longer pause)
+  const BETWEEN_PHASES_BLANK = 200; // 200ms blank between phases of same card
+  const INTER_BLOCK_BLANK = 1000; // 1s between blocks
+  const FADE_DURATION = 250; // 250ms fade transitions
   
   useEffect(() => {
     fetchCards();
@@ -97,14 +100,16 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
         setCountdownSeconds(prev => {
           if (prev <= 1) {
             if (phase === 'initial-countdown') {
-              // Start the flash session
+              // Start the flash session with preview
               setPhase('flash');
               setSessionStartTime(Date.now());
+              setViewPhase('preview');
+              setShowPreview(true);
             } else {
               // Move to next block when countdown finishes
               continueToNextBlock();
             }
-            return 6; // Reset for next time
+            return 10; // Reset for next time
           }
           return prev - 1;
         });
@@ -176,13 +181,14 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
           setCurrentBlockSize(blockSize);
           setBlockCards(sessionCards.slice(0, blockSize));
           setCurrentBlock(1);
-          setViewPhase('orthographic');
+          setViewPhase('preview');
+          setShowPreview(true);
           
           // Show warning or initial countdown
           if (showWarning && mode === 'new') {
             setPhase('initial-countdown'); // We'll add the warning to this phase
           } else {
-            setCountdownSeconds(6);
+            setCountdownSeconds(10);
             setPhase('initial-countdown');
           }
         }
@@ -249,7 +255,8 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
         setCurrentBlockSize(0);
         setCurrentBlockStartIndex(0);
         setCurrentBlock(1);
-        setViewPhase('orthographic');
+        setViewPhase('preview');
+        setShowPreview(true);
         setTotalCardsStudied(0);
         setElapsedTime(0);
         setPausedTime(0);
@@ -287,158 +294,152 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [handleKeyPress]);
   
-  // New segmented flash logic based on research
+  // New segmented flash logic with 3 blocks
   useEffect(() => {
-    if (phase === 'flash' && currentIndex < blockCards.length && !isPaused) {
+    if (phase === 'flash' && !isPaused && currentIndex < blockCards.length) {
       let timer: NodeJS.Timeout;
       
-      // Block 1: Full segmented approach (orthographic, phonological, semantic)
+      // Block 1: Full segmented approach (ortho → phono → semantic → self-test)
       if (currentBlock === 1) {
         switch (viewPhase) {
-          case 'orthographic':
-            // Show character alone (orthographic focus)
+          case 'preview':
+            // Show preview grid of upcoming characters
             timer = setTimeout(() => {
               setViewPhase('blank');
-              setTimeout(() => setViewPhase('phonological'), ORTHOGRAPHIC_BLANK);
+              setTimeout(() => {
+                setCurrentIndex(0);
+                setViewPhase('orthographic');
+              }, BETWEEN_PHASES_BLANK);
+            }, PREVIEW_TIME);
+            break;
+            
+          case 'orthographic':
+            // Show character alone
+            timer = setTimeout(() => {
+              setViewPhase('blank');
+              setTimeout(() => setViewPhase('phonological'), BETWEEN_PHASES_BLANK);
             }, ORTHOGRAPHIC_TIME);
             break;
             
           case 'phonological':
-            // Show character + pinyin + audio (phonological focus)
+            // Show character + pinyin + audio
             timer = setTimeout(() => {
               setViewPhase('blank');
               setTimeout(() => {
-                // Only show semantic if we have an image
                 if (blockCards[currentIndex]?.imageUrl) {
                   setViewPhase('semantic');
                 } else {
-                  // Skip semantic, go straight to retrieval
-                  setViewPhase('retrieval');
+                  setViewPhase('self-test');
                 }
-              }, PHONOLOGICAL_BLANK);
+              }, BETWEEN_PHASES_BLANK);
             }, PHONOLOGICAL_TIME);
             break;
             
           case 'semantic':
-            // Show image + meaning (semantic/visual focus)
+            // Show image + meaning
             timer = setTimeout(() => {
               setViewPhase('blank');
-              setTimeout(() => setViewPhase('retrieval'), SEMANTIC_BLANK);
+              setTimeout(() => setViewPhase('self-test'), BETWEEN_PHASES_BLANK);
             }, SEMANTIC_TIME);
             break;
             
-          case 'retrieval':
-            // Show character alone for mini-retrieval check
+          case 'self-test':
+            // Show character alone for retrieval
             timer = setTimeout(() => {
-              // In block 1, add a flash transition before next card
-              if (currentIndex + 1 < blockCards.length) {
-                setViewPhase('flash-transition');
-                setTransitionFlashCount(0);
-              } else {
-                // Last card in block, just go to blank then next
-                setViewPhase('blank');
-                setTimeout(() => nextCard(), BETWEEN_CARDS);
-              }
-            }, RETRIEVAL_TIME);
-            break;
-            
-          case 'flash-transition':
-            // Flash between cards in block 1
-            if (transitionFlashCount === 0) {
-              // First: black -> white
-              timer = setTimeout(() => {
-                setFlashState('white');
-                setTransitionFlashCount(1);
-              }, 200); // Short pause before flash
-            } else if (transitionFlashCount === 1) {
-              // Hold white for a moment
-              timer = setTimeout(() => {
-                setFlashState('black');
-                setTransitionFlashCount(2);
-              }, 400); // Hold the white flash longer
-            } else {
-              // Hold black for a longer break before next card
-              timer = setTimeout(() => {
-                setFlashState('black');
-                setTransitionFlashCount(0);
-                nextCard();
-              }, 600); // Longer break after flash
-            }
+              setViewPhase('blank');
+              setTimeout(() => {
+                if (currentIndex + 1 < blockCards.length) {
+                  setCurrentIndex(currentIndex + 1);
+                  setViewPhase('orthographic');
+                } else {
+                  // End of block 1
+                  setViewPhase('consolidation');
+                }
+              }, BETWEEN_CARDS_BLANK); // Longer pause between different cards
+            }, SELF_TEST_TIME);
             break;
         }
       }
       
-      // Block 2: Combined phonology + semantics in single exposure
+      // Block 2: Combined view (everything together for reinforcement)
       else if (currentBlock === 2) {
         switch (viewPhase) {
           case 'orthographic':
-            // Skip orthographic in block 2, go straight to combined
+            // Skip straight to combined view
             setViewPhase('phonological');
             break;
             
           case 'phonological':
-            // Show everything together for longer in block 2
+            // Show everything together for longer
             timer = setTimeout(() => {
-              nextCard();
-            }, 2000); // 2s combined exposure (was 1s)
+              setViewPhase('blank');
+              setTimeout(() => {
+                if (currentIndex + 1 < blockCards.length) {
+                  setCurrentIndex(currentIndex + 1);
+                  setViewPhase('orthographic');
+                } else {
+                  setViewPhase('consolidation');
+                }
+              }, BETWEEN_CARDS_BLANK);
+            }, 3000); // 3s for combined view
             break;
         }
       }
       
-      // Block 3: Quick recognition check
+      // Block 3: Quick recognition (char → full info)
       else if (currentBlock === 3) {
         switch (viewPhase) {
           case 'orthographic':
             // Show character for recognition
             timer = setTimeout(() => {
               setViewPhase('phonological');
-            }, 1000); // 1s character (was 500ms)
+            }, 1000); // 1s for recognition
             break;
             
           case 'phonological':
-            // Flash of full info
+            // Quick flash of full info
             timer = setTimeout(() => {
-              nextCard();
-            }, 1500); // 1.5s full info (was 500ms)
+              setViewPhase('blank');
+              setTimeout(() => {
+                if (currentIndex + 1 < blockCards.length) {
+                  setCurrentIndex(currentIndex + 1);
+                  setViewPhase('orthographic');
+                } else {
+                  // All blocks complete, start quiz
+                  setPhase('quiz');
+                }
+              }, BETWEEN_CARDS_BLANK);
+            }, 1500); // 1.5s for quick review
             break;
         }
       }
       
-      // Handle consolidation phase
-      if (viewPhase === 'consolidation' && !isFlashing) {
-        // Show text for 2 seconds, then start flashing
-        timer = setTimeout(() => {
-          setIsFlashing(true);
-        }, 2000); // Wait 2s before starting flash
+      // Handle consolidation between blocks
+      if (viewPhase === 'consolidation') {
+        // Start countdown when entering consolidation
+        if (consolidationCountdown === 3) {
+          timer = setTimeout(() => {
+            setConsolidationCountdown(2);
+          }, 1000);
+        } else if (consolidationCountdown === 2) {
+          timer = setTimeout(() => {
+            setConsolidationCountdown(1);
+          }, 1000);
+        } else if (consolidationCountdown === 1) {
+          timer = setTimeout(() => {
+            // Reset countdown and move to next block
+            setConsolidationCountdown(3);
+            setCurrentBlock(currentBlock + 1);
+            setCurrentIndex(0);
+            setViewPhase('orthographic');
+          }, 1000);
+        }
       }
       
       return () => clearTimeout(timer);
     }
-  }, [currentIndex, phase, blockCards.length, viewPhase, isPaused, currentBlock, isFlashing, transitionFlashCount, flashState]);
+  }, [currentIndex, phase, blockCards.length, viewPhase, isPaused, currentBlock, consolidationCountdown]);
   
-  // Handle flashing animation during consolidation
-  useEffect(() => {
-    if (isFlashing) {
-      let flashCount = 0;
-      const flashInterval = setInterval(() => {
-        // Toggle between black and white
-        setFlashState(prev => prev === 'black' ? 'white' : 'black');
-        flashCount++;
-        
-        if (flashCount >= 4) { // 4 transitions over 3 seconds (slower)
-          clearInterval(flashInterval);
-          setIsFlashing(false);
-          setFlashState('black'); // Reset to black
-          // Move to next block
-          setCurrentBlock(prev => prev + 1);
-          setCurrentIndex(0);
-          setViewPhase('orthographic');
-        }
-      }, 750); // Toggle every 750ms (was 500ms)
-      
-      return () => clearInterval(flashInterval);
-    }
-  }, [isFlashing]);
   
   // Preload next card's assets
   useEffect(() => {
@@ -460,22 +461,6 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
     }
   }, [currentIndex, blockCards]);
   
-  const nextCard = () => {
-    if (currentIndex + 1 >= blockCards.length) {
-      // Check if we should move to next block or start quiz
-      if (currentBlock < 3) {
-        // Show consolidation screen before next block
-        setViewPhase('consolidation');
-      } else {
-        // Start quiz after all 3 blocks
-        setPhase('quiz');
-      }
-    } else {
-      // Move to next card in current block
-      setCurrentIndex(currentIndex + 1);
-      setViewPhase('orthographic');
-    }
-  };
   
   const handleQuizComplete = async (results: boolean[]) => {
     // For practice mode, handle chunked completion
@@ -558,7 +543,7 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
     const nextBlockStart = currentBlockStartIndex + currentBlockSize;
     if (nextBlockStart < cards.length) {
       // Show countdown before next block
-      setCountdownSeconds(6);
+      setCountdownSeconds(10);
       setPhase('countdown');
     } else {
       // Session complete - mark all cards as studied
@@ -603,7 +588,8 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
     setBlockCards(cards.slice(nextBlockStart, nextBlockStart + actualBlockSize));
     setCurrentIndex(0);
     setCurrentBlock(1);
-    setViewPhase('orthographic');
+    setViewPhase('preview');
+    setShowPreview(true);
     setPhase('flash');
   };
   
@@ -612,7 +598,7 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
     
     if (continueSession) {
       // Show countdown before continuing
-      setCountdownSeconds(6);
+      setCountdownSeconds(10);
       setPhase('countdown');
     } else {
       // End session early
@@ -997,49 +983,95 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
   
   // Show blank screen
   if (viewPhase === 'blank') {
-    return <div className="fixed inset-0 bg-black" />;
+    return <div className={`fixed inset-0 bg-black ${reduceMotion ? '' : `transition-opacity duration-${FADE_DURATION}`}`} />;
   }
   
-  // Show flash transition between cards in block 1
-  if (viewPhase === 'flash-transition') {
-    return <div className={`fixed inset-0 ${flashState === 'white' ? 'bg-white' : 'bg-black'} transition-colors duration-500`} />;
-  }
-  
-  // Show consolidation screen between blocks
+  // Show consolidation countdown between blocks
   if (viewPhase === 'consolidation') {
     return (
-      <div className={`fixed inset-0 transition-colors duration-200 flex items-center justify-center ${
-        isFlashing ? (flashState === 'white' ? 'bg-white' : 'bg-black') : 'bg-black'
-      }`}>
-        {!isFlashing && (
-          <div className="text-center">
-            <div className="w-2 h-2 bg-gray-600 rounded-full mx-auto mb-8" />
-            <div className="text-gray-500 text-sm">
-              Block {currentBlock} complete
-            </div>
-            <div className="text-gray-600 text-xs mt-2">
-              Consolidating...
-            </div>
+      <div className="fixed inset-0 bg-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-8xl font-bold text-gray-600 mb-4">
+            {consolidationCountdown}
           </div>
-        )}
+          <div className="w-2 h-2 bg-gray-700 rounded-full mx-auto animate-pulse" />
+        </div>
+      </div>
+    );
+  }
+  
+  // Show preview grid
+  if (viewPhase === 'preview' && showPreview) {
+    return (
+      <div className="fixed inset-0 bg-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-gray-500 text-sm mb-4">Upcoming characters</div>
+          <div className="grid grid-cols-3 gap-4">
+            {blockCards.slice(0, 6).map((card, idx) => (
+              <div key={idx} className="text-4xl text-gray-600">{card.hanzi}</div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
   
   // Render different views based on current phase
   return (
-    <div className="fixed inset-0 bg-black flex items-center justify-center">
+    <div className="fixed inset-0 bg-black flex items-center justify-center" style={{ opacity: fadeIntensity }}>
+      {/* Accessibility controls - only show when paused */}
+      {isPaused && (
+        <div className="fixed bottom-24 left-1/2 transform -translate-x-1/2 flex gap-3 z-20">
+          <button
+            onClick={() => setReduceMotion(!reduceMotion)}
+            className="px-4 py-2.5 bg-gray-900/80 hover:bg-gray-800 backdrop-blur-sm text-gray-300 hover:text-white rounded-xl transition-all duration-200 flex items-center gap-2 border border-gray-800 hover:border-gray-700 group"
+            title="Toggle reduce motion"
+          >
+            {reduceMotion ? (
+              <>
+                <Zap className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                <span className="text-sm font-medium">Enable Motion</span>
+              </>
+            ) : (
+              <>
+                <ZapOff className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                <span className="text-sm font-medium">Reduce Motion</span>
+              </>
+            )}
+          </button>
+          <button
+            onClick={() => setFadeIntensity(fadeIntensity === 1 ? 0.7 : 1)}
+            className="px-4 py-2.5 bg-gray-900/80 hover:bg-gray-800 backdrop-blur-sm text-gray-300 hover:text-white rounded-xl transition-all duration-200 flex items-center gap-2 border border-gray-800 hover:border-gray-700 group"
+            title="Adjust brightness"
+          >
+            {fadeIntensity === 1 ? (
+              <>
+                <EyeOff className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                <span className="text-sm font-medium">Dim Display</span>
+              </>
+            ) : (
+              <>
+                <Eye className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                <span className="text-sm font-medium">Full Brightness</span>
+              </>
+            )}
+          </button>
+        </div>
+      )}
+      
       <div className="text-center">
         {/* Orthographic focus - character alone */}
-        {viewPhase === 'orthographic' && (
-          <div className="text-9xl font-bold text-white">{currentCard.hanzi}</div>
+        {viewPhase === 'orthographic' && currentCard && (
+          <div className={`text-9xl font-bold text-white ${reduceMotion ? '' : `transition-opacity duration-${FADE_DURATION}`}`}>
+            {currentCard.hanzi}
+          </div>
         )}
         
         {/* Phonological focus - varies by block */}
-        {viewPhase === 'phonological' && (
+        {viewPhase === 'phonological' && currentCard && (
           <div className="space-y-4">
-            {/* Block 1: Character + pinyin + audio */}
-            {currentBlock === 1 && (
+            {/* Block 1 & 3: Character + pinyin + audio */}
+            {(currentBlock === 1 || currentBlock === 3) && (
               <>
                 <div className="text-8xl font-bold text-white">{currentCard.hanzi}</div>
                 <div className="text-6xl text-gray-300">{currentCard.pinyin}</div>
@@ -1063,20 +1095,11 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
                 <div className="text-3xl text-gray-300">{currentCard.meaning}</div>
               </>
             )}
-            
-            {/* Block 3: Quick full info flash */}
-            {currentBlock === 3 && (
-              <>
-                <div className="text-6xl font-bold text-white">{currentCard.hanzi}</div>
-                <div className="text-4xl text-gray-300">{currentCard.pinyin}</div>
-                <div className="text-3xl text-gray-400">{currentCard.meaning}</div>
-              </>
-            )}
           </div>
         )}
         
         {/* Semantic/visual focus - image + meaning */}
-        {viewPhase === 'semantic' && currentCard.imageUrl && (
+        {viewPhase === 'semantic' && currentCard?.imageUrl && (
           <div className="space-y-4">
             <div className="w-96 h-96 mx-auto mb-4">
               <img
@@ -1089,8 +1112,8 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
           </div>
         )}
         
-        {/* Retrieval check - character alone for mental recall */}
-        {viewPhase === 'retrieval' && (
+        {/* Self-test - character alone for retrieval practice */}
+        {viewPhase === 'self-test' && currentCard && (
           <div className="text-9xl font-bold text-white">{currentCard.hanzi}</div>
         )}
       </div>
@@ -1124,7 +1147,7 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
       </div>
       
       {/* Block indicator for second and third passes */}
-      {currentBlock > 1 && (
+      {currentBlock > 1 && phase === 'flash' && (
         <div className="fixed top-8 left-8 text-sm text-gray-500">
           Pass {currentBlock} - {currentBlock === 2 ? 'Reinforcement' : 'Final consolidation'}
         </div>
@@ -1137,8 +1160,8 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
         </div>
       )}
       
-      {/* Play audio only during phonological phase, but not in block 3 (too fast) */}
-      {viewPhase === 'phonological' && currentBlock !== 3 && currentCard.audioUrl && !isPaused && (
+      {/* Play audio during phonological phase - but not in Block 3 (mental pronunciation) */}
+      {viewPhase === 'phonological' && currentCard?.audioUrl && !isPaused && currentBlock !== 3 && (
         <audio src={currentCard.audioUrl} autoPlay />
       )}
     </div>

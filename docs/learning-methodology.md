@@ -8,19 +8,25 @@ This guide explains how the flash session learning system works and how to maxim
 
 The flash session uses a scientifically-based approach that presents characters in three distinct passes:
 
+### Preview Phase
+- **Character Grid** (2s): Visual preview of upcoming 4-6 characters for priming
+
 ### Pass 1: Segmented Learning (Encoding Phase)
 Each character is broken down into distinct components:
 - **Orthographic Focus** (800ms): Character shape alone for visual encoding
 - **Phonological Focus** (2s): Character + pinyin + audio for sound association
 - **Semantic Focus** (2s): Image + meaning for conceptual understanding
 - **Retrieval Check** (1.5s): Character alone to test immediate recall
+- **Inter-card Blank** (800ms): Neural reset between different characters
 
 ### Pass 2: Reinforcement (Integration Phase)
-- **Combined Presentation** (2s): All elements shown together to strengthen connections
+- **Combined Presentation** (3s): All elements shown together to strengthen connections
+- **Holistic Processing**: Integrates orthographic, phonological, and semantic information
 
 ### Pass 3: Quick Recognition (Consolidation Phase)
-- **Character Flash** (1s): Rapid character recognition
+- **Character Flash** (1s): Rapid character recognition without audio
 - **Full Info Flash** (1.5s): Quick review of all information
+- **Mental Pronunciation**: No audio playback forces internal generation
 
 ### Quiz Phase
 After the three passes, a quiz tests immediate recognition through multiple-choice questions.
@@ -157,6 +163,28 @@ Evening: Practice quiz on today's learned cards
 3. **Active Learning**: Engage with material, don't just passively view
 4. **Patience**: Building long-term memory takes weeks, not hours
 5. **Quality over Quantity**: Better to master few than poorly learn many
+
+## New Features for Enhanced Learning
+
+### Extended Countdown (10 seconds)
+- Allows proper mental preparation and attention focusing
+- Reduces anxiety and improves readiness
+- Based on attention deployment research
+
+### Accessibility Improvements
+- **Reduce Motion**: Removes transitions for motion-sensitive users
+- **Dim Display**: 70% brightness option reduces eye strain
+- **Controls Hidden During Learning**: Shown only when paused to minimize distraction
+
+### Block Transitions
+- 3-second countdown between blocks (no text)
+- Allows memory consolidation
+- Prevents interference between learning phases
+
+### Progressive Audio Support
+- Block 1: Full audio support for initial learning
+- Block 2: Audio reinforcement with combined presentation
+- Block 3: No audio - encourages mental pronunciation and self-testing
 
 ## The Science Behind the System
 

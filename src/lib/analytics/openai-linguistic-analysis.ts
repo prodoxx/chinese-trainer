@@ -446,7 +446,7 @@ Provide a detailed JSON analysis with these exact fields:
   "mnemonics": ["memory aids for remembering this character"],
   "commonConfusions": [
     {
-      "character": "similar character",
+      "character": "similar character (MUST be different from ${character})",
       "reason": "why they're confused",
       "similarity": 0-1 scale
     }
