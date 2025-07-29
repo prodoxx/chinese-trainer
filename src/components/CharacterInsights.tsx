@@ -286,6 +286,28 @@ export default function CharacterInsights({ characterId, character, onClose }: C
                 </div>
               )}
 
+              {/* Memory Aids (from enrichment) */}
+              {insights.complexity.mnemonics && insights.complexity.mnemonics.length > 0 && (
+                <div className="bg-gray-800/50 rounded-lg p-6">
+                  <h3 className="text-xl font-semibold mb-4">Memory Aids</h3>
+                  <div className="space-y-3">
+                    {insights.complexity.mnemonics.map((mnemonic, index) => (
+                      <div key={index} className="p-3 bg-gray-900/50 rounded-lg">
+                        <p className="text-gray-200">{mnemonic}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Etymology (from enrichment) */}
+              {insights.complexity.etymology && (
+                <div className="bg-gray-800/50 rounded-lg p-6">
+                  <h3 className="text-xl font-semibold mb-4">Etymology</h3>
+                  <p className="text-gray-200">{insights.complexity.etymology}</p>
+                </div>
+              )}
+
               {/* AI Insights Toggle */}
               {!insights.aiInsights && (
                 <div className="bg-gray-800/50 rounded-lg p-6 text-center">

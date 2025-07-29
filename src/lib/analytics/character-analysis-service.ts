@@ -91,7 +91,9 @@ export async function getCharacterAnalysisWithCache(
     visualComplexity: analysis.visualComplexity,
     phoneticTransparency: analysis.phoneticTransparency,
     semanticTransparency: analysis.semanticTransparency,
-    overallDifficulty: analysis.overallDifficulty
+    overallDifficulty: analysis.overallDifficulty,
+    mnemonics: analysis.mnemonics,
+    etymology: analysis.etymology
   };
 }
 

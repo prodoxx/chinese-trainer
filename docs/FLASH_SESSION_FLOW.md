@@ -1,188 +1,182 @@
 # Flash Session Flow Documentation
 
 ## Overview
-The flash session is a scientifically-designed learning system based on cognitive psychology research. It uses segmented presentation, temporal spacing, and rapid serial visual presentation (RSVP) to optimize memory encoding and retention.
+The flash session is a scientifically-designed learning system based on cognitive psychology research. It uses dual-phase presentation with temporal spacing to optimize memory encoding and retention.
 
 ## Session Structure
 
 ### 1. Session Initialization
-- **Countdown**: 6-second initial countdown before session starts
+- **Countdown**: 3-2-1 countdown before session starts
+  - Fast: 500ms per number
+  - Medium: 750ms per number
+  - Slow: 1000ms per number
 - **Session Size**: 
   - New mode: Limited to 7 cards (optimal working memory capacity)
-  - Review/Practice modes: All due cards
+  - Review mode: Limited to 7 cards for optimal learning
+  - Practice mode: All previously studied cards
 
-### 2. Block System
-Each session is divided into 3 blocks with different presentation strategies:
+### 2. Flash Presentation
+The session uses a simplified two-phase approach for each card:
 
-#### Block 1: Full Segmented Approach
-- **Purpose**: Initial encoding with multi-modal processing
-- **Phases per card**:
-  1. **Orthographic** (800ms): Character alone
-  2. **Blank** (200ms): Processing gap
-  3. **Phonological** (2000ms): Character + pinyin + audio
-  4. **Blank** (300ms): Processing gap
-  5. **Semantic** (2000ms): Image + meaning
-  6. **Blank** (500ms): Processing gap
-  7. **Retrieval** (1500ms): Character alone for retrieval check
-  8. **Between cards** (300ms): Gap before next card
+#### Phase 1: Hanzi Only
+- **Purpose**: Initial visual encoding
+- **Content**: Character displayed alone
+- **Duration**: 
+  - Fast: 2 seconds
+  - Medium: 3 seconds
+  - Slow: 4 seconds
+- **Followed by**: Blank screen (200-500ms depending on speed)
 
-**Total time per card**: ~7.1 seconds
+#### Phase 2: Full Information
+- **Purpose**: Multi-modal encoding with all associations
+- **Content**: Character + pinyin + image + meaning
+- **Audio**: Plays at the start of this phase
+- **Duration**:
+  - Fast: 3 seconds
+  - Medium: 4 seconds
+  - Slow: 5 seconds
+- **Followed by**: Blank screen (200-500ms depending on speed)
 
-#### Block 2: Rapid Alternation
-- **Purpose**: Strengthen visual-phonological connections
-- **Pattern**: Alternates between orthographic and phonological
-- **Timing**:
-  - Orthographic: 300ms
-  - Phonological: 700ms (with audio)
-  - No blanks between phases
-  - 200ms between cards
-
-**Total time per card**: ~2.2 seconds (2 cycles)
-
-#### Block 3: Flash Card Style
-- **Purpose**: Rapid retrieval practice
-- **Single phase per card**: 800ms showing all information
-- **Between cards**: 200ms gap
-
-**Total time per card**: 1 second
-
-### 3. Transition Flashes
-Between blocks, there's a dramatic transition sequence:
-- **Black screen flash**: 3 times
-- **Pattern**: Black (100ms) → White (100ms) → repeat
-- **Purpose**: Clear visual buffer and signal transition
-
-### 4. Inter-Block Countdown
-- **Duration**: 6 seconds
-- **Purpose**: Mental preparation for next block's different timing
-
-## Timing Constants
+## Speed Presets
 
 ```javascript
-// Block 1 - Segmented (slower for encoding)
-ORTHOGRAPHIC_TIME = 800ms    // Character alone
-ORTHOGRAPHIC_BLANK = 200ms   // Blank after orthographic
-PHONOLOGICAL_TIME = 2000ms   // Character + pinyin + audio
-PHONOLOGICAL_BLANK = 300ms   // Blank after phonological
-SEMANTIC_TIME = 2000ms       // Image + meaning
-SEMANTIC_BLANK = 500ms       // Blank after semantic
-RETRIEVAL_TIME = 1500ms      // Character for retrieval
-BETWEEN_CARDS = 300ms        // Gap between cards
+// Fast preset
+{
+  initialCountdown: 500,     // Per number in countdown
+  hanziPhase: 2000,         // Character alone
+  blankAfterHanzi: 200,     // Blank after character
+  fullPhase: 3000,          // All information + audio
+  blankAfterFull: 200       // Blank after full info
+}
 
-// Block 2 - Rapid Alternation
-RAPID_ORTHO = 300ms         // Quick character flash
-RAPID_PHONO = 700ms         // Quick phonological
-RAPID_GAP = 200ms           // Between cards
+// Medium preset (default)
+{
+  initialCountdown: 750,
+  hanziPhase: 3000,
+  blankAfterHanzi: 300,
+  fullPhase: 4000,
+  blankAfterFull: 300
+}
 
-// Block 3 - Flash Card
-FLASH_TIME = 800ms          // All information
-FLASH_GAP = 200ms           // Between cards
-
-// Transitions
-FLASH_DURATION = 100ms      // Each flash (black/white)
-COUNTDOWN_DURATION = 6s     // Between blocks
+// Slow preset
+{
+  initialCountdown: 1000,
+  hanziPhase: 4000,
+  blankAfterHanzi: 500,
+  fullPhase: 5000,
+  blankAfterFull: 500
+}
 ```
 
 ## Quiz Phase
 
-After each block of cards:
-1. **Immediate quiz**: Tests retention of just-studied cards
-2. **Feedback**: Visual feedback for correct/incorrect
-3. **Scoring**: Tracks accuracy for spaced repetition algorithm
+After all cards have been presented:
+1. **Immediate quiz**: Tests retention of studied cards
+2. **Question types**: Cycles through Meaning→Character, Audio→Character, Character→Image
+3. **Time limit**: 10 seconds per question
+4. **Feedback**: Immediate visual and audio feedback
+5. **Auto-advance**: 2 seconds after answer (immediate on timeout)
+6. **Scoring**: Updates spaced repetition algorithm
 
 ## Session Flow Diagram
 
 ```
 START
   ↓
-[6s Countdown]
+[3-2-1 Countdown]
   ↓
-BLOCK 1 (4-6 cards)
-  ├─ Card 1: Ortho → Blank → Phono → Blank → Semantic → Blank → Retrieval
-  ├─ Card 2: (same pattern)
-  └─ ...
+FLASH PHASE (all cards)
+  ├─ Card 1: Hanzi → Blank → Full Info → Blank
+  ├─ Card 2: Hanzi → Blank → Full Info → Blank
+  ├─ Card 3: Hanzi → Blank → Full Info → Blank
+  └─ ... (up to 7 cards for new/review)
   ↓
-[Quiz Block 1]
-  ↓
-[3x Flash Transition]
-  ↓
-[6s Countdown]
-  ↓
-BLOCK 2 (4-6 cards)
-  ├─ Card 1: Ortho → Phono → Ortho → Phono
-  ├─ Card 2: (same pattern)
-  └─ ...
-  ↓
-[Quiz Block 2]
-  ↓
-[3x Flash Transition]
-  ↓
-[6s Countdown]
-  ↓
-BLOCK 3 (remaining cards)
-  ├─ Card 1: Full flash (800ms)
-  ├─ Card 2: Full flash (800ms)
-  └─ ...
-  ↓
-[Quiz Block 3]
+QUIZ PHASE
+  ├─ Question 1: Meaning → Character
+  ├─ Question 2: Audio → Character
+  ├─ Question 3: Character → Image
+  └─ ... (cycles through types)
   ↓
 SESSION COMPLETE
 ```
 
-## Practice Mode Variations
+## Mode Variations
 
-### Quick Mode
-- Only uses Block 3 (flash card style)
-- Faster completion
-- Good for review of well-known material
+### New Mode
+- Limited to 7 cards per session
+- Cards must have audio before being presented
+- Prompts user after 7 cards to continue or stop
+- Focuses on initial encoding
 
-### Focused Mode
-- Only includes cards with <70% accuracy
-- Uses all 3 blocks for thorough practice
-- Targets problem areas
+### Review Mode
+- Limited to 7 cards per session (highest priority cards)
+- Cards sorted by: overdue days, then memory strength
+- Updates spaced repetition intervals
+- Reinforces previously learned material
 
-### Full Mode
-- All previously studied cards
-- Complete 3-block sequence
-- Comprehensive review
+### Practice Mode
+- Includes all previously studied cards
+- No session size limit
+- Good for exam preparation
+- Does not affect spaced repetition scheduling
 
 ## Cognitive Principles
 
-1. **Segmented Presentation**: Prevents cognitive overload by presenting information in chunks
-2. **Temporal Spacing**: Blanks between phases allow processing time
+1. **Dual-Phase Presentation**: Separates visual recognition from semantic processing
+2. **Temporal Spacing**: Blanks between phases allow consolidation
 3. **Multi-modal Encoding**: Visual + auditory + semantic creates multiple memory pathways
-4. **Active Retrieval**: Retrieval phase and quizzes strengthen memory
-5. **Varied Repetition**: Different presentation styles prevent habituation
-6. **Dramatic Transitions**: Flash sequences help clear working memory between blocks
+4. **Active Retrieval**: Quiz phase strengthens memory through testing effect
+5. **Limited Session Size**: 7±2 cards respect working memory capacity
+6. **Immediate Feedback**: Reinforces correct associations
 
 ## User Controls
 
-- **ESC**: Exit session
+- **Q/ESC**: Exit session (with confirmation)
 - **P**: Pause/Resume during flash phase
-- **Space**: Continue when prompted between rounds
+- **R**: Restart session (with confirmation)
+- **1-4**: Answer quiz questions
+- **Space**: Continue after timeout in quiz
 
 ## Session Metrics
 
 The system tracks:
 - Total cards studied
 - Time elapsed (excluding pauses)
-- Quiz accuracy per block
-- Overall session accuracy
-- Cards per minute rate
+- Quiz accuracy and response times
+- Cards marked for review
+- Session completion status
 
-## Optimization Opportunities
+## Features
 
-1. **Timing Adjustments**: Current timings could be personalized based on user performance
-2. **Adaptive Blocks**: Block size could adjust based on accuracy
-3. **Custom Flash Patterns**: Different patterns for different character types
-4. **Biometric Integration**: Could adjust timing based on pupil dilation or EEG data
-5. **Spacing Algorithms**: Inter-session spacing could be optimized further
+### Pause System
+- Accurate time tracking with pause/resume
+- Audio does not play while paused
+- Visual indicator shows paused state
+- Timer resumes exactly where it left off
+
+### Progress Indicators
+- Real-time card counter (e.g., "Studied: 3/7")
+- Mode indicator (New Cards, Review Session, Practice Mode)
+- Visual countdown between phases
+
+### Custom Dialogs
+- All confirmations use custom AlertDialog component
+- Session automatically pauses during dialogs
+- Consistent UI experience (no browser alerts)
+
+## Future Enhancements
+
+1. **Adaptive Timing**: Adjust speed based on quiz performance
+2. **Personalized Intervals**: Learn optimal timing for each user
+3. **Difficulty-Based Timing**: Slower presentation for complex characters
+4. **Session Analytics**: Track optimal session length for retention
+5. **Gesture Controls**: Swipe gestures for mobile version
 
 ## Research References
 
-The timing and structure are based on:
+The current design is based on:
 - Working memory capacity research (Miller, 1956: 7±2 items)
 - Dual-coding theory (Paivio, 1969)
-- Spacing effect research (Ebbinghaus, 1885)
-- RSVP studies for rapid learning (Potter, 1975)
+- Testing effect research (Roediger & Karpicke, 2006)
 - Multimedia learning principles (Mayer, 2001)
+- Spaced repetition algorithms (SM-2 by Wozniak, 1987)

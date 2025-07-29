@@ -1,19 +1,21 @@
-# Chinese Character Trainer
+# Danbing - Traditional Chinese Learning Platform
 
-A minimal web app for learning Traditional Chinese characters using spaced repetition and dual coding (visual + meaning + pinyin).
+A cloud-based web application for learning Traditional Chinese characters using spaced repetition, intelligent mnemonics, and multi-sensory learning techniques.
 
 ## Features
 
 - Import CSV decks with Traditional Chinese characters
 - Automatic character enrichment using CC-CEDICT dictionary (123,557 entries)
 - Real pinyin with tone marks and comprehensive definitions
-- AI-powered intelligent image search that automatically detects abstract vs concrete concepts
-- Multiple image sources: Unsplash and Pexels with automatic fallback
-- Beautiful, relevant images with proper attribution
+- AI-powered image generation using DALL-E 3
+- High-quality, contextually relevant images for every character
+- Consistent visual style across all learning materials
 - Flash card presentations with timed intervals
 - Quiz sessions after each block of cards
 - Dark theme optimized for focus
-- Local-only data storage with MongoDB
+- Cloud-based storage with user accounts
+- Cross-device synchronization
+- Personalized learning progress
 
 ## Getting Started
 
@@ -39,9 +41,8 @@ bun install
 cp .env.example .env
 ```
 Then add your API credentials:
-- **Unsplash**: Get from https://unsplash.com/developers
-- **Pexels**: Get from https://www.pexels.com/api/
-- **OpenAI** (optional): For better image search queries
+- **OpenAI**: Required for character analysis and DALL-E image generation
+- **Azure**: For Text-to-Speech services
 
 4. Load the CC-CEDICT dictionary (123,557 entries):
 ```bash
@@ -86,22 +87,30 @@ Then re-import your CSV files for fresh enrichment.
 
 A `sample-deck.csv` file is included with 30 common Traditional Chinese characters.
 
-## How AI Image Search Works
+## How AI Image Generation Works
 
-The app uses OpenAI to intelligently categorize Chinese characters and generate appropriate image searches:
+The app uses OpenAI to analyze Chinese characters and generate contextually appropriate images:
 
-1. **Grammatical/Abstract**: Particles (的, 了), pronouns (我, 你) → Searches for "Chinese calligraphy"
-2. **Concrete Objects**: 山 (mountain), 書 (book) → Direct visual searches
-3. **Actions/Verbs**: 吃 (eat), 跑 (run) → Searches for people performing actions
-4. **Emotions**: 愛 (love), 怒 (anger) → Facial expressions or symbolic representations
-5. **Qualities**: 大 (big), 快 (fast) → Visual metaphors or comparisons
+1. **Character Analysis**: Each character is analyzed for meaning, context, and cultural significance
+2. **Visual Prompt Generation**: AI creates detailed prompts optimized for DALL-E 3
+3. **Image Generation**: DALL-E 3 creates unique, high-quality images for each character
+4. **Caching**: Generated images are cached permanently to reduce costs
 
-No hardcoding required - the AI automatically determines the best visual representation!
+All images are generated with consistent style and quality, ensuring a cohesive learning experience!
+
+## Current Features
+
+- Text-to-speech audio generation with Taiwan Mandarin voice
+- Full SM-2 spaced repetition scheduling implementation
+- Progress tracking and analytics dashboard
+- Character insights with linguistic analysis
+- Intelligent mnemonic generation
+- Redis-based job queues for scalable enrichment
 
 ## Future Enhancements
 
-- Text-to-speech audio generation with zh-TW voice
-- Full SM-2 spaced repetition scheduling implementation
-- Offline support with service workers
-- Progress tracking and analytics
-- Image caching to reduce API calls
+- Social features and deck sharing
+- Premium subscription tiers
+- Mobile applications
+- Collaborative learning groups
+- Advanced analytics and learning predictions

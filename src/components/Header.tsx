@@ -31,7 +31,7 @@ export default function Header({ onBack, showAnalyticsLink = true }: HeaderProps
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-                  HelloWorld AI
+                  Danbing
                   <Sparkles className="w-5 h-5 text-violet-400" />
                 </h1>
                 <p className="text-sm text-gray-500">Master Traditional Chinese characters with Taiwan pronunciation</p>

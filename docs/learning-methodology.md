@@ -4,32 +4,35 @@
 
 This guide explains how the flash session learning system works and how to maximize your retention of Chinese characters.
 
-## The Three-Pass Learning System
+## The Dual-Phase Learning System
 
-The flash session uses a scientifically-based approach that presents characters in three distinct passes:
+The flash session uses a scientifically-based approach that presents characters in two distinct phases:
 
-### Preview Phase
-- **Character Grid** (2s): Visual preview of upcoming 4-6 characters for priming
+### Phase 1: Visual Recognition
+- **Character Only** (2-4s depending on speed): 
+  - Focuses attention on character shape
+  - Allows visual encoding without distraction
+  - Creates anticipation for meaning
+  - Adjustable timing via speed presets
 
-### Pass 1: Segmented Learning (Encoding Phase)
-Each character is broken down into distinct components:
-- **Orthographic Focus** (800ms): Character shape alone for visual encoding
-- **Phonological Focus** (2s): Character + pinyin + audio for sound association
-- **Semantic Focus** (2s): Image + meaning for conceptual understanding
-- **Retrieval Check** (1.5s): Character alone to test immediate recall
-- **Inter-card Blank** (800ms): Neural reset between different characters
+### Phase 2: Multi-Modal Integration
+- **Full Information** (3-5s depending on speed):
+  - Character + pinyin + image + meaning
+  - Audio plays automatically
+  - Creates multiple memory pathways
+  - Reinforces all associations simultaneously
 
-### Pass 2: Reinforcement (Integration Phase)
-- **Combined Presentation** (3s): All elements shown together to strengthen connections
-- **Holistic Processing**: Integrates orthographic, phonological, and semantic information
-
-### Pass 3: Quick Recognition (Consolidation Phase)
-- **Character Flash** (1s): Rapid character recognition without audio
-- **Full Info Flash** (1.5s): Quick review of all information
-- **Mental Pronunciation**: No audio playback forces internal generation
+### Speed Presets
+Choose based on your learning needs:
+- **Fast** (5.4s/card): For review or familiar material
+- **Medium** (7.6s/card): Default for most learning
+- **Slow** (10s/card): For beginners or complex characters
 
 ### Quiz Phase
-After the three passes, a quiz tests immediate recognition through multiple-choice questions.
+After the flash presentation, an immediate quiz tests retention:
+- **Question Types**: Meaning→Character, Audio→Character, Character→Image
+- **Time Limit**: 10 seconds per question
+- **Immediate Feedback**: Audio reinforcement on all answers
 
 ## Why High Quiz Scores Don't Equal Long-Term Retention
 
@@ -70,9 +73,10 @@ The app tracks memory strength using an exponential decay model that considers:
 ## Optimal Learning Strategy
 
 ### 1. Session Size
-- **Recommended**: 5-7 new characters per session
-- **Maximum**: 10 characters for most learners
+- **Optimal**: 7 new characters per session (enforced by the app)
+- **Based on**: Miller's Law (7±2 working memory capacity)
 - **Why**: Better encoding and less interference
+- **Option**: Can continue after 7 cards if desired
 
 ### 2. Daily Practice Schedule
 ```
@@ -91,19 +95,22 @@ Evening: Practice quiz on today's learned cards
 
 ### 4. Using the Three Modes Effectively
 
-#### Study New Mode
+#### New Mode
 - For first-time learning
+- Limited to 7 cards per session
+- Cards must have audio before presentation
 - Use when mentally fresh
-- Limit session size based on difficulty
 
 #### Review Mode
 - For spaced repetition reviews
+- Limited to 7 highest-priority cards
 - Do these IMMEDIATELY when due
 - Critical for long-term retention
 
-#### Practice Quiz Mode
-- For additional rehearsal
-- Use between scheduled reviews
+#### Practice Mode
+- For additional rehearsal without affecting scheduling
+- Includes all previously studied cards
+- No session size limit
 - Especially helpful before exams
 
 ## Memory Enhancement Techniques
@@ -164,27 +171,29 @@ Evening: Practice quiz on today's learned cards
 4. **Patience**: Building long-term memory takes weeks, not hours
 5. **Quality over Quantity**: Better to master few than poorly learn many
 
-## New Features for Enhanced Learning
+## Key Features for Enhanced Learning
 
-### Extended Countdown (10 seconds)
-- Allows proper mental preparation and attention focusing
-- Reduces anxiety and improves readiness
-- Based on attention deployment research
+### Flexible Countdown
+- 3-2-1 countdown with speed-adjustable timing
+- Fast: 500ms per number
+- Medium: 750ms per number
+- Slow: 1000ms per number
 
-### Accessibility Improvements
-- **Reduce Motion**: Removes transitions for motion-sensitive users
-- **Dim Display**: 70% brightness option reduces eye strain
-- **Controls Hidden During Learning**: Shown only when paused to minimize distraction
+### Enhanced Controls
+- **Pause (P)**: Pause/resume with accurate time tracking
+- **Exit (Q/ESC)**: Exit with custom confirmation dialog
+- **Restart (R)**: Restart entire session
+- **Quiz Answers (1-4)**: Quick keyboard navigation
 
-### Block Transitions
-- 3-second countdown between blocks (no text)
-- Allows memory consolidation
-- Prevents interference between learning phases
+### Progress Tracking
+- Real-time card counter (e.g., "Studied: 3/7")
+- Mode indicator shows session type
+- Session automatically pauses during dialogs
 
-### Progressive Audio Support
-- Block 1: Full audio support for initial learning
-- Block 2: Audio reinforcement with combined presentation
-- Block 3: No audio - encourages mental pronunciation and self-testing
+### Audio Features
+- Automatic audio playback during Phase 2
+- Audio feedback on quiz answers
+- Wrong answers play buzz sound followed by correct audio
 
 ## The Science Behind the System
 

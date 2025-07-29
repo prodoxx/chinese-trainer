@@ -22,6 +22,20 @@ services:
       - redis-data:/data
     command: redis-server --appendonly yes
 
+  postgres:
+    image: postgres:17-alpine
+    container_name: chinese-app-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: chinese_app_user
+      POSTGRES_PASSWORD: chinese_app_password
+      POSTGRES_DB: chinese_app
+    ports:
+      - "5436:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
 volumes:
   mongo-data:
   redis-data:
+  postgres-data:

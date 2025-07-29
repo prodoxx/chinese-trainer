@@ -1,167 +1,147 @@
 # Flash Session Timing Reference
 
-## Quick Reference Table
+## Speed Presets
 
-| Phase | Block 1 (Segmented) | Block 2 (Rapid) | Block 3 (Flash) |
-|-------|-------------------|----------------|----------------|
-| **Purpose** | Initial encoding | Strengthen connections | Rapid retrieval |
-| **Cards per block** | 4-6 cards | 4-6 cards | Remaining cards |
-| **Total time/card** | ~7.1 seconds | ~2.2 seconds | 1 second |
+The app now supports three speed presets that scale all timing values:
 
-## Detailed Timing Breakdown
+| Preset | Initial Countdown | Hanzi Phase | Blank | Full Phase | Blank | Total/Card |
+|--------|------------------|-------------|-------|------------|-------|------------|
+| **Fast** | 0.5s | 2s | 0.2s | 3s | 0.2s | ~5.4s |
+| **Medium** | 0.75s | 3s | 0.3s | 4s | 0.3s | ~7.6s |
+| **Slow** | 1s | 4s | 0.5s | 5s | 0.5s | ~10s |
 
-### Block 1: Segmented Presentation
-```
-Card 1 Start
-├─ [800ms]  Orthographic (字) - Character alone
-├─ [200ms]  Blank screen
-├─ [2000ms] Phonological (字 + "zì" + 🔊) - With audio
-├─ [300ms]  Blank screen  
-├─ [2000ms] Semantic (📷 + "character/word") - Image + meaning
-├─ [500ms]  Blank screen
-├─ [1500ms] Retrieval (字) - Character alone for recall
-└─ [300ms]  Gap before next card
-= 7100ms total per card
-```
+## Simplified Timing Structure
 
-### Block 2: Rapid Alternation
-```
-Card 1 Start
-├─ [300ms]  Orthographic (字)
-├─ [700ms]  Phonological (字 + "zì" + 🔊)
-├─ [300ms]  Orthographic (字)
-├─ [700ms]  Phonological (字 + "zì" + 🔊)
-└─ [200ms]  Gap before next card
-= 2200ms total per card
-```
+The current implementation uses a simplified two-phase approach:
 
-### Block 3: Flash Card Style
-```
-Card 1 Start
-├─ [800ms]  All info (字 + "zì" + 📷 + "character/word")
-└─ [200ms]  Gap before next card
-= 1000ms total per card
-```
+### Phase 1: Hanzi Only
+- Shows just the character (字)
+- Duration varies by speed preset (2-4s)
 
-### Transition Sequences
+### Phase 2: Full Information
+- Shows character + pinyin + image + meaning + audio
+- Duration varies by speed preset (3-5s)
+- Audio plays at the start of this phase
 
-#### Inter-block Flash (3x)
-```
-Flash 1: [100ms BLACK] → [100ms WHITE]
-Flash 2: [100ms BLACK] → [100ms WHITE]  
-Flash 3: [100ms BLACK] → [100ms WHITE]
-Total: 600ms
-```
+## Session Structure
 
-#### Countdown Between Blocks
 ```
-[6000ms] Countdown from 6 to 1
+Initial Countdown (3-2-1)
+├─ Fast: 500ms per number
+├─ Medium: 750ms per number  
+└─ Slow: 1000ms per number
+
+For each card:
+├─ [2-4s]   Hanzi phase (character only)
+├─ [0.2-0.5s] Blank screen
+├─ [3-5s]   Full phase (all information + audio)
+└─ [0.2-0.5s] Blank screen
 ```
 
 ## Complete Session Timeline Example
 
-For a 15-card session:
+For a 7-card session (optimal session size) at Medium speed:
 ```
-[6s]     Initial countdown
-[35.5s]  Block 1: 5 cards × 7.1s
-[Quiz]   Variable duration
-[0.6s]   Flash transition
-[6s]     Countdown
-[11s]    Block 2: 5 cards × 2.2s  
-[Quiz]   Variable duration
-[0.6s]   Flash transition
-[6s]     Countdown
-[5s]     Block 3: 5 cards × 1s
-[Quiz]   Variable duration
+[2.25s]  Initial countdown (3-2-1)
+[53.2s]  Flash phase: 7 cards × 7.6s each
+[Quiz]   Variable duration (~2-3 questions)
 ---------------------------------
-~71s + quiz time (typically ~90-120s total)
+~55s + quiz time (typically ~70-90s total)
 ```
+
+## Quiz Phase
+
+After the flash phase, users complete a quiz with:
+- 2-3 questions cycling through question types
+- Question types: Meaning→Character, Audio→Character, Character→Image
+- 10 second time limit per question
+- Immediate feedback with audio playback
+- Auto-advance after 2 seconds (or immediate on timeout)
 
 ## Code Location
 
-All timing constants are defined in:
-`src/components/FlashSession.tsx` (lines 64-72)
+Speed preset logic is implemented in:
+`src/components/FlashSession.tsx`
 
 ```typescript
-// Timing constants - slower for better learning
-const ORTHOGRAPHIC_TIME = 800;    // Show character alone
-const ORTHOGRAPHIC_BLANK = 200;   // Blank after orthographic
-const PHONOLOGICAL_TIME = 2000;   // Character + pinyin + audio
-const PHONOLOGICAL_BLANK = 300;   // Blank after phonological  
-const SEMANTIC_TIME = 2000;       // Image + meaning
-const SEMANTIC_BLANK = 500;       // Blank after semantic
-const RETRIEVAL_TIME = 1500;      // Character alone for retrieval
-const BETWEEN_CARDS = 300;        // Gap between cards
+const getTimingForSpeed = (speed: 'fast' | 'medium' | 'slow') => {
+  switch (speed) {
+    case 'fast':
+      return {
+        initialCountdown: 500,
+        hanziPhase: 2000,
+        blankAfterHanzi: 200,
+        fullPhase: 3000,
+        blankAfterFull: 200,
+      };
+    case 'slow':
+      return {
+        initialCountdown: 1000,
+        hanziPhase: 4000,
+        blankAfterHanzi: 500,
+        fullPhase: 5000,
+        blankAfterFull: 500,
+      };
+    case 'medium':
+    default:
+      return {
+        initialCountdown: 750,
+        hanziPhase: 3000,
+        blankAfterHanzi: 300,
+        fullPhase: 4000,
+        blankAfterFull: 300,
+      };
+  }
+};
 ```
 
 ## Modifying Timings
 
-### To make sessions faster:
-- Reduce `PHONOLOGICAL_TIME` to 1500ms
-- Reduce `SEMANTIC_TIME` to 1500ms
-- Reduce `RETRIEVAL_TIME` to 1000ms
-- Reduce blanks by 50%
+To adjust timing for all users:
+1. Modify the values in the `getTimingForSpeed` function
+2. Test the changes with a sample deck
+3. Consider user feedback on pacing
 
-### To make sessions slower (for beginners):
-- Increase `ORTHOGRAPHIC_TIME` to 1000ms
-- Increase `PHONOLOGICAL_TIME` to 2500ms
-- Increase all blanks by 50%
-
-### To adjust flash intensity:
-- Modify flash count in `setTransitionFlashCount(3)`
-- Adjust flash duration (currently 100ms each)
+To add a new speed preset:
+1. Add the new option to the speed type
+2. Add a case in the `getTimingForSpeed` switch
+3. Update the UI speed selector
 
 ## Audio Synchronization
 
-Audio playback is triggered during:
-- Block 1: Start of phonological phase
-- Block 2: Start of each phonological phase
-- Block 3: Not played (too fast)
+Audio playback occurs:
+- During the full information phase (Phase 2)
+- Played once at the start of the phase
+- Not interrupted by phase transitions
 
 ## Performance Considerations
 
-- **Minimum timing**: Don't go below 200ms for any phase (except blanks)
-- **Audio cutoff**: Audio may be cut off if phase < 500ms
-- **Cognitive load**: Total time per card shouldn't exceed 10s
-- **Habituation**: Very fast timings (< 100ms) may cause habituation
+- **Minimum timing**: Don't go below 200ms for blanks
+- **Audio cutoff**: Full phase should be at least 2s to allow audio completion
+- **Cognitive load**: Total time per card ranges from 5.4s (fast) to 10s (slow)
+- **Session length**: Optimal 7-card sessions take 70-90s total including quiz
 
-## Experimental Variations
+## Session Features
 
-### "Subliminal" Mode (not implemented)
-```
-Orthographic: 50ms
-Blank: 50ms
-Result: Below conscious threshold
-```
+### Pause Functionality
+- Press 'P' to pause during flash phase
+- Timer stops and resumes accurately
+- Audio does not play while paused
 
-### "Meditation" Mode (not implemented)
-```
-All phases: 3000ms
-All blanks: 1000ms
-Result: Slow, mindful learning
-```
+### Exit Handling
+- Press 'Q' or 'ESC' to exit
+- Custom confirm dialog (not browser native)
+- Session automatically pauses during confirm
 
-### "Competition" Mode (not implemented)
-```
-All phases: 50% of current
-No blanks
-Result: High-speed challenge
+### Progress Tracking
+- Real-time card counter (e.g., "Studied: 3/7")
+- Mode indicator shows current session type
+- Countdown timer between phases
 
-```
+## Future Enhancements
 
-## A/B Testing Opportunities
-
-1. **Blank duration impact**: Test 0ms vs 200ms vs 500ms blanks
-2. **Phase order**: Test semantic-first vs phonological-first
-3. **Retrieval phase**: Test with/without retrieval phase
-4. **Block 2 variations**: Test 2-cycle vs 3-cycle alternation
-5. **Audio timing**: Test audio at start vs middle of phase
-
-## Metrics to Track
-
-When modifying timings, monitor:
-- Quiz accuracy per block
-- Session completion rate
-- Time to fatigue (pause frequency)
-- Long-term retention (24h, 1 week)
-- User preference ratings
+1. **Variable Speed During Session**: Allow speed changes mid-session
+2. **Adaptive Timing**: Adjust speed based on quiz performance
+3. **Custom Presets**: Let users save their preferred timings
+4. **Per-Card Timing**: Adjust timing based on character complexity
+5. **Study Mode Analytics**: Track optimal timing for retention

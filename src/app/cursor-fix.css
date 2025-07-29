@@ -1,0 +1,71 @@
+/* Override any cursor resets */
+* {
+  cursor: auto;
+}
+
+/* Force cursor pointer on all interactive elements */
+a, 
+a[href],
+a:link,
+a:visited,
+a:hover,
+a:active {
+  cursor: pointer !important;
+}
+
+button,
+button:hover,
+button:focus {
+  cursor: pointer !important;
+}
+
+[role="button"],
+[role="button"]:hover {
+  cursor: pointer !important;
+}
+
+input[type="submit"],
+input[type="button"],
+input[type="reset"],
+input[type="submit"]:hover,
+input[type="button"]:hover,
+input[type="reset"]:hover {
+  cursor: pointer !important;
+}
+
+select,
+select:hover {
+  cursor: pointer !important;
+}
+
+.cursor-pointer,
+.cursor-pointer:hover,
+[class*="cursor-pointer"] {
+  cursor: pointer !important;
+}
+
+/* Links in navigation and footer */
+nav a,
+nav a:hover,
+footer a,
+footer a:hover,
+header a,
+header a:hover {
+  cursor: pointer !important;
+}
+
+/* Any clickable element */
+[onclick],
+[href],
+[tabindex]:not([tabindex="-1"]) {
+  cursor: pointer !important;
+}
+
+/* Disabled elements */
+button:disabled,
+input:disabled,
+select:disabled,
+.cursor-not-allowed,
+[disabled] {
+  cursor: not-allowed !important;
+}

@@ -43,7 +43,7 @@ Response quality (0-5 scale) is calculated based on:
 - **4**: Good - quick recall (2-4 seconds)
 - **3**: Pass - slow recall (4-8 seconds)
 - **2**: Incorrect but attempted
-- **0**: Complete timeout/no response
+- **0**: Complete timeout (10 seconds)
 
 ### Memory Strength and Decay
 
@@ -272,8 +272,9 @@ Body: [{
 ```
 GET /api/cards/:deckId/review
 Response: {
-  cards: Card[],
-  totalDue: number
+  cards: Card[],    // Limited to 7 cards maximum
+  totalDue: number, // Total cards due (may be more than 7)
+  totalCards: number // Cards returned in this session
 }
 ```
 
@@ -317,11 +318,25 @@ The deck list shows real-time statistics:
 
 ### Flash Session Modes
 
-1. **Study All**: Shows all cards in random blocks
-2. **Review**: Shows only cards due for review, prioritized by:
-   - Most overdue first
-   - Weakest memory strength
-   - Previous error rate
+1. **New Mode**: 
+   - Limited to 7 cards per session (optimal working memory)
+   - Requires audio before presentation
+   - Prompts user to continue after 7 cards
+   - Creates initial memory traces
+
+2. **Review Mode**: 
+   - Limited to 7 cards per session
+   - Shows highest priority cards, prioritized by:
+     - Most overdue first
+     - Weakest memory strength
+     - Previous error rate
+   - Updates SM-2 intervals based on performance
+
+3. **Practice Mode**:
+   - No session limit
+   - Includes all previously studied cards
+   - Does not affect spaced repetition scheduling
+   - Good for exam preparation
 
 ### Analytics Collection
 

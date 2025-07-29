@@ -97,33 +97,28 @@ Our flash session system is built on decades of cognitive science research. Ever
 - Our 800ms inter-card blanks allow initial consolidation
 - 3s inter-block periods permit deeper consolidation
 
-## Three-Block Structure Rationale
+## Dual-Phase Structure Rationale
 
-### Block 1: Analytical Processing
+### Phase 1: Visual Recognition
 **Craik & Lockhart (1972)**: Levels of Processing
-- Deeper processing leads to better retention
-- Segmented presentation forces deep, analytical processing
-- Each modality processed separately for maximum encoding
+- Initial character-only presentation allows focused visual processing
+- Reduces cognitive load by separating visual from semantic processing
+- Creates anticipation that enhances subsequent encoding
 
-### Block 2: Holistic Integration
+### Phase 2: Multi-Modal Integration
 **Kosslyn (1980)**: Mental Imagery Theory
-- Combined presentation creates unified mental representation
-- 3s exposure allows complete Gestalt formation
-- Strengthens inter-modal associations
-
-### Block 3: Transfer-Appropriate Processing
-**Morris et al. (1977)**: Transfer-Appropriate Processing
-- Practice should match retrieval conditions
-- Real reading has no audio support
-- Mental pronunciation mimics authentic use
+- Combined presentation (character + pinyin + image + meaning + audio)
+- Creates rich, interconnected memory traces
+- Multiple retrieval pathways reduce forgetting
+- Audio reinforcement strengthens phonological encoding
 
 ## Attention and Vigilance Optimization
 
 ### Sustained Attention Limits
 **Warm et al. (2008)**: Vigilance and Sustained Attention
 - Attention degrades after 5-10 minutes
-- Our ~7-minute sessions stay within optimal window
-- Varied block structure maintains engagement
+- Our 7-card sessions (~90 seconds) stay well within optimal window
+- Speed presets allow adaptation to individual needs
 
 ### Attention Restoration
 **Kaplan (1995)**: Attention Restoration Theory
@@ -216,19 +211,19 @@ Our flash session system is built on decades of cognitive science research. Ever
 ## Optimal Learning Parameters
 
 ### Session Timing
-- **Total Duration**: ~7 minutes (within attention span)
-- **Per-character Time**: 7.3s (Block 1), 3s (Block 2), 2.5s (Block 3)
-- **Cognitive Processing**: Decreases as familiarity increases
+- **Total Duration**: ~90 seconds for 7 cards (within attention span)
+- **Per-character Time**: 5.4s (Fast), 7.6s (Medium), 10s (Slow)
+- **Cognitive Processing**: Adjustable via speed presets
 
 ### Exposure Optimization
-- **Preview**: 2s (priming and preparation)
-- **Initial Learning**: Extended exposures for encoding
-- **Consolidation**: 3s countdowns for memory strengthening
-- **Total Exposures**: 3x per character across blocks
+- **Phase 1**: 2-4s character only (visual encoding)
+- **Phase 2**: 3-5s full information (multi-modal integration)
+- **Blanks**: 200-500ms (consolidation periods)
+- **Quiz**: Immediate testing for retrieval practice
 
 ## Conclusion
 
-Every aspect of our flash session design—from the 10-second initial countdown to the silent Block 3—is grounded in cognitive science research. This evidence-based approach ensures optimal learning efficiency while respecting the limitations and capabilities of human memory systems.
+Every aspect of our flash session design—from the speed-adjustable countdown to the immediate quiz phase—is grounded in cognitive science research. This evidence-based approach ensures optimal learning efficiency while respecting the limitations and capabilities of human memory systems.
 
 The system balances competing demands:
 - Deep processing vs. session length
