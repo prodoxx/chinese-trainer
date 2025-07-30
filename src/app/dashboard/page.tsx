@@ -62,7 +62,7 @@ export default function DashboardPage() {
               <div>
                 <div className="mb-4 sm:mb-6">
                   <h2 className="text-xl sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#f7cc48] to-yellow-500 mb-1 sm:mb-2">Add New Deck</h2>
-                  <p className="text-xs sm:text-sm text-[#7d8590]">Import CSV files with Traditional Chinese characters</p>
+                  <p className="text-xs sm:text-sm text-[#7d8590]">Import CSV files with Chinese characters (one per line)</p>
                 </div>
                 <div className="bg-[#21262d] rounded-2xl border border-[#30363d] hover:border-[#f7cc48]/50 transition-all duration-300 p-4 sm:p-6 shadow-lg shadow-[#f7cc48]/10 relative overflow-hidden group">
                   <div className="absolute inset-0 bg-gradient-to-br from-[#f7cc48]/10 to-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />

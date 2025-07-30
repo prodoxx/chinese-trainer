@@ -342,9 +342,9 @@ export default function Quiz({ cards, deckId, onComplete, onExit }: QuizProps) {
               className={`
                 p-4 sm:p-6 rounded-lg border-2 transition-all cursor-pointer
                 ${showResult && option.id === question.correctCard.id
-                  ? 'border-green-500 bg-green-900/30'
-                  : showResult && option.id !== question.correctCard.id
-                  ? 'border-red-500 bg-red-900/30'
+                  ? 'border-green-500 bg-green-500 bg-opacity-20'
+                  : showResult && option.id !== question.correctCard.id && selectedAnswer === option.id
+                  ? 'border-red-500 bg-red-500 bg-opacity-20'
                   : 'border-gray-700 hover:border-gray-500'
                 }
                 ${!showResult && 'hover:bg-gray-900'}

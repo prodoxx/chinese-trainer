@@ -14,6 +14,7 @@ export interface ICard extends Document {
   imageAttributionUrl?: string;
   unsplashImageId?: string; // Keep for backward compatibility
   cached: boolean;
+  disambiguated?: boolean; // True if user manually selected from multiple meanings
   // Linguistic analysis fields
   semanticCategory?: string;
   tonePattern?: string;
@@ -44,6 +45,7 @@ const CardSchema = new Schema<ICard>(
     imageAttributionUrl: { type: String },
     unsplashImageId: { type: String }, // Keep for backward compatibility
     cached: { type: Boolean, default: false },
+    disambiguated: { type: Boolean, default: false },
     // Linguistic analysis fields
     semanticCategory: { type: String },
     tonePattern: { type: String },

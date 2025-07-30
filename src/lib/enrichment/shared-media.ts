@@ -2,11 +2,8 @@
  * Shared media generation functions that reuse media across all cards with the same hanzi
  */
 
-import { generateTTSAudioR2 } from './azure-tts-r2';
-import { generateDALLEImageR2 } from './openai-dalle-r2';
-import { uploadToR2, existsInR2, generateMediaKeysByHanzi } from '@/lib/r2-storage';
-import { generateSpeech } from './azure-tts-r2';
-import openai from './openai-client';
+import { uploadToR2, existsInR2, deleteFromR2, generateMediaKeysByHanzi } from '@/lib/r2-storage';
+import OpenAI from 'openai';
 
 export interface SharedMediaResult {
   audioUrl: string;
@@ -26,7 +23,9 @@ export async function generateSharedAudio(hanzi: string): Promise<{ audioUrl: st
     // Check if audio already exists
     const exists = await existsInR2(audioKey);
     if (exists) {
-      const audioUrl = `${process.env.R2_PUBLIC_URL}/${audioKey}`;
+      // Return secure API endpoint - strip 'media/' prefix for cleaner URLs
+      const audioPath = audioKey.replace('media/', '');
+      const audioUrl = `/api/media/${audioPath}`;
       return { audioUrl, cached: true };
     }
     
@@ -61,16 +60,18 @@ export async function generateSharedAudio(hanzi: string): Promise<{ audioUrl: st
     const audioData = await response.arrayBuffer();
     const audioBuffer = Buffer.from(audioData);
     
-    // Upload to R2
-    const audioUrl = await uploadToR2(audioKey, audioBuffer, {
+    // Upload to R2 (avoid special characters in metadata)
+    await uploadToR2(audioKey, audioBuffer, {
       contentType: 'audio/mpeg',
       metadata: {
-        hanzi,
         voice,
         generatedAt: new Date().toISOString(),
       }
     });
     
+    // Return secure API endpoint - strip 'media/' prefix for cleaner URLs
+    const audioPath = audioKey.replace('media/', '');
+    const audioUrl = `/api/media/${audioPath}`;
     return { audioUrl, cached: false };
   } catch (error) {
     console.error('Shared audio generation error:', error);
@@ -84,8 +85,9 @@ export async function generateSharedAudio(hanzi: string): Promise<{ audioUrl: st
  */
 export async function generateSharedImage(
   hanzi: string,
-  meaning: string,
-  pinyin: string
+  meaning: string = '',
+  pinyin: string = '',
+  force: boolean = false
 ): Promise<{ imageUrl: string; cached: boolean }> {
   if (!process.env.OPENAI_API_KEY) {
     console.warn("OpenAI API key not configured");
@@ -95,23 +97,63 @@ export async function generateSharedImage(
   try {
     const { image: imageKey } = generateMediaKeysByHanzi(hanzi);
     
-    // Check if image already exists
-    const exists = await existsInR2(imageKey);
-    if (exists) {
-      const imageUrl = `${process.env.R2_PUBLIC_URL}/${imageKey}`;
-      return { imageUrl, cached: true };
+    // Check if image already exists (skip if force=true)
+    if (!force) {
+      const exists = await existsInR2(imageKey);
+      if (exists) {
+        // Return secure API endpoint - strip 'media/' prefix for cleaner URLs
+        const imagePath = imageKey.replace('media/', '');
+        const imageUrl = `/api/media/${imagePath}`;
+        return { imageUrl, cached: true };
+      }
+    } else {
+      console.log(`Force regeneration requested for ${hanzi}, will delete existing image if present`);
+      // Delete existing image if force regenerating
+      try {
+        const exists = await existsInR2(imageKey);
+        if (exists) {
+          console.log(`   Deleting existing image at ${imageKey}`);
+          await deleteFromR2(imageKey);
+        }
+      } catch (deleteError) {
+        console.warn(`   Could not delete existing image:`, deleteError);
+      }
     }
     
-    // Generate prompt based on the character
-    const prompt = `Simple illustration representing "${meaning}". If depicting a person, show a representation including East Asian, Hispanic, White, or Black individual only - one person only. No South Asian/Indian people. Cartoon or minimalist style, educational context.`;
+    // Create an intelligent prompt that focuses solely on the English meaning
+    const meaningLower = meaning.toLowerCase();
     
-    console.log(`Generating shared DALL-E image for ${hanzi}`);
+    // Build a comprehensive prompt that ensures correct interpretation
+    let prompt = `Create an educational illustration that accurately represents ONLY this specific meaning: "${meaning}". `;
     
-    // Import OpenAI client configuration
-    const { default: openaiClient } = await import('./openai-dalle-r2');
+    // Add specific instructions based on what type of concept it might be
+    if (meaningLower.match(/\b(person|people|human|man|woman|child)\b/) || 
+        meaningLower.match(/\b(feel|feeling|emotion|state)\b/) ||
+        meaningLower.match(/ing\b/) || // likely an action or state
+        meaningLower.match(/ed\b/)) {   // likely a state or condition
+      prompt += `If this involves a person, show them clearly demonstrating this concept through appropriate facial expressions, body language, or actions. `;
+    }
+    
+    // Add clarification to avoid ambiguity
+    prompt += `Focus exclusively on visualizing "${meaning}" without any alternative interpretations. Make the meaning immediately obvious to a language learner. `;
+    
+    // Add style instructions
+    prompt += `Use a simple, clear cartoon style suitable for educational flashcards. If showing people, depict one person only (East Asian, Hispanic, White, or Black individual). Avoid complex scenes or multiple interpretations.`;
+    
+    // Add explicit instruction to ignore any other possible meanings
+    prompt += ` IMPORTANT: This image must represent "${meaning}" and nothing else.`;
+    
+    console.log(`Generating shared DALL-E image for ${hanzi} with meaning: "${meaning}" and pinyin: "${pinyin}"`);
+    console.log(`Generated prompt: ${prompt}`);
+    console.log(`Image will be stored at: ${imageKey}`);
+    
+    // Initialize OpenAI client
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
     
     // Generate image with DALL-E 3
-    const response = await openaiClient.images.generate({
+    const response = await openai.images.generate({
       model: "dall-e-3",
       prompt,
       n: 1,
@@ -129,16 +171,25 @@ export async function generateSharedImage(
     const imageResponse = await fetch(dalleImageUrl);
     const imageBuffer = await imageResponse.arrayBuffer();
     
-    const imageUrl = await uploadToR2(imageKey, Buffer.from(imageBuffer), {
+    // Upload to R2 with minimal metadata to avoid signature issues
+    await uploadToR2(imageKey, Buffer.from(imageBuffer), {
       contentType: 'image/jpeg',
       metadata: {
-        hanzi,
-        meaning,
-        pinyin,
-        prompt,
         generatedAt: new Date().toISOString(),
+        source: 'dalle',
       }
     });
+    
+    console.log(`✅ Image uploaded successfully to: ${imageKey}`);
+    console.log(`   Generated from prompt focusing on: "${meaning}"`);
+    
+    // Return secure API endpoint - strip 'media/' prefix for cleaner URLs
+    const imagePath = imageKey.replace('media/', '');
+    // Add timestamp to bust browser cache when force regenerating
+    const imageUrl = force 
+      ? `/api/media/${imagePath}?t=${Date.now()}`
+      : `/api/media/${imagePath}`;
+    console.log(`   Access URL: ${imageUrl}`);
     
     return { imageUrl, cached: false };
   } catch (error) {

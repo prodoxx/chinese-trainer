@@ -18,10 +18,12 @@ const r2Client = new S3Client({
   },
   // Force path-style addressing for R2 compatibility
   forcePathStyle: true,
+  // Disable checksums for R2 compatibility
+  requestChecksumCalculation: 'WHEN_REQUIRED',
+  responseChecksumValidation: 'WHEN_REQUIRED',
 });
 
 const BUCKET_NAME = process.env.R2_BUCKET_NAME!;
-const PUBLIC_URL = process.env.R2_PUBLIC_URL!;
 
 export interface UploadOptions {
   contentType?: string;
@@ -37,20 +39,45 @@ export async function uploadToR2(
   options: UploadOptions = {}
 ): Promise<string> {
   try {
-    const command = new PutObjectCommand({
+    // Filter out empty metadata values
+    let filteredMetadata: Record<string, string> | undefined = undefined;
+    
+    if (options.metadata) {
+      const nonEmptyMetadata: Record<string, string> = {};
+      for (const [key, value] of Object.entries(options.metadata)) {
+        // Only include if value is non-empty string
+        if (value && typeof value === 'string' && value.trim() !== '') {
+          nonEmptyMetadata[key] = value;
+        }
+      }
+      
+      // Only set metadata if there are non-empty values
+      if (Object.keys(nonEmptyMetadata).length > 0) {
+        filteredMetadata = nonEmptyMetadata;
+      }
+    }
+    
+    // Build command parameters, only including defined values
+    const commandParams: any = {
       Bucket: BUCKET_NAME,
       Key: key,
       Body: body,
-      ContentType: options.contentType,
-      Metadata: options.metadata,
-      // Disable automatic checksum for R2 compatibility
-      ChecksumAlgorithm: undefined,
-    });
+    };
+    
+    if (options.contentType) {
+      commandParams.ContentType = options.contentType;
+    }
+    
+    if (filteredMetadata && Object.keys(filteredMetadata).length > 0) {
+      commandParams.Metadata = filteredMetadata;
+    }
+    
+    const command = new PutObjectCommand(commandParams);
 
     await r2Client.send(command);
     
-    // Return the public URL
-    return `${PUBLIC_URL}/${key}`;
+    // Return the key for internal reference
+    return key;
   } catch (error) {
     console.error("Error uploading to R2:", error);
     throw new Error(`Failed to upload file to R2: ${error}`);
@@ -66,22 +93,47 @@ export async function uploadLargeFileToR2(
   options: UploadOptions = {}
 ): Promise<string> {
   try {
+    // Filter out empty metadata values
+    let filteredMetadata: Record<string, string> | undefined = undefined;
+    
+    if (options.metadata) {
+      const nonEmptyMetadata: Record<string, string> = {};
+      for (const [key, value] of Object.entries(options.metadata)) {
+        // Only include if value is non-empty string
+        if (value && typeof value === 'string' && value.trim() !== '') {
+          nonEmptyMetadata[key] = value;
+        }
+      }
+      
+      // Only set metadata if there are non-empty values
+      if (Object.keys(nonEmptyMetadata).length > 0) {
+        filteredMetadata = nonEmptyMetadata;
+      }
+    }
+    
+    // Build command parameters, only including defined values
+    const uploadParams: any = {
+      Bucket: BUCKET_NAME,
+      Key: key,
+      Body: body,
+    };
+    
+    if (options.contentType) {
+      uploadParams.ContentType = options.contentType;
+    }
+    
+    if (filteredMetadata && Object.keys(filteredMetadata).length > 0) {
+      uploadParams.Metadata = filteredMetadata;
+    }
+    
     const upload = new Upload({
       client: r2Client,
-      params: {
-        Bucket: BUCKET_NAME,
-        Key: key,
-        Body: body,
-        ContentType: options.contentType,
-        Metadata: options.metadata,
-        // Disable automatic checksum for R2 compatibility
-        ChecksumAlgorithm: undefined,
-      },
+      params: uploadParams,
     });
 
     await upload.done();
     
-    return `${PUBLIC_URL}/${key}`;
+    return key;
   } catch (error) {
     console.error("Error uploading large file to R2:", error);
     throw new Error(`Failed to upload large file to R2: ${error}`);
@@ -99,16 +151,16 @@ export async function downloadFromR2(key: string): Promise<Buffer> {
     });
 
     const response = await r2Client.send(command);
-    const stream = response.Body as ReadableStream;
     
-    // Convert stream to buffer
-    const chunks: Uint8Array[] = [];
-    const reader = stream.getReader();
+    // In Node.js, Body is a readable stream that needs to be converted to buffer
+    if (!response.Body) {
+      throw new Error('No body in response');
+    }
     
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      chunks.push(value);
+    // Convert the stream to a buffer
+    const chunks: Buffer[] = [];
+    for await (const chunk of response.Body as any) {
+      chunks.push(Buffer.from(chunk));
     }
     
     return Buffer.concat(chunks);
@@ -187,15 +239,24 @@ export function generateMediaKeys(deckId: string, cardId: string) {
 
 /**
  * Generate storage keys based on the Chinese character
- * This ensures maximum reuse across all cards with the same hanzi
+ * Uses SHA256 hash to prevent predictable URLs while maintaining consistency
  */
 export function generateMediaKeysByHanzi(hanzi: string) {
-  // Encode the hanzi to ensure valid URL paths
-  const encodedHanzi = encodeURIComponent(hanzi);
+  // Create a hash of the hanzi to prevent predictable URLs
+  const crypto = require('crypto');
+  const hash = crypto.createHash('sha256').update(hanzi).digest('hex');
+  
+  // Use first 12 characters of hash for shorter paths
+  const shortHash = hash.substring(0, 12);
+  
+  console.log(`🔑 Generating media keys for "${hanzi}"`);
+  console.log(`   Full hash: ${hash}`);
+  console.log(`   Short hash: ${shortHash}`);
+  
   return {
-    image: `media/hanzi/${encodedHanzi}/image.jpg`,
-    audio: `media/hanzi/${encodedHanzi}/audio.mp3`,
-    thumbnail: `media/hanzi/${encodedHanzi}/thumbnail.jpg`,
+    image: `media/shared/${shortHash}/image.jpg`,
+    audio: `media/shared/${shortHash}/audio.mp3`,
+    thumbnail: `media/shared/${shortHash}/thumbnail.jpg`,
   };
 }
 

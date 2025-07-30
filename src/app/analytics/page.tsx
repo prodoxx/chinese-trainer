@@ -11,7 +11,7 @@ export default function AnalyticsPage() {
   return (
     <>
       <Navigation />
-      <div className="min-h-[calc(100vh-4rem)] bg-[#0d1117] flex flex-col">
+      <div className="min-h-[calc(100vh-4rem)] bg-[#1a1f2e] flex flex-col">
         <div className="flex-1">
           <Analytics onBack={() => router.push('/')} />
         </div>

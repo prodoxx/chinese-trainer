@@ -19,7 +19,7 @@ export default function MarketingLayout({
 	const closeMobileMenu = () => {
 		setIsMobileMenuOpen(false);
 	};
-	
+
 	return (
 		<div className="min-h-screen bg-[#0d1117]">
 			{/* Navigation */}
@@ -33,14 +33,16 @@ export default function MarketingLayout({
 								onClick={closeMobileMenu}
 							>
 								<Image
-									src="https://storage.danbing.ai/danbing_mascot_small.png"
+									src="https://static.danbing.ai/danbing.png"
 									alt="Danbing Mascot"
 									width={32}
 									height={32}
 									className="rounded-lg w-8 h-8 sm:w-[32px] sm:h-[32px]"
 								/>
 								<div className="flex items-baseline space-x-1">
-									<span className="text-xl sm:text-2xl font-bold text-white">Danbing</span>
+									<span className="text-xl sm:text-2xl font-bold text-white">
+										Danbing
+									</span>
 									<span className="text-xs sm:text-sm font-medium text-[#f7cc48] bg-[#f7cc48]/10 px-1.5 sm:px-2 py-0.5 rounded-md">
 										AI
 									</span>
@@ -73,7 +75,7 @@ export default function MarketingLayout({
 								Pricing
 							</Link>
 						</div>
-						
+
 						{/* Desktop CTA buttons */}
 						<div className="hidden md:flex items-center space-x-4">
 							<Link
@@ -89,7 +91,7 @@ export default function MarketingLayout({
 								Start Learning Free
 							</Link>
 						</div>
-						
+
 						{/* Mobile menu button */}
 						<button
 							onClick={toggleMobileMenu}
@@ -104,7 +106,7 @@ export default function MarketingLayout({
 						</button>
 					</div>
 				</div>
-				
+
 				{/* Mobile menu */}
 				{isMobileMenuOpen && (
 					<div className="md:hidden border-t border-[#21262d] bg-[#0d1117]/95 backdrop-blur">
@@ -162,8 +164,13 @@ export default function MarketingLayout({
 				<div className="container mx-auto px-4 sm:px-6">
 					<div className="flex items-center justify-center space-x-2 text-xs sm:text-sm">
 						<span className="text-[#7d8590] text-center">
-							<span className="hidden sm:inline">New: Cloud-based learning with cross-device sync - learn anywhere, anytime</span>
-							<span className="sm:hidden">New: Cross-device sync available</span>
+							<span className="hidden sm:inline">
+								New: Cloud-based learning with cross-device sync - learn
+								anywhere, anytime
+							</span>
+							<span className="sm:hidden">
+								New: Cross-device sync available
+							</span>
 						</span>
 						<ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 text-[#f7cc48] flex-shrink-0" />
 					</div>
@@ -179,7 +186,7 @@ export default function MarketingLayout({
 						<div className="sm:col-span-2 md:col-span-1">
 							<div className="flex items-center space-x-3 mb-4">
 								<Image
-									src="https://storage.danbing.ai/danbing_mascot_small.png"
+									src="https://static.danbing.ai/danbing.png"
 									alt="Danbing Mascot"
 									width={24}
 									height={24}
@@ -278,7 +285,9 @@ export default function MarketingLayout({
 					</div>
 
 					<div className="border-t border-[#21262d] mt-8 pt-8 text-center text-[#7d8590]">
-						<p className="text-sm">&copy; 2025 Danbing AI. All rights reserved.</p>
+						<p className="text-sm">
+							&copy; 2025 Danbing AI. All rights reserved.
+						</p>
 					</div>
 				</div>
 			</footer>

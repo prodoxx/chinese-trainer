@@ -10,7 +10,7 @@ import Review from '@/lib/db/models/Review';
 export const deckImportWorker = new Worker<DeckImportJobData>(
   'deck-import',
   async (job: Job<DeckImportJobData>) => {
-    const { deckId, userId, deckName, hanziList, sessionId } = job.data;
+    const { deckId, userId, deckName, hanziList, sessionId, disambiguationSelections } = job.data;
     
     console.log(`\n📥 Starting deck import for "${deckName}" (${deckId})`);
     console.log(`   Characters to import: ${hanziList.length}`);
@@ -48,7 +48,18 @@ export const deckImportWorker = new Worker<DeckImportJobData>(
           let card = await Card.findOne({ hanzi });
           
           if (!card) {
-            card = await Card.create({ hanzi });
+            // Check if we have disambiguation selection for this character
+            const disambiguationSelection = disambiguationSelections?.[hanzi];
+            
+            card = await Card.create({ 
+              hanzi,
+              // If we have a pre-selected meaning, store it
+              ...(disambiguationSelection && {
+                pinyin: disambiguationSelection.pinyin,
+                meaning: disambiguationSelection.meaning,
+                disambiguated: true
+              })
+            });
             newCardsCount++;
           } else {
             existingCardsCount++;

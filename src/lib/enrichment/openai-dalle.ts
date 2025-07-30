@@ -74,8 +74,42 @@ function generateLearningPrompt(
 		return "SKIP_IMAGE";
 	}
 
-	// Default: Create a scene based on the meaning
-	return `Simple illustration representing "${meaning}". If depicting a person, show a representation including East Asian, Hispanic, White, or Black individual only - one person only. No South Asian/Indian people. Cartoon or minimalist style, educational context.`;
+	// Parse the meaning to understand what we're depicting
+	const meaningLower = meaning.toLowerCase();
+	
+	// For abstract concepts or actions, create contextual scenes
+	if (hanzi === "累") {
+		// Check if it's tired (lèi) or accumulate (lěi) based on pinyin
+		if (pinyin.includes("lèi") || pinyin.includes("lei4") || meaningLower.includes("tired") || meaningLower.includes("weary")) {
+			return `Educational illustration showing tiredness: A person looking exhausted, sitting on a chair with drooping shoulders, yawning, with tired eyes and a weary expression. Maybe holding their head in their hands or stretching. Simple cartoon style with muted colors to convey fatigue. No text.`;
+		} else if (pinyin.includes("lěi") || pinyin.includes("lei3") || meaningLower.includes("accumulate")) {
+			return `Educational illustration showing the concept of accumulation: A person carefully stacking coins in increasingly tall piles on a table, representing gradual accumulation over time. Simple, clean cartoon style with bright colors. No text.`;
+		}
+	}
+	
+	if (hanzi === "放鬆" || meaningLower.includes("relax") || meaningLower.includes("loosen")) {
+		return `Educational illustration showing relaxation: A person sitting comfortably in a peaceful garden, shoulders relaxed, with a calm expression, perhaps doing gentle stretching or meditation. Peaceful atmosphere with soft colors. Simple cartoon style. No text.`;
+	}
+	
+	// For verbs and actions
+	if (meaningLower.includes("to ")) {
+		return `Educational illustration clearly demonstrating the action "${meaning}". Show a person actively performing this specific action in a clear, unambiguous way. Simple cartoon style, bright colors, educational context. No text.`;
+	}
+	
+	// For concrete objects
+	if (meaningLower.includes("object") || meaningLower.includes("thing") || 
+		!meaningLower.includes("to ") && !meaningLower.includes("feeling") && !meaningLower.includes("emotion")) {
+		return `Educational illustration of "${meaning}". Show the object clearly as the main focus, with appropriate context. Simple, clean style with bright colors. No text.`;
+	}
+	
+	// For emotions and feelings
+	if (meaningLower.includes("feeling") || meaningLower.includes("emotion") || 
+		meaningLower.includes("happy") || meaningLower.includes("sad") || meaningLower.includes("angry")) {
+		return `Educational illustration showing the emotion or feeling of "${meaning}". Use facial expressions and body language to clearly convey this emotion. Simple cartoon style. No text.`;
+	}
+
+	// Default: Create a scene that clearly represents the meaning
+	return `Educational illustration that clearly and accurately represents the concept of "${meaning}". The image should make the meaning immediately obvious to a language learner. Use visual metaphors or concrete examples when dealing with abstract concepts. Simple, clean cartoon style with bright colors. No text in the image.`;
 }
 
 /**

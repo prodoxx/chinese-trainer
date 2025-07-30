@@ -1,15 +1,15 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'storage.danbing.ai',
-        pathname: '/**',
-      },
-    ],
-  },
+	images: {
+		remotePatterns: [
+			{
+				protocol: "https",
+				hostname: "static.danbing.ai",
+				pathname: "/**",
+			},
+		],
+	},
 };
 
 export default nextConfig;

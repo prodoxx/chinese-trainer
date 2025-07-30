@@ -2,15 +2,31 @@
 
 import { useState } from 'react';
 import { Upload, FileText, AlertCircle, CheckCircle, RefreshCw } from 'lucide-react';
+import DisambiguationModal from './DisambiguationModal';
 
 interface DeckImportProps {
   onImportComplete: () => void;
+}
+
+interface MultiMeaningCharacter {
+  hanzi: string;
+  position: number;
+  meanings: Array<{
+    pinyin: string;
+    meaning: string;
+    frequency?: string;
+  }>;
 }
 
 export default function DeckImport({ onImportComplete }: DeckImportProps) {
   const [isImporting, setIsImporting] = useState(false);
   const [error, setError] = useState('');
   const [dragActive, setDragActive] = useState(false);
+  const [pendingImport, setPendingImport] = useState<{
+    file: File;
+    hanziList: string[];
+  } | null>(null);
+  const [disambiguationData, setDisambiguationData] = useState<MultiMeaningCharacter[] | null>(null);
   
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -46,10 +62,80 @@ export default function DeckImport({ onImportComplete }: DeckImportProps) {
     setIsImporting(true);
     setError('');
     
+    try {
+      // First, parse the CSV to extract hanzi list
+      const text = await file.text();
+      const lines = text.trim().split('\n').filter(line => line.trim());
+      
+      if (lines.length === 0) {
+        throw new Error('CSV file is empty');
+      }
+      
+      // Check if first line is a header or a character
+      let startIndex = 0;
+      const firstLine = lines[0].trim();
+      
+      // If first line contains "hanzi" or doesn't look like Chinese characters, skip it
+      if (firstLine.toLowerCase().includes('hanzi') || 
+          !/^[\u4e00-\u9fff]+$/.test(firstLine)) {
+        startIndex = 1;
+      }
+      
+      const hanziList: string[] = [];
+      for (let i = startIndex; i < lines.length; i++) {
+        const hanzi = lines[i].trim();
+        if (hanzi && /^[\u4e00-\u9fff]+$/.test(hanzi) && hanzi.length <= 4) {
+          hanziList.push(hanzi);
+        }
+      }
+      
+      if (hanziList.length === 0) {
+        throw new Error('No valid characters found in CSV');
+      }
+      
+      // Check for disambiguation needs
+      const disambiguationResponse = await fetch('/api/decks/check-disambiguation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hanziList }),
+      });
+      
+      const disambiguationResult = await disambiguationResponse.json();
+      
+      if (!disambiguationResponse.ok) {
+        throw new Error(disambiguationResult.error || 'Failed to check disambiguation');
+      }
+      
+      if (disambiguationResult.needsDisambiguation) {
+        // Show disambiguation modal
+        setPendingImport({ file, hanziList });
+        setDisambiguationData(disambiguationResult.charactersNeedingClarification);
+        setIsImporting(false);
+      } else {
+        // No disambiguation needed, proceed with import
+        await proceedWithImport(file, null);
+      }
+      
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Import failed');
+      setIsImporting(false);
+    }
+  };
+
+  const proceedWithImport = async (
+    file: File, 
+    disambiguationSelections: Record<string, { pinyin: string; meaning: string }> | null
+  ) => {
+    setIsImporting(true);
+    
     const formData = new FormData();
     formData.append('file', file);
     formData.append('name', file.name.replace('.csv', ''));
     formData.append('sessionId', `session-${Date.now()}`);
+    
+    if (disambiguationSelections) {
+      formData.append('disambiguationSelections', JSON.stringify(disambiguationSelections));
+    }
     
     try {
       const response = await fetch('/api/decks/import', {
@@ -74,10 +160,26 @@ export default function DeckImport({ onImportComplete }: DeckImportProps) {
       onImportComplete();
       setIsImporting(false);
       
+      // Clear pending import data
+      setPendingImport(null);
+      setDisambiguationData(null);
+      
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Import failed');
       setIsImporting(false);
     }
+  };
+
+  const handleDisambiguationComplete = (selections: Record<string, { pinyin: string; meaning: string }>) => {
+    if (pendingImport) {
+      proceedWithImport(pendingImport.file, selections);
+    }
+  };
+
+  const handleDisambiguationCancel = () => {
+    setPendingImport(null);
+    setDisambiguationData(null);
+    setError('Import cancelled');
   };
   
   return (
@@ -130,7 +232,7 @@ export default function DeckImport({ onImportComplete }: DeckImportProps) {
             </div>
             <div className="flex items-center gap-1">
               <CheckCircle className="w-3 h-3" />
-              <span>&quot;hanzi&quot; header required</span>
+              <span>One character per line</span>
             </div>
           </div>
         </div>
@@ -144,9 +246,19 @@ export default function DeckImport({ onImportComplete }: DeckImportProps) {
       )}
       
       <div className="text-xs text-gray-600 space-y-1">
-        <p>• Each row should contain one Chinese character</p>
+        <p>• Each line should contain one Chinese character (1-4 characters)</p>
+        <p>• No header required - just list the characters</p>
         <p>• The system will auto-enrich with meanings, pinyin, images & audio</p>
       </div>
+
+      {/* Disambiguation Modal */}
+      {disambiguationData && (
+        <DisambiguationModal
+          characters={disambiguationData}
+          onComplete={handleDisambiguationComplete}
+          onCancel={handleDisambiguationCancel}
+        />
+      )}
     </div>
   );
 }

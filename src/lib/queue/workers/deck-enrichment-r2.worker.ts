@@ -8,8 +8,10 @@ import DeckCard from '@/lib/db/models/DeckCard';
 import Dictionary from '@/lib/db/models/Dictionary';
 import { generateTTSAudioR2 } from '@/lib/enrichment/azure-tts-r2';
 import { generateDALLEImageR2 } from '@/lib/enrichment/openai-dalle-r2';
+import { generateSharedAudio, generateSharedImage } from '@/lib/enrichment/shared-media';
 import { interpretChinese } from '@/lib/enrichment/openai-interpret';
 import { convertPinyinToneNumbersToMarks, hasToneMarks } from '@/lib/utils/pinyin';
+import { getPreferredEntry } from '@/lib/enrichment/multi-pronunciation-handler';
 import { getCharacterAnalysisWithCache } from '@/lib/analytics/character-analysis-service';
 import { EnhancedCharacterComplexity } from '@/lib/analytics/enhanced-linguistic-complexity';
 
@@ -90,30 +92,48 @@ export const deckEnrichmentR2Worker = new Worker<DeckEnrichmentJobData>(
             }
           });
           
-          // Look up in CEDICT
-          let dictEntry = await Dictionary.findOne({ 
-            traditional: card.hanzi 
-          });
-          
-          let needsInterpretation = false;
-          
-          if (dictEntry) {
-            console.log(`   ✓ Found in dictionary`);
-            // Use the first definition and pinyin
-            card.meaning = dictEntry.definitions[0] || 'No definition';
-            card.pinyin = dictEntry.pinyin;
+          // Check if card was already disambiguated
+          if (card.disambiguated && card.meaning && card.pinyin) {
+            console.log(`   ✓ Using pre-selected meaning: ${card.pinyin} - ${card.meaning}`);
             
             // Convert tone numbers to marks if needed
             if (!hasToneMarks(card.pinyin)) {
               card.pinyin = convertPinyinToneNumbersToMarks(card.pinyin);
             }
           } else {
-            console.log(`   ✗ Not in dictionary, will use AI interpretation`);
-            needsInterpretation = true;
+            // Look up in CEDICT
+            const dictEntries = await Dictionary.find({ 
+              traditional: card.hanzi 
+            });
+            
+            if (dictEntries.length > 0) {
+              console.log(`   ✓ Found in dictionary`);
+              
+              // If multiple entries exist, use the multi-pronunciation handler
+              if (dictEntries.length > 1) {
+                const preferredEntry = getPreferredEntry(card.hanzi, dictEntries);
+                card.meaning = preferredEntry.definitions[0] || 'No definition';
+                card.pinyin = preferredEntry.pinyin;
+                console.log(`   Multiple pronunciations found, selected: ${card.pinyin}`);
+              } else {
+                // Single entry
+                card.meaning = dictEntries[0].definitions[0] || 'No definition';
+                card.pinyin = dictEntries[0].pinyin;
+              }
+              
+              // Convert tone numbers to marks if needed
+              if (!hasToneMarks(card.pinyin)) {
+                card.pinyin = convertPinyinToneNumbersToMarks(card.pinyin);
+              }
+            } else {
+              console.log(`   ✗ Not in dictionary, will use AI interpretation`);
+            }
           }
           
           // If not in dictionary or meaning is unclear, use AI interpretation
-          if (needsInterpretation || card.meaning === 'No definition' || !card.pinyin) {
+          const needsInterpretation = card.disambiguated ? false : (!card.meaning || card.meaning === 'No definition' || !card.pinyin);
+          
+          if (needsInterpretation) {
             console.log(`   🤖 Using AI interpretation...`);
             
             await Deck.findByIdAndUpdate(deckId, {
@@ -167,16 +187,14 @@ export const deckEnrichmentR2Worker = new Worker<DeckEnrichmentJobData>(
             }
           });
           
-          const image = await generateDALLEImageR2(
+          const image = await generateSharedImage(
             card.hanzi, 
             card.meaning, 
-            card.pinyin,
-            deckId,
-            cardId
+            card.pinyin
           );
           
-          if (image.url) {
-            card.imageUrl = image.url;
+          if (image.imageUrl) {
+            card.imageUrl = image.imageUrl;
             card.imageSource = 'dalle';
             card.imageSourceId = image.cached ? 'cached' : 'generated';
             card.imageAttribution = 'AI Generated';
@@ -204,7 +222,7 @@ export const deckEnrichmentR2Worker = new Worker<DeckEnrichmentJobData>(
           });
           
           try {
-            const ttsResult = await generateTTSAudioR2(card.hanzi, deckId, cardId);
+            const ttsResult = await generateSharedAudio(card.hanzi);
             card.audioUrl = ttsResult.audioUrl;
             console.log(`   ✓ Audio ${ttsResult.cached ? 'retrieved from cache' : 'generated'}`);
           } catch (ttsError) {

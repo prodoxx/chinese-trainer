@@ -5,6 +5,7 @@ import DeckCard from '@/lib/db/models/DeckCard';
 import Dictionary from '@/lib/db/models/Dictionary';
 import { searchForImage } from '@/lib/enrichment/unified-image-search';
 import { generateTTSAudio } from '@/lib/enrichment/azure-tts';
+import { getPreferredEntry } from '@/lib/enrichment/multi-pronunciation-handler';
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,15 +29,27 @@ export async function POST(request: NextRequest) {
     const enrichedCards = [];
     
     for (const card of cards) {
-      // Look up in CEDICT
-      const dictEntry = await Dictionary.findOne({ 
+      // Find ALL dictionary entries for this character (for multiple pronunciations)
+      const dictEntries = await Dictionary.find({ 
         traditional: card.hanzi 
       });
       
-      if (dictEntry) {
-        // Use the first definition
-        card.meaning = dictEntry.definitions[0] || 'No definition';
-        card.pinyin = dictEntry.pinyin;
+      if (dictEntries.length > 0) {
+        // Use the multi-pronunciation handler to get the preferred entry
+        const selectedEntry = getPreferredEntry(card.hanzi, dictEntries);
+        
+        // Use the selected entry
+        card.meaning = selectedEntry.definitions[0] || 'No definition';
+        card.pinyin = selectedEntry.pinyin;
+        
+        // Log if there are multiple pronunciations
+        if (dictEntries.length > 1) {
+          console.log(`Multiple pronunciations found for ${card.hanzi}:`);
+          dictEntries.forEach(entry => {
+            console.log(`  ${entry.pinyin}: ${entry.definitions.join(', ')}`);
+          });
+          console.log(`Selected: ${card.pinyin} - ${card.meaning}`);
+        }
       } else {
         // Fallback for characters not in dictionary
         card.meaning = 'Unknown character';

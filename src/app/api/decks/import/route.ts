@@ -21,6 +21,7 @@ export async function POST(request: NextRequest) {
     const file = formData.get('file') as File;
     const deckName = formData.get('name') as string;
     const sessionId = formData.get('sessionId') as string;
+    const disambiguationSelectionsStr = formData.get('disambiguationSelections') as string | null;
     
     if (!file || !deckName || !sessionId) {
       return NextResponse.json(
@@ -29,22 +30,41 @@ export async function POST(request: NextRequest) {
       );
     }
     
+    // Parse disambiguation selections if provided
+    let disambiguationSelections: Record<string, { pinyin: string; meaning: string }> | null = null;
+    if (disambiguationSelectionsStr) {
+      try {
+        disambiguationSelections = JSON.parse(disambiguationSelectionsStr);
+      } catch (e) {
+        console.error('Failed to parse disambiguation selections:', e);
+      }
+    }
+    
     // Read file content
     const text = await file.text();
-    const lines = text.trim().split('\n');
+    const lines = text.trim().split('\n').filter(line => line.trim());
     
-    if (lines.length === 0 || !lines[0].toLowerCase().includes('hanzi')) {
+    if (lines.length === 0) {
       return NextResponse.json(
-        { error: 'CSV must have "hanzi" header' }, 
+        { error: 'CSV file is empty' }, 
         { status: 400 }
       );
     }
     
-    // Parse CSV
+    // Parse CSV - check if first line is a header or a character
+    let startIndex = 0;
+    const firstLine = lines[0].trim();
+    
+    // If first line contains "hanzi" or doesn't look like Chinese characters, skip it
+    if (firstLine.toLowerCase().includes('hanzi') || 
+        !/^[\u4e00-\u9fff]+$/.test(firstLine)) {
+      startIndex = 1;
+    }
+    
     const hanziList: string[] = [];
     const errors: { row: number; error: string }[] = [];
     
-    for (let i = 1; i < lines.length; i++) {
+    for (let i = startIndex; i < lines.length; i++) {
       const hanzi = lines[i].trim();
       if (!hanzi) continue;
       
@@ -90,7 +110,7 @@ export async function POST(request: NextRequest) {
       }
     });
     
-    // Queue import job
+    // Queue import job with disambiguation selections
     const job = await deckImportQueue.add(
       `import-${deck._id}`,
       {
@@ -99,6 +119,7 @@ export async function POST(request: NextRequest) {
         deckName,
         hanziList,
         sessionId,
+        disambiguationSelections,
       }
     );
     
