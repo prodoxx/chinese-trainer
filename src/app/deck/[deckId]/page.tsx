@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import Header from '@/components/Header'
+import Navigation from '@/components/Navigation'
+import Footer from '@/components/Footer'
 import CharacterInsights from '@/components/CharacterInsights'
 import { BarChart3, Zap, Clock } from 'lucide-react'
 
@@ -68,30 +69,37 @@ export default function DeckView() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-950 text-white">
-        <Header onBack={() => router.push('/')} showAnalyticsLink={false} />
-        <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-          <div className="text-center py-12">Loading deck...</div>
+      <>
+        <Navigation />
+        <div className="min-h-[calc(100vh-4rem)] bg-gray-950 text-white font-learning flex flex-col">
+          <div className="flex-1 max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 w-full">
+            <div className="text-center py-12">Loading deck...</div>
+          </div>
+          <Footer />
         </div>
-      </div>
+      </>
     )
   }
 
   if (error || !deck) {
     return (
-      <div className="min-h-screen bg-gray-950 text-white">
-        <Header onBack={() => router.push('/')} showAnalyticsLink={false} />
-        <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-          <div className="text-center text-red-600 py-12">{error || 'Deck not found'}</div>
+      <>
+        <Navigation />
+        <div className="min-h-[calc(100vh-4rem)] bg-gray-950 text-white font-learning flex flex-col">
+          <div className="flex-1 max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 w-full">
+            <div className="text-center text-red-600 py-12">{error || 'Deck not found'}</div>
+          </div>
+          <Footer />
         </div>
-      </div>
+      </>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
-      <Header onBack={() => router.push('/')} showAnalyticsLink={false} />
-      <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+    <>
+      <Navigation />
+      <div className="min-h-[calc(100vh-4rem)] bg-gray-950 text-white font-learning flex flex-col">
+        <div className="flex-1 max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 w-full">
         <div className="mb-8">
           <h1 className="text-3xl font-bold">{deck.name}</h1>
           <p className="text-gray-400 mt-2">{deck.cards.length} cards in this deck</p>
@@ -105,7 +113,7 @@ export default function DeckView() {
               onClick={() => setSelectedCharacter({ id: card._id, hanzi: card.hanzi })}
             >
               <div className="text-center mb-4">
-                <div className="text-6xl font-bold mb-2 text-white">{card.hanzi}</div>
+                <div className="text-6xl font-bold mb-2 text-white hanzi">{card.hanzi}</div>
                 <div className="text-xl text-gray-400 mb-2">{card.pinyin}</div>
                 <div className="text-sm text-gray-500">{card.english.join(', ')}</div>
               </div>
@@ -190,6 +198,9 @@ export default function DeckView() {
             No cards in this deck yet
           </div>
         )}
+        </div>
+        
+        <Footer />
       </div>
       
       {/* Character Insights Modal */}
@@ -200,6 +211,6 @@ export default function DeckView() {
           onClose={() => setSelectedCharacter(null)}
         />
       )}
-    </div>
+    </>
   )
 }

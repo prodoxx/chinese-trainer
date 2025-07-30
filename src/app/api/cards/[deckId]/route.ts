@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/db/mongodb';
 import Card from '@/lib/db/models/Card';
+import Deck from '@/lib/db/models/Deck';
 import DeckCard from '@/lib/db/models/DeckCard';
 import Review from '@/lib/db/models/Review';
 
@@ -9,9 +12,24 @@ export async function GET(
   context: { params: Promise<{ deckId: string }> }
 ) {
   try {
+    // Get authenticated user
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' }, 
+        { status: 401 }
+      );
+    }
+    
     await connectDB();
     
     const { deckId } = await context.params;
+    
+    // Verify user owns this deck
+    const deck = await Deck.findOne({ _id: deckId, userId: session.user.id });
+    if (!deck) {
+      return NextResponse.json({ error: 'Deck not found' }, { status: 404 });
+    }
     
     // Find all card associations for this deck
     const deckCards = await DeckCard.find({ deckId });
@@ -20,8 +38,9 @@ export async function GET(
     // Fetch the actual cards
     let cards = await Card.find({ _id: { $in: cardIds } });
     
-    // Get reviews to filter out studied cards
+    // Get reviews for current user to filter out studied cards
     const reviews = await Review.find({ 
+      userId: session.user.id,
       cardId: { $in: cardIds },
       firstStudiedAt: { $exists: true }
     }).select('cardId');

@@ -1,7 +1,10 @@
 import { BookOpen, Target, Zap, Clock, Eye, Lightbulb, ArrowRight, Brain } from "lucide-react"
 import Link from "next/link"
+import { redirectIfAuthenticated } from "@/lib/auth-helpers"
 
-export default function SciencePage() {
+export default async function SciencePage() {
+  // Redirect to dashboard if authenticated
+  await redirectIfAuthenticated();
   return (
     <>
       {/* Hero Section */}

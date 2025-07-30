@@ -12,14 +12,16 @@ export const authOptions: NextAuthOptions = {
   },
   pages: {
     signIn: "/auth/signin",
-    signUp: "/auth/signup",
+    signUp: "/auth/signup", 
     error: "/auth/error",
     verifyRequest: "/auth/verify-request",
   },
+  debug: process.env.NODE_ENV === "development",
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      allowDangerousEmailAccountLinking: true, // Allow automatic account creation
     }),
     CredentialsProvider({
       name: "credentials",
@@ -65,7 +67,20 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user, account }) {
+    async signIn({ user, account, profile }) {
+      // Allow OAuth sign-ins
+      if (account?.provider === "google") {
+        return true;
+      }
+      
+      // For credentials provider
+      if (account?.provider === "credentials") {
+        return true;
+      }
+      
+      return false;
+    },
+    async jwt({ token, user, account, profile }) {
       if (user) {
         token.id = user.id;
         token.role = (user as any).role || "user";

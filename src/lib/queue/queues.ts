@@ -31,6 +31,7 @@ export const deckImportQueue = new Queue('deck-import', {
 
 export interface DeckEnrichmentJobData {
   deckId: string;
+  userId: string;
   deckName: string;
   sessionId: string;
   force?: boolean;
@@ -38,6 +39,7 @@ export interface DeckEnrichmentJobData {
 
 export interface DeckImportJobData {
   deckId: string;
+  userId: string;
   deckName: string;
   hanziList: string[];
   sessionId: string;

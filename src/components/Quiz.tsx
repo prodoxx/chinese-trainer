@@ -295,17 +295,17 @@ export default function Quiz({ cards, deckId, onComplete, onExit }: QuizProps) {
   const question = questions[currentQuestion];
   
   return (
-    <div className="fixed inset-0 bg-black flex items-center justify-center">
-      <div className="max-w-4xl w-full px-8">
-        <div className="mb-8">
-          <div className="flex justify-between items-center mb-4">
-            <div className="text-xl">Question {currentQuestion + 1} of {questions.length}</div>
-            <div className={`text-xl ${timeRemaining < 5 ? 'text-red-500' : ''}`}>
+    <div className="fixed inset-0 bg-black flex items-center justify-center p-4">
+      <div className="max-w-4xl w-full px-4 sm:px-8">
+        <div className="mb-6 sm:mb-8">
+          <div className="flex justify-between items-center mb-3 sm:mb-4">
+            <div className="text-base sm:text-xl">Question {currentQuestion + 1} of {questions.length}</div>
+            <div className={`text-base sm:text-xl ${timeRemaining < 5 ? 'text-red-500' : ''}`}>
               {Math.ceil(timeRemaining)}s
             </div>
           </div>
           
-          <div className="text-3xl text-center mb-8">
+          <div className="text-xl sm:text-2xl md:text-3xl text-center mb-6 sm:mb-8">
             {question.type === 'meaning-to-hanzi' ? (
               <div>Which character means &ldquo;{question.correctCard.meaning}&rdquo;?</div>
             ) : question.type === 'audio-to-hanzi' ? (
@@ -327,20 +327,20 @@ export default function Quiz({ cards, deckId, onComplete, onExit }: QuizProps) {
             ) : (
               <div className="space-y-4">
                 <div>Which image matches this character?</div>
-                <div className="text-6xl">{question.correctCard.hanzi}</div>
+                <div className="text-5xl sm:text-6xl">{question.correctCard.hanzi}</div>
               </div>
             )}
           </div>
         </div>
         
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           {question.options.map((option, index) => (
             <button
               key={option.id}
               onClick={() => handleAnswer(option.id)}
               disabled={showResult}
               className={`
-                p-6 rounded-lg border-2 transition-all cursor-pointer
+                p-4 sm:p-6 rounded-lg border-2 transition-all cursor-pointer
                 ${showResult && option.id === question.correctCard.id
                   ? 'border-green-500 bg-green-900/30'
                   : showResult && option.id !== question.correctCard.id
@@ -353,12 +353,12 @@ export default function Quiz({ cards, deckId, onComplete, onExit }: QuizProps) {
               <div className="flex items-center space-x-2">
                 <span className="text-gray-500">{index + 1}.</span>
                 {question.type === 'meaning-to-hanzi' || question.type === 'audio-to-hanzi' ? (
-                  <span className="text-4xl">{option.hanzi}</span>
+                  <span className="text-3xl sm:text-4xl">{option.hanzi}</span>
                 ) : (
                   option.imageUrl ? (
-                    <img src={option.imageUrl} alt="" className="w-32 h-32 object-cover rounded" />
+                    <img src={option.imageUrl} alt="" className="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded" />
                   ) : (
-                    <div className="w-32 h-32 bg-gray-800 rounded flex items-center justify-center">
+                    <div className="w-24 h-24 sm:w-32 sm:h-32 bg-gray-800 rounded flex items-center justify-center">
                       {option.hanzi}
                     </div>
                   )
@@ -369,8 +369,8 @@ export default function Quiz({ cards, deckId, onComplete, onExit }: QuizProps) {
         </div>
         
         {showResult && (
-          <div className="mt-8 text-center">
-            <div className="text-2xl mb-4">
+          <div className="mt-6 sm:mt-8 text-center">
+            <div className="text-lg sm:text-xl md:text-2xl mb-3 sm:mb-4">
               {timedOut ? '⏰ Time\'s up!' : selectedAnswer === question.correctCard.id ? '✓ Correct!' : '✗ Incorrect'}
             </div>
             <div className="text-gray-400">
@@ -380,8 +380,9 @@ export default function Quiz({ cards, deckId, onComplete, onExit }: QuizProps) {
         )}
       </div>
       
-      <div className="fixed bottom-8 right-8 text-sm text-gray-500">
-        {!showResult && 'Press 1-4 to answer • '}R to restart • Q/ESC to exit
+      <div className="fixed bottom-4 sm:bottom-8 right-4 sm:right-8 text-xs sm:text-sm text-gray-500">
+        <span className="hidden sm:inline">{!showResult && 'Press 1-4 to answer • '}R to restart • Q/ESC to exit</span>
+        <span className="sm:hidden">Q: Exit</span>
       </div>
     </div>
   );

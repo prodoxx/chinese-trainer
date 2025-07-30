@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/db/mongodb';
 import Review from '@/lib/db/models/Review';
 import Card from '@/lib/db/models/Card';
@@ -7,6 +9,15 @@ import DeckCard from '@/lib/db/models/DeckCard';
 
 export async function GET(request: NextRequest) {
   try {
+    // Get authenticated user
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' }, 
+        { status: 401 }
+      );
+    }
+    
     await connectDB();
     
     // Get date range from query params (default to last 30 days)
@@ -15,8 +26,9 @@ export async function GET(request: NextRequest) {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
     
-    // Get all reviews (including those without lastReviewedAt)
+    // Get all reviews for the current user (including those without lastReviewedAt)
     const reviews = await Review.find({
+      userId: session.user.id,
       $or: [
         { lastReviewedAt: { $gte: startDate } },
         { firstStudiedAt: { $gte: startDate } }
@@ -103,13 +115,13 @@ export async function GET(request: NextRequest) {
     }
     longestStreak = Math.max(longestStreak, tempStreak);
     
-    // Get deck performance
-    const decks = await Deck.find();
+    // Get deck performance for current user
+    const decks = await Deck.find({ userId: session.user.id });
     const deckStats = await Promise.all(decks.map(async (deck) => {
       const deckCards = await DeckCard.find({ deckId: deck._id }).populate('cardId');
       const cardIds = deckCards.map(dc => dc.cardId._id);
       
-      const deckReviews = await Review.find({ cardId: { $in: cardIds } });
+      const deckReviews = await Review.find({ userId: session.user.id, cardId: { $in: cardIds } });
       const totalDeckReviews = deckReviews.reduce((sum, r) => sum + (r.seen || 0), 0);
       const correctDeckReviews = deckReviews.reduce((sum, r) => sum + (r.correct || 0), 0);
       

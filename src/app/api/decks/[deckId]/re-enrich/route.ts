@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { deckEnrichmentQueue } from '@/lib/queue/queues';
 import Deck from '@/lib/db/models/Deck';
 import connectDB from '@/lib/db/mongodb';
@@ -8,6 +10,15 @@ export async function POST(
   context: { params: Promise<{ deckId: string }> }
 ) {
   try {
+    // Get authenticated user
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' }, 
+        { status: 401 }
+      );
+    }
+    
     await connectDB();
     
     const { deckId } = await context.params;
@@ -17,8 +28,8 @@ export async function POST(
       return NextResponse.json({ error: 'Session ID required' }, { status: 400 });
     }
     
-    // Get deck info
-    const deck = await Deck.findById(deckId);
+    // Get deck info for current user
+    const deck = await Deck.findOne({ _id: deckId, userId: session.user.id });
     if (!deck) {
       return NextResponse.json({ error: 'Deck not found' }, { status: 404 });
     }
@@ -38,6 +49,7 @@ export async function POST(
       `re-enrich-${deckId}`,
       {
         deckId,
+        userId: session.user.id,
         deckName: deck.name,
         sessionId,
         force,

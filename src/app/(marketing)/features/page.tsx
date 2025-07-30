@@ -1,7 +1,10 @@
 import { Upload, Zap, BarChart3, Clock, Globe, Smartphone, Shield, Settings, ArrowRight, Brain, Play, RotateCcw, Timer } from "lucide-react"
 import Link from "next/link"
+import { redirectIfAuthenticated } from "@/lib/auth-helpers"
 
-export default function FeaturesPage() {
+export default async function FeaturesPage() {
+  // Redirect to dashboard if authenticated
+  await redirectIfAuthenticated();
   return (
     <>
       {/* Hero Section */}

@@ -256,10 +256,10 @@ export default function DeckList({ onSelectDeck }: DeckListProps) {
 
 	if (decks.length === 0) {
 		return (
-			<div className="text-center p-12 bg-gray-900/30 rounded-2xl border border-gray-800 border-dashed">
-				<Layers className="w-12 h-12 text-gray-700 mx-auto mb-4" />
-				<p className="text-gray-500">No decks yet</p>
-				<p className="text-sm text-gray-600 mt-1">Import a deck to start your learning journey</p>
+			<div className="text-center p-12 bg-[#21262d] rounded-2xl border border-[#30363d] border-dashed">
+				<Layers className="w-12 h-12 text-[#f7cc48] mx-auto mb-4" />
+				<p className="text-white font-semibold">No decks yet</p>
+				<p className="text-sm text-[#7d8590] mt-1">Import a deck to start your learning journey</p>
 			</div>
 		);
 	}
@@ -270,15 +270,17 @@ export default function DeckList({ onSelectDeck }: DeckListProps) {
 				{decks.map((deck) => (
 					<div
 						key={deck.id}
-						className="group bg-gray-900/30 backdrop-blur-sm rounded-2xl border border-gray-800 p-6 transition-all duration-300 hover:bg-gray-900/50 hover:border-gray-700"
+						className="group relative bg-[#21262d] rounded-2xl border border-[#30363d] p-4 sm:p-6 transition-all duration-300 hover:border-[#f7cc48]/50 overflow-hidden"
 					>
-						<div className="flex justify-between items-start">
+						{/* Gradient overlay */}
+						<div className="absolute inset-0 bg-gradient-to-br from-[#f7cc48]/10 via-transparent to-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+						<div className="relative flex justify-between items-start">
 							<Link href={`/deck/${deck.id}`} className="flex-1 cursor-pointer">
 								<div className="flex items-center gap-3 mb-3">
-									<div className="w-10 h-10 bg-gradient-to-br from-violet-600/20 to-purple-600/20 rounded-xl flex items-center justify-center">
-										<BookOpen className="w-5 h-5 text-violet-400" />
+									<div className="w-10 h-10 bg-gradient-to-br from-[#f7cc48]/20 to-orange-500/20 rounded-xl flex items-center justify-center">
+										<BookOpen className="w-5 h-5 text-[#f7cc48]" />
 									</div>
-									<div className="flex-1">
+									<div className="flex-1 min-w-0">
 										{editingDeck === deck.id ? (
 											<div className="flex items-center gap-2">
 												<input
@@ -293,7 +295,7 @@ export default function DeckList({ onSelectDeck }: DeckListProps) {
 														}
 													}}
 													onClick={(e) => e.stopPropagation()}
-													className="px-2 py-1 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+													className="flex-1 min-w-0 px-2 py-1 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 text-sm"
 													autoFocus
 												/>
 												<button
@@ -301,7 +303,7 @@ export default function DeckList({ onSelectDeck }: DeckListProps) {
 														e.stopPropagation();
 														handleEditSave(deck.id);
 													}}
-													className="p-1 text-green-400 hover:bg-gray-800 rounded transition-colors cursor-pointer"
+													className="p-1 text-green-400 hover:bg-gray-800 rounded transition-colors cursor-pointer flex-shrink-0"
 												>
 													<Check className="w-4 h-4" />
 												</button>
@@ -310,24 +312,24 @@ export default function DeckList({ onSelectDeck }: DeckListProps) {
 														e.stopPropagation();
 														handleEditCancel();
 													}}
-													className="p-1 text-gray-400 hover:bg-gray-800 rounded transition-colors cursor-pointer"
+													className="p-1 text-gray-400 hover:bg-gray-800 rounded transition-colors cursor-pointer flex-shrink-0"
 												>
 													<X className="w-4 h-4" />
 												</button>
 											</div>
 										) : (
 											<div className="flex items-center gap-2 group/name">
-												<h3 className="font-semibold text-white group-hover:text-violet-300 transition-colors">{deck.name}</h3>
+												<h3 className="font-semibold text-white group-hover:text-[#f7cc48] transition-colors truncate">{deck.name}</h3>
 												<button
 													onClick={(e) => handleEditStart(e, deck.id, deck.name)}
-													className="opacity-0 group-hover/name:opacity-100 p-1 text-gray-400 hover:text-violet-400 hover:bg-gray-800 rounded transition-all cursor-pointer"
+													className="opacity-0 group-hover/name:opacity-100 md:opacity-0 p-1 text-gray-400 hover:text-[#f7cc48] hover:bg-[#161b22] rounded transition-all cursor-pointer flex-shrink-0"
 													title="Edit deck name"
 												>
 													<Edit2 className="w-3.5 h-3.5" />
 												</button>
 											</div>
 										)}
-										<p className="text-sm text-gray-500 flex items-center gap-2 mt-1">
+										<p className="text-xs sm:text-sm text-gray-500 flex items-center gap-2 mt-1">
 											<Layers className="w-3 h-3" />
 											{deck.cardsCount} cards
 											{deck.status !== "ready" && (
@@ -399,68 +401,74 @@ export default function DeckList({ onSelectDeck }: DeckListProps) {
 							</Link>
 							<div className="flex flex-col gap-2">
 								{/* Action buttons */}
-								<div className="flex gap-2 justify-end">
+								<div className="flex gap-1 sm:gap-2 justify-end">
 									<button
 										onClick={(e) => handleReEnrich(e, deck.id)}
 										disabled={
 											enrichingDeck === deck.id || deck.status !== "ready"
 										}
-										className="p-2 text-gray-500 hover:text-violet-400 hover:bg-gray-800 rounded-lg transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+										className="p-1.5 sm:p-2 text-[#7d8590] hover:text-[#f7cc48] hover:bg-[#161b22] rounded-lg transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
 										title="Re-enrich missing images/audio (Shift+click to force update ALL)"
 									>
 										{enrichingDeck === deck.id ? (
-											<RefreshCw className="w-4 h-4 animate-spin" />
+											<RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
 										) : (
-											<RefreshCw className="w-4 h-4" />
+											<RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
 										)}
 									</button>
 									<button
 										onClick={(e) => handleDelete(e, deck.id, deck.name)}
 										disabled={deletingDeck === deck.id || deck.status !== "ready"}
-										className="p-2 text-gray-500 hover:text-red-400 hover:bg-gray-800 rounded-lg transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+										className="p-1.5 sm:p-2 text-[#7d8590] hover:text-red-400 hover:bg-[#161b22] rounded-lg transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
 										title="Delete deck"
 									>
 										{deletingDeck === deck.id ? (
-											<RefreshCw className="w-4 h-4 animate-spin" />
+											<RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
 										) : (
-											<Trash2 className="w-4 h-4" />
+											<Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
 										)}
 									</button>
 								</div>
 								{/* Study buttons or enrichment progress */}
 								{deck.status === "ready" ? (
-									<div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-800">
+									<div className="flex flex-col sm:flex-row flex-wrap gap-2 mt-3 pt-3 border-t border-[#30363d]">
 										{deck.stats &&
 											deck.stats.newCards > 0 && (
 												<button
 													onClick={() => onSelectDeck(deck.id, "new")}
-													className="flex-1 min-w-[120px] px-4 py-2.5 bg-gradient-to-r from-blue-600/20 to-blue-500/20 hover:from-blue-600/30 hover:to-blue-500/30 text-blue-300 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 border border-blue-800/50 hover:border-blue-700/50 group cursor-pointer"
+													className="flex-1 min-w-0 sm:min-w-[120px] px-3 sm:px-4 py-2 sm:py-2.5 bg-gradient-to-r from-[#f7cc48]/20 to-yellow-500/20 hover:from-[#f7cc48]/30 hover:to-yellow-500/30 text-[#f7cc48] rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2 border border-[#f7cc48]/30 hover:border-[#f7cc48]/50 group cursor-pointer"
 													title={`Study ${deck.stats.newCards} new cards`}
 												>
-													<Sparkles className="w-4 h-4 group-hover:scale-110 transition-transform" />
-													<span className="text-sm font-medium">Study New ({deck.stats.newCards})</span>
+													<Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:scale-110 transition-transform" />
+													<span className="text-xs sm:text-sm font-medium">
+														<span className="hidden sm:inline">Study New</span>
+														<span className="sm:hidden">New</span> ({deck.stats.newCards})
+													</span>
 												</button>
 											)}
 										{deck.stats &&
 											(deck.stats.overdue > 0 || deck.stats.dueToday > 0) && (
 												<button
 													onClick={() => onSelectDeck(deck.id, "review")}
-													className="flex-1 min-w-[120px] px-4 py-2.5 bg-gradient-to-r from-yellow-600/20 to-orange-500/20 hover:from-yellow-600/30 hover:to-orange-500/30 text-yellow-300 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 border border-yellow-800/50 hover:border-yellow-700/50 group cursor-pointer"
+													className="flex-1 min-w-0 sm:min-w-[120px] px-3 sm:px-4 py-2 sm:py-2.5 bg-gradient-to-r from-orange-600/20 to-red-500/20 hover:from-orange-600/30 hover:to-red-500/30 text-orange-400 rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2 border border-orange-800/50 hover:border-orange-700/50 group cursor-pointer"
 													title={`Review ${deck.stats.overdue + deck.stats.dueToday} due cards`}
 												>
-													<Zap className="w-4 h-4 group-hover:scale-110 transition-transform" />
-													<span className="text-sm font-medium">Review ({deck.stats.overdue + deck.stats.dueToday})</span>
+													<Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:scale-110 transition-transform" />
+													<span className="text-xs sm:text-sm font-medium">Review ({deck.stats.overdue + deck.stats.dueToday})</span>
 												</button>
 											)}
 										{deck.stats &&
 											deck.stats.totalCards > deck.stats.newCards && (
 												<button
 													onClick={() => onSelectDeck(deck.id, "practice")}
-													className="flex-1 min-w-[120px] px-4 py-2.5 bg-gradient-to-r from-purple-600/20 to-pink-500/20 hover:from-purple-600/30 hover:to-pink-500/30 text-purple-300 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 border border-purple-800/50 hover:border-purple-700/50 group cursor-pointer"
+													className="flex-1 min-w-0 sm:min-w-[120px] px-3 sm:px-4 py-2 sm:py-2.5 bg-gradient-to-r from-green-600/20 to-emerald-500/20 hover:from-green-600/30 hover:to-emerald-500/30 text-green-400 rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2 border border-green-800/50 hover:border-green-700/50 group cursor-pointer"
 													title={`Practice quiz on all ${deck.stats.totalCards - deck.stats.newCards} studied cards`}
 												>
-													<Brain className="w-4 h-4 group-hover:scale-110 transition-transform" />
-													<span className="text-sm font-medium">Practice ({deck.stats.totalCards - deck.stats.newCards})</span>
+													<Brain className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:scale-110 transition-transform" />
+													<span className="text-xs sm:text-sm font-medium">
+														<span className="hidden sm:inline">Practice</span>
+														<span className="sm:hidden">Quiz</span> ({deck.stats.totalCards - deck.stats.newCards})
+													</span>
 												</button>
 											)}
 									</div>
@@ -470,7 +478,7 @@ export default function DeckList({ onSelectDeck }: DeckListProps) {
 						
 						{/* Enrichment progress - full width */}
 						{deck.status !== "ready" && deck.enrichmentProgress && (
-							<div className="mt-4 p-4 bg-gray-800/30 rounded-xl border border-gray-800">
+							<div className="mt-4 p-4 bg-[#161b22] rounded-xl border border-[#30363d]">
 								<div className="flex justify-between text-xs text-gray-400 mb-2">
 									<span className="flex items-center gap-1.5">
 										<RefreshCw className="w-3 h-3 animate-spin" />
@@ -484,7 +492,7 @@ export default function DeckList({ onSelectDeck }: DeckListProps) {
 								</div>
 								<div className="w-full bg-gray-900 rounded-full h-2 overflow-hidden">
 									<div
-										className="bg-gradient-to-r from-violet-600 to-purple-600 h-2 rounded-full transition-all duration-300"
+										className="bg-gradient-to-r from-[#f7cc48] to-orange-500 h-2 rounded-full transition-all duration-300"
 										style={{
 											width: `${(deck.enrichmentProgress.processedCards / deck.enrichmentProgress.totalCards) * 100}%`,
 										}}
@@ -498,7 +506,7 @@ export default function DeckList({ onSelectDeck }: DeckListProps) {
 							</div>
 						)}
 						{deck.status !== "ready" && !deck.enrichmentProgress && (
-							<div className="mt-4 p-4 bg-gray-800/30 rounded-xl border border-gray-800">
+							<div className="mt-4 p-4 bg-[#161b22] rounded-xl border border-[#30363d]">
 								<div className="text-sm text-gray-500 text-center">
 									{deck.status === "importing" ? "Importing cards..." : "Preparing deck..."}
 								</div>

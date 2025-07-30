@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
 
 export interface IReview extends Document {
+  userId: string; // Reference to User in PostgreSQL
   cardId: Types.ObjectId;
   deckId: Types.ObjectId;
   ease: number;
@@ -19,7 +20,8 @@ export interface IReview extends Document {
 
 const ReviewSchema = new Schema<IReview>(
   {
-    cardId: { type: Schema.Types.ObjectId, ref: 'Card', required: true, unique: true },
+    userId: { type: String, required: true, index: true }, // User ID from PostgreSQL
+    cardId: { type: Schema.Types.ObjectId, ref: 'Card', required: true },
     deckId: { type: Schema.Types.ObjectId, ref: 'Deck', required: true },
     ease: { type: Number, default: 2.5, min: 1.3 },
     intervalDays: { type: Number, default: 1 },
@@ -35,8 +37,9 @@ const ReviewSchema = new Schema<IReview>(
   { timestamps: true }
 );
 
-ReviewSchema.index({ cardId: 1 }, { unique: true });
-ReviewSchema.index({ deckId: 1, due: 1 });
-ReviewSchema.index({ deckId: 1, memoryStrength: 1 });
+// Compound index for unique reviews per user/card combination
+ReviewSchema.index({ userId: 1, cardId: 1 }, { unique: true });
+ReviewSchema.index({ userId: 1, deckId: 1, due: 1 });
+ReviewSchema.index({ userId: 1, deckId: 1, memoryStrength: 1 });
 
 export default mongoose.models.Review || mongoose.model<IReview>('Review', ReviewSchema);

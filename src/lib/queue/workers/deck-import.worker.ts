@@ -10,7 +10,7 @@ import Review from '@/lib/db/models/Review';
 export const deckImportWorker = new Worker<DeckImportJobData>(
   'deck-import',
   async (job: Job<DeckImportJobData>) => {
-    const { deckId, deckName, hanziList, sessionId } = job.data;
+    const { deckId, userId, deckName, hanziList, sessionId } = job.data;
     
     console.log(`\n📥 Starting deck import for "${deckName}" (${deckId})`);
     console.log(`   Characters to import: ${hanziList.length}`);
@@ -50,12 +50,20 @@ export const deckImportWorker = new Worker<DeckImportJobData>(
           if (!card) {
             card = await Card.create({ hanzi });
             newCardsCount++;
-            
-            // Create review record for new card
-            await Review.create({ cardId: card._id });
           } else {
             existingCardsCount++;
           }
+          
+          // Create or update review record for this user
+          await Review.findOneAndUpdate(
+            { userId, cardId: card._id },
+            { 
+              userId, 
+              cardId: card._id, 
+              deckId: deck._id 
+            },
+            { upsert: true }
+          )
           
           // Link card to this deck
           await DeckCard.findOneAndUpdate(
@@ -96,6 +104,7 @@ export const deckImportWorker = new Worker<DeckImportJobData>(
         `enrich-${deck._id}`,
         {
           deckId: deck._id.toString(),
+          userId,
           deckName: deck.name,
           sessionId,
           force: false,

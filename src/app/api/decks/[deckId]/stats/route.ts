@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/db/mongodb';
+import Deck from '@/lib/db/models/Deck';
 import Review from '@/lib/db/models/Review';
 import DeckCard from '@/lib/db/models/DeckCard';
 import { calculateDeckStats, calculateMemoryStrength, getCardsForReview } from '@/lib/spaced-repetition/sm2';
@@ -9,16 +12,31 @@ export async function GET(
   { params }: { params: Promise<{ deckId: string }> }
 ) {
   try {
+    // Get authenticated user
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' }, 
+        { status: 401 }
+      );
+    }
+    
     await connectDB();
     
     const { deckId } = await params;
+    
+    // Verify user owns this deck
+    const deck = await Deck.findOne({ _id: deckId, userId: session.user.id });
+    if (!deck) {
+      return NextResponse.json({ error: 'Deck not found' }, { status: 404 });
+    }
     
     // Get all cards in the deck
     const deckCards = await DeckCard.find({ deckId }).select('cardId');
     const cardIds = deckCards.map(dc => dc.cardId);
     
-    // Get all reviews for this deck
-    const reviews = await Review.find({ deckId }).lean();
+    // Get all reviews for this deck for current user
+    const reviews = await Review.find({ userId: session.user.id, deckId }).lean();
     
     // Create review records for cards without reviews
     const reviewedCardIds = new Set(reviews.map(r => r.cardId.toString()));

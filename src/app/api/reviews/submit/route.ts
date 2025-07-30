@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/db/mongodb';
 import Review from '@/lib/db/models/Review';
 import { calculateNextReview, calculateQuality, calculateMemoryStrength } from '@/lib/spaced-repetition/sm2';
@@ -16,6 +18,15 @@ export async function POST(req: NextRequest) {
   let submissions: ReviewSubmission[] = [];
   
   try {
+    // Get authenticated user
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' }, 
+        { status: 401 }
+      );
+    }
+    
     await connectDB();
     
     submissions = await req.json();
@@ -35,11 +46,12 @@ export async function POST(req: NextRequest) {
         continue;
       }
       
-      // Find or create review record
-      let review = await Review.findOne({ cardId });
+      // Find or create review record for this user
+      let review = await Review.findOne({ userId: session.user.id, cardId });
       
       if (!review) {
         review = new Review({
+          userId: session.user.id,
           cardId: new mongoose.Types.ObjectId(cardId),
           deckId: new mongoose.Types.ObjectId(deckId),
           ease: 2.5,

@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/db/mongodb';
 import Deck from '@/lib/db/models/Deck';
 import DeckCard from '@/lib/db/models/DeckCard';
@@ -12,12 +14,21 @@ export async function GET(
   context: { params: Promise<{ deckId: string }> }
 ) {
   try {
+    // Get authenticated user
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' }, 
+        { status: 401 }
+      );
+    }
+    
     await connectDB();
     
     const { deckId } = await context.params;
     
-    // Find the deck
-    const deck = await Deck.findById(deckId);
+    // Find the deck for current user
+    const deck = await Deck.findOne({ _id: deckId, userId: session.user.id });
     if (!deck) {
       return NextResponse.json({ error: 'Deck not found' }, { status: 404 });
     }
@@ -28,9 +39,10 @@ export async function GET(
     // Get all deck-card associations
     const deckCards = await DeckCard.find({ deckId }).populate('cardId');
     
-    // Get review stats for each card
+    // Get review stats for each card for current user
     const cardIds = deckCards.map(dc => (dc.cardId as any)._id);
     const reviews = await Review.find({ 
+      userId: session.user.id,
       cardId: { $in: cardIds },
       deckId: new ObjectId(deckId)
     });
@@ -39,19 +51,14 @@ export async function GET(
     const cardStatsMap = new Map();
     
     cardIds.forEach(cardId => {
-      const cardReviews = reviews.filter(r => r.cardId.toString() === cardId.toString());
-      const correctReviews = cardReviews.filter(r => r.correct);
-      
-      // Get the most recent review for difficulty
-      const sortedReviews = cardReviews.sort((a, b) => b.reviewedAt.getTime() - a.reviewedAt.getTime());
-      const mostRecentReview = sortedReviews[0];
+      const cardReview = reviews.find(r => r.cardId.toString() === cardId.toString());
       
       cardStatsMap.set(cardId.toString(), {
-        totalReviews: cardReviews.length,
-        correctReviews: correctReviews.length,
-        accuracy: cardReviews.length > 0 ? (correctReviews.length / cardReviews.length) * 100 : 0,
-        lastReviewed: mostRecentReview ? mostRecentReview.reviewedAt : null,
-        difficulty: mostRecentReview ? (mostRecentReview.difficulty || 2.5) : 2.5
+        totalReviews: cardReview ? cardReview.seen : 0,
+        correctReviews: cardReview ? cardReview.correct : 0,
+        accuracy: cardReview && cardReview.seen > 0 ? (cardReview.correct / cardReview.seen) * 100 : 0,
+        lastReviewed: cardReview ? cardReview.lastReviewedAt : null,
+        difficulty: cardReview ? cardReview.ease : 2.5
       });
     });
     
@@ -92,12 +99,21 @@ export async function DELETE(
   context: { params: Promise<{ deckId: string }> }
 ) {
   try {
+    // Get authenticated user
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' }, 
+        { status: 401 }
+      );
+    }
+    
     await connectDB();
     
     const { deckId } = await context.params;
     
-    // Find the deck
-    const deck = await Deck.findById(deckId);
+    // Find the deck for current user
+    const deck = await Deck.findOne({ _id: deckId, userId: session.user.id });
     if (!deck) {
       return NextResponse.json({ error: 'Deck not found' }, { status: 404 });
     }
@@ -129,6 +145,15 @@ export async function PATCH(
   context: { params: Promise<{ deckId: string }> }
 ) {
   try {
+    // Get authenticated user
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' }, 
+        { status: 401 }
+      );
+    }
+    
     await connectDB();
     
     const { deckId } = await context.params;
@@ -142,8 +167,8 @@ export async function PATCH(
       );
     }
     
-    const updatedDeck = await Deck.findByIdAndUpdate(
-      deckId,
+    const updatedDeck = await Deck.findOneAndUpdate(
+      { _id: deckId, userId: session.user.id },
       { name: name.trim() },
       { new: true }
     );

@@ -16,6 +16,8 @@ const r2Client = new S3Client({
     accessKeyId: process.env.R2_ACCESS_KEY_ID!,
     secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
   },
+  // Force path-style addressing for R2 compatibility
+  forcePathStyle: true,
 });
 
 const BUCKET_NAME = process.env.R2_BUCKET_NAME!;
@@ -41,6 +43,8 @@ export async function uploadToR2(
       Body: body,
       ContentType: options.contentType,
       Metadata: options.metadata,
+      // Disable automatic checksum for R2 compatibility
+      ChecksumAlgorithm: undefined,
     });
 
     await r2Client.send(command);
@@ -70,6 +74,8 @@ export async function uploadLargeFileToR2(
         Body: body,
         ContentType: options.contentType,
         Metadata: options.metadata,
+        // Disable automatic checksum for R2 compatibility
+        ChecksumAlgorithm: undefined,
       },
     });
 
@@ -168,12 +174,28 @@ export async function getPresignedUrl(
 
 /**
  * Generate storage keys for card media
+ * Uses only cardId to ensure media is shared across decks
  */
 export function generateMediaKeys(deckId: string, cardId: string) {
+  // Use only cardId for storage to share media across decks
   return {
-    image: `decks/${deckId}/cards/${cardId}/image.jpg`,
-    audio: `decks/${deckId}/cards/${cardId}/audio.mp3`,
-    thumbnail: `decks/${deckId}/cards/${cardId}/thumbnail.jpg`,
+    image: `cards/${cardId}/image.jpg`,
+    audio: `cards/${cardId}/audio.mp3`,
+    thumbnail: `cards/${cardId}/thumbnail.jpg`,
+  };
+}
+
+/**
+ * Generate storage keys based on the Chinese character
+ * This ensures maximum reuse across all cards with the same hanzi
+ */
+export function generateMediaKeysByHanzi(hanzi: string) {
+  // Encode the hanzi to ensure valid URL paths
+  const encodedHanzi = encodeURIComponent(hanzi);
+  return {
+    image: `media/hanzi/${encodedHanzi}/image.jpg`,
+    audio: `media/hanzi/${encodedHanzi}/audio.mp3`,
+    thumbnail: `media/hanzi/${encodedHanzi}/thumbnail.jpg`,
   };
 }
 

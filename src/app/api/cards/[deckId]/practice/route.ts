@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/db/mongodb';
 import Card from '@/lib/db/models/Card';
+import Deck from '@/lib/db/models/Deck';
 import Review from '@/lib/db/models/Review';
 import DeckCard from '@/lib/db/models/DeckCard';
 
@@ -12,9 +15,24 @@ export async function GET(
   context: { params: Promise<{ deckId: string }> }
 ) {
   try {
+    // Get authenticated user
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' }, 
+        { status: 401 }
+      );
+    }
+    
     await connectDB();
     
     const { deckId } = await context.params;
+    
+    // Verify user owns this deck
+    const deck = await Deck.findOne({ _id: deckId, userId: session.user.id });
+    if (!deck) {
+      return NextResponse.json({ error: 'Deck not found' }, { status: 404 });
+    }
     
     // Get all cards in the deck
     const deckCards = await DeckCard.find({ deckId }).populate('cardId');
@@ -30,24 +48,23 @@ export async function GET(
     // Get all reviews for cards in this deck
     const cardIds = cards.map(c => c._id);
     
-    // Try both queries to find reviews
-    const reviewsByCardId = await Review.find({ 
-      cardId: { $in: cardIds } 
-    });
-    
-    const reviewsByDeckId = await Review.find({ 
-      deckId: deckId 
+    // Get reviews for current user only
+    const reviews = await Review.find({ 
+      userId: session.user.id,
+      $or: [
+        { cardId: { $in: cardIds } },
+        { deckId: deckId }
+      ]
     });
     
     console.log('Practice endpoint - Reviews found:', {
-      byCardId: reviewsByCardId.length,
-      byDeckId: reviewsByDeckId.length,
+      reviews: reviews.length,
       totalCards: cards.length
     });
     
-    // Combine and deduplicate reviews
+    // Create review map
     const reviewMap = new Map();
-    [...reviewsByCardId, ...reviewsByDeckId].forEach(r => {
+    reviews.forEach(r => {
       reviewMap.set(r.cardId.toString(), r);
     });
     

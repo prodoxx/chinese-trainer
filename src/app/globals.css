@@ -30,6 +30,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-learning: var(--font-nunito);
   
   /* Custom colors for marketing pages */
   --color-*: initial;
@@ -79,4 +80,18 @@ button:disabled,
 input:disabled,
 select:disabled {
   cursor: not-allowed !important;
+}
+
+/* Professional learning font for authenticated pages */
+.font-learning {
+  font-family: var(--font-learning), var(--font-sans);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+/* Keep Chinese characters in a more readable font */
+.font-learning .chinese-char,
+.font-learning .hanzi {
+  font-family: var(--font-sans);
+  font-weight: 700;
 }

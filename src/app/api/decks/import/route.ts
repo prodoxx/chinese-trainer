@@ -1,10 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/db/mongodb';
 import Deck from '@/lib/db/models/Deck';
 import { deckImportQueue } from '@/lib/queue/queues';
 
 export async function POST(request: NextRequest) {
   try {
+    // Get authenticated user
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' }, 
+        { status: 401 }
+      );
+    }
+
     // Parse multipart form data
     const formData = await request.formData();
     const file = formData.get('file') as File;
@@ -61,27 +72,30 @@ export async function POST(request: NextRequest) {
     await connectDB();
     
     const slug = deckName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    const deck = await Deck.findOneAndUpdate(
-      { slug },
-      { 
-        name: deckName, 
-        slug, 
-        cardsCount: hanziList.length,
-        status: 'importing',
-        enrichmentProgress: {
-          totalCards: hanziList.length,
-          processedCards: 0,
-          currentOperation: 'Importing characters...'
-        }
-      },
-      { upsert: true, new: true }
-    );
+    
+    // Create unique slug for this user
+    const existingDeck = await Deck.findOne({ userId: session.user.id, slug });
+    const finalSlug = existingDeck ? `${slug}-${Date.now()}` : slug;
+    
+    const deck = await Deck.create({
+      userId: session.user.id,
+      name: deckName, 
+      slug: finalSlug, 
+      cardsCount: hanziList.length,
+      status: 'importing',
+      enrichmentProgress: {
+        totalCards: hanziList.length,
+        processedCards: 0,
+        currentOperation: 'Importing characters...'
+      }
+    });
     
     // Queue import job
     const job = await deckImportQueue.add(
       `import-${deck._id}`,
       {
         deckId: deck._id.toString(),
+        userId: session.user.id,
         deckName,
         hanziList,
         sessionId,

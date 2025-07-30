@@ -675,64 +675,64 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
   // Show practice mode selection
   if (showPracticeModeSelection && mode === 'practice') {
     return (
-      <div className="fixed inset-0 bg-black flex items-center justify-center">
-        <div className="bg-gray-900 p-8 rounded-lg max-w-2xl text-center">
-          <h2 className="text-2xl font-bold text-white mb-6">Choose Practice Mode</h2>
+      <div className="fixed inset-0 bg-black flex items-center justify-center p-4">
+        <div className="bg-gray-900 p-6 sm:p-8 rounded-lg max-w-2xl w-full text-center">
+          <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">Choose Practice Mode</h2>
           
-          <div className="space-y-4 mb-6">
+          <div className="space-y-3 sm:space-y-4 mb-4 sm:mb-6">
             <button
               onClick={() => setSelectedPracticeMode('quick')}
-              className={`w-full p-4 rounded-lg border-2 transition-all text-left ${
+              className={`w-full p-3 sm:p-4 rounded-lg border-2 transition-all text-left ${
                 selectedPracticeMode === 'quick'
                   ? 'border-violet-500 bg-violet-900/20'
                   : 'border-gray-700 hover:border-gray-600'
               }`}
             >
-              <h3 className="text-lg font-semibold text-white mb-1">🚀 Quick Practice</h3>
-              <p className="text-gray-300 text-sm">5-7 random cards for a fast review</p>
+              <h3 className="text-base sm:text-lg font-semibold text-white mb-1">🚀 Quick Practice</h3>
+              <p className="text-gray-300 text-xs sm:text-sm">5-7 random cards for a fast review</p>
               <p className="text-gray-500 text-xs mt-1">~2-3 minutes</p>
             </button>
             
             <button
               onClick={() => setSelectedPracticeMode('full')}
-              className={`w-full p-4 rounded-lg border-2 transition-all text-left ${
+              className={`w-full p-3 sm:p-4 rounded-lg border-2 transition-all text-left ${
                 selectedPracticeMode === 'full'
                   ? 'border-violet-500 bg-violet-900/20'
                   : 'border-gray-700 hover:border-gray-600'
               }`}
             >
-              <h3 className="text-lg font-semibold text-white mb-1">📚 Full Review</h3>
-              <p className="text-gray-300 text-sm">All {cards.length} cards in chunks of 7 with breaks</p>
+              <h3 className="text-base sm:text-lg font-semibold text-white mb-1">📚 Full Review</h3>
+              <p className="text-gray-300 text-xs sm:text-sm">All {cards.length} cards in chunks of 7 with breaks</p>
               <p className="text-gray-500 text-xs mt-1">Optimal for learning with cognitive breaks</p>
             </button>
             
             <button
               onClick={() => setSelectedPracticeMode('focused')}
-              className={`w-full p-4 rounded-lg border-2 transition-all text-left ${
+              className={`w-full p-3 sm:p-4 rounded-lg border-2 transition-all text-left ${
                 selectedPracticeMode === 'focused'
                   ? 'border-violet-500 bg-violet-900/20'
                   : 'border-gray-700 hover:border-gray-600'
               }`}
               disabled={true}
             >
-              <h3 className="text-lg font-semibold text-gray-500 mb-1">🎯 Focused Practice</h3>
-              <p className="text-gray-500 text-sm">Review only previously missed cards</p>
+              <h3 className="text-base sm:text-lg font-semibold text-gray-500 mb-1">🎯 Focused Practice</h3>
+              <p className="text-gray-500 text-xs sm:text-sm">Review only previously missed cards</p>
               <p className="text-gray-600 text-xs mt-1">Available after completing some reviews</p>
             </button>
           </div>
           
-          <div className="bg-blue-900/30 border border-blue-700 rounded-lg p-4 mb-6 text-left">
-            <p className="text-blue-300 font-semibold mb-2">💡 Recommendation</p>
-            <p className="text-gray-300 text-sm">
+          <div className="bg-blue-900/30 border border-blue-700 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6 text-left">
+            <p className="text-blue-300 font-semibold mb-1 sm:mb-2 text-sm sm:text-base">💡 Recommendation</p>
+            <p className="text-gray-300 text-xs sm:text-sm">
               Full Review mode follows cognitive science best practices with optimal chunk sizes
               and memory consolidation breaks between rounds.
             </p>
           </div>
           
-          <div className="flex gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
             <button
               onClick={onExit}
-              className="px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded transition-colors"
+              className="px-4 sm:px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded transition-colors text-sm sm:text-base"
             >
               Cancel
             </button>
@@ -763,7 +763,7 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
                   setSessionStartTime(Date.now());
                 }
               }}
-              className="px-6 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded transition-colors font-semibold"
+              className="px-4 sm:px-6 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded transition-colors font-semibold text-sm sm:text-base"
             >
               Start Practice
             </button>
@@ -785,43 +785,43 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
     const isReviewRound = remainingCards === 0 && missedCardIds.size > 0 && practiceRound === 1;
     
     return (
-      <div className="fixed inset-0 bg-black flex items-center justify-center">
-        <div className="bg-gray-900 p-8 rounded-lg max-w-lg text-center">
-          <h2 className="text-2xl font-bold text-white mb-4">
+      <div className="fixed inset-0 bg-black flex items-center justify-center p-4">
+        <div className="bg-gray-900 p-6 sm:p-8 rounded-lg max-w-lg w-full text-center">
+          <h2 className="text-xl sm:text-2xl font-bold text-white mb-3 sm:mb-4">
             {isReviewRound ? '📝 Ready for Focused Review?' : '✨ Great Progress!'}
           </h2>
           
-          <div className="mb-6 space-y-2">
-            <p className="text-gray-300">
+          <div className="mb-4 sm:mb-6 space-y-2">
+            <p className="text-gray-300 text-sm sm:text-base">
               Round {practiceRound} Progress
             </p>
-            <p className="text-lg text-white">
+            <p className="text-base sm:text-lg text-white">
               Completed: {totalAnswered} cards
             </p>
-            <p className="text-lg text-green-400">
+            <p className="text-base sm:text-lg text-green-400">
               Correct: {totalCorrect} / {totalAnswered} ({percentage}%)
             </p>
-            <p className="text-gray-400">
+            <p className="text-gray-400 text-sm sm:text-base">
               Time: {formatTime(elapsedTime)}
             </p>
           </div>
           
           {isReviewRound ? (
-            <div className="bg-yellow-900/30 border border-yellow-700 rounded-lg p-4 mb-6 text-left">
-              <p className="text-yellow-300 font-semibold mb-2">
+            <div className="bg-yellow-900/30 border border-yellow-700 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6 text-left">
+              <p className="text-yellow-300 font-semibold mb-1 sm:mb-2 text-sm sm:text-base">
                 🎯 Focused Review Round
               </p>
-              <p className="text-gray-300 text-sm">
+              <p className="text-gray-300 text-xs sm:text-sm">
                 Let&apos;s review the {missedCardIds.size} cards you found challenging.
                 This targeted practice will help reinforce these specific characters.
               </p>
             </div>
           ) : (
-            <div className="bg-blue-900/30 border border-blue-700 rounded-lg p-4 mb-6 text-left">
-              <p className="text-blue-300 font-semibold mb-2">
+            <div className="bg-blue-900/30 border border-blue-700 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6 text-left">
+              <p className="text-blue-300 font-semibold mb-1 sm:mb-2 text-sm sm:text-base">
                 🧠 Cognitive Break
               </p>
-              <p className="text-gray-300 text-sm">
+              <p className="text-gray-300 text-xs sm:text-sm">
                 Taking short breaks between chunks helps consolidate memory.
                 Ready for the next {Math.min(7, remainingCards)} cards?
               </p>
@@ -831,16 +831,16 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
             </div>
           )}
           
-          <div className="flex gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
             <button
               onClick={onExit}
-              className="px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded transition-colors"
+              className="px-4 sm:px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded transition-colors text-sm sm:text-base"
             >
               End Practice
             </button>
             <button
               onClick={continuePractice}
-              className="px-6 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded transition-colors font-semibold"
+              className="px-4 sm:px-6 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded transition-colors font-semibold text-sm sm:text-base"
             >
               {isReviewRound ? 'Start Review' : 'Continue'}
             </button>
@@ -853,46 +853,46 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
   // Show continue prompt
   if (showContinuePrompt) {
     return (
-      <div className="fixed inset-0 bg-black flex items-center justify-center">
-        <div className="bg-gray-900 p-8 rounded-lg max-w-lg text-center">
-          <h2 className="text-2xl font-bold text-white mb-4">
+      <div className="fixed inset-0 bg-black flex items-center justify-center p-4">
+        <div className="bg-gray-900 p-6 sm:p-8 rounded-lg max-w-lg w-full text-center">
+          <h2 className="text-xl sm:text-2xl font-bold text-white mb-3 sm:mb-4">
             {mode === 'new' && totalCardsStudied >= OPTIMAL_SESSION_SIZE 
               ? '🎯 Optimal Session Size Reached!' 
               : 'Great progress!'}
           </h2>
-          <p className="text-gray-300 mb-2">
+          <p className="text-gray-300 mb-2 text-sm sm:text-base">
             You&apos;ve studied {totalCardsStudied} out of {actualSessionCards} cards
           </p>
           {quizResults.length > 0 && (
-            <p className="text-green-400 mb-2">
+            <p className="text-green-400 mb-2 text-sm sm:text-base">
               Correct: {quizResults.filter(r => r).length} / {quizResults.length} 
               ({Math.round((quizResults.filter(r => r).length / quizResults.length) * 100)}%)
             </p>
           )}
-          <p className="text-gray-400 mb-6">
+          <p className="text-gray-400 mb-4 sm:mb-6 text-sm sm:text-base">
             Time elapsed: {formatTime(elapsedTime)}
           </p>
           {mode === 'new' && totalCardsStudied >= OPTIMAL_SESSION_SIZE && (
-            <div className="bg-yellow-900/30 border border-yellow-700 rounded-lg p-4 mb-6 text-left">
-              <p className="text-yellow-300 text-sm font-semibold mb-2">
+            <div className="bg-yellow-900/30 border border-yellow-700 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6 text-left">
+              <p className="text-yellow-300 text-xs sm:text-sm font-semibold mb-1 sm:mb-2">
                 ⚠️ Cognitive Load Warning
               </p>
-              <p className="text-gray-300 text-sm">
+              <p className="text-gray-300 text-xs sm:text-sm">
                 You&apos;ve reached the optimal learning capacity for one session. 
                 Research shows that learning effectiveness decreases beyond 7±2 items.
               </p>
-              <p className="text-gray-400 text-sm mt-2">
+              <p className="text-gray-400 text-xs sm:text-sm mt-2">
                 Recommendation: End this session and return later for better retention.
               </p>
             </div>
           )}
-          <p className="text-gray-300 mb-6">
+          <p className="text-gray-300 mb-4 sm:mb-6 text-sm sm:text-base">
             Would you like to continue or end the session here?
           </p>
-          <div className="flex gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
             <button
               onClick={() => handleContinueChoice(false)}
-              className={`px-6 py-2 rounded transition-colors ${
+              className={`px-4 sm:px-6 py-2 rounded transition-colors text-sm sm:text-base ${
                 mode === 'new' && totalCardsStudied >= OPTIMAL_SESSION_SIZE
                   ? 'bg-green-600 hover:bg-green-700 text-white font-semibold'
                   : 'bg-gray-700 hover:bg-gray-600 text-white'
@@ -904,7 +904,7 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
             </button>
             <button
               onClick={() => handleContinueChoice(true)}
-              className={`px-6 py-2 rounded transition-colors ${
+              className={`px-4 sm:px-6 py-2 rounded transition-colors text-sm sm:text-base ${
                 mode === 'new' && totalCardsStudied >= OPTIMAL_SESSION_SIZE
                   ? 'bg-gray-600 hover:bg-gray-700 text-gray-300'
                   : 'bg-violet-600 hover:bg-violet-700 text-white'
@@ -936,10 +936,10 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
   // Show countdown screen
   if (phase === 'countdown') {
     return (
-      <div className="fixed inset-0 bg-black flex items-center justify-center">
+      <div className="fixed inset-0 bg-black flex items-center justify-center p-4">
         <div className="text-center">
-          <h2 className="text-3xl text-white mb-8">Get ready for the next drill</h2>
-          <div className="text-8xl font-bold text-gray-400">{countdownSeconds}</div>
+          <h2 className="text-xl sm:text-2xl md:text-3xl text-white mb-6 sm:mb-8">Get ready for the next drill</h2>
+          <div className="text-6xl sm:text-7xl md:text-8xl font-bold text-gray-400">{countdownSeconds}</div>
         </div>
       </div>
     );
@@ -948,29 +948,29 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
   // Show initial countdown screen
   if (phase === 'initial-countdown') {
     return (
-      <div className="fixed inset-0 bg-black flex items-center justify-center">
-        <div className="text-center max-w-2xl px-8">
+      <div className="fixed inset-0 bg-black flex items-center justify-center p-4">
+        <div className="text-center max-w-2xl px-4 sm:px-8">
           {showSessionSizeWarning && mode === 'new' ? (
             <>
-              <h2 className="text-2xl text-yellow-400 mb-4">⚠️ Session Size Optimized</h2>
-              <p className="text-gray-300 mb-4">
+              <h2 className="text-xl sm:text-2xl text-yellow-400 mb-3 sm:mb-4">⚠️ Session Size Optimized</h2>
+              <p className="text-gray-300 mb-3 sm:mb-4 text-sm sm:text-base">
                 Based on cognitive science research, we&apos;ve limited this session to {OPTIMAL_SESSION_SIZE} characters 
                 for optimal learning. Working memory can effectively handle 7±2 items at once.
               </p>
-              <p className="text-gray-400 mb-6">
+              <p className="text-gray-400 mb-4 sm:mb-6 text-sm sm:text-base">
                 You can study the remaining {totalAvailableCards - cards.length} characters 
                 in your next session for better retention.
               </p>
-              <p className="text-sm text-gray-500 mb-8">
+              <p className="text-xs sm:text-sm text-gray-500 mb-6 sm:mb-8">
                 Tip: Multiple smaller sessions are more effective than one large session!
               </p>
             </>
           ) : (
-            <h2 className="text-3xl text-white mb-8">Your flash session is about to start</h2>
+            <h2 className="text-xl sm:text-2xl md:text-3xl text-white mb-6 sm:mb-8">Your flash session is about to start</h2>
           )}
-          <div className="text-8xl font-bold text-gray-400">{countdownSeconds}</div>
+          <div className="text-6xl sm:text-7xl md:text-8xl font-bold text-gray-400">{countdownSeconds}</div>
           {mode === 'new' && (
-            <p className="text-sm text-gray-500 mt-6">
+            <p className="text-xs sm:text-sm text-gray-500 mt-4 sm:mt-6">
               Studying {cards.length} {cards.length === 1 ? 'character' : 'characters'}
             </p>
           )}
@@ -1062,7 +1062,7 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
       <div className="text-center">
         {/* Orthographic focus - character alone */}
         {viewPhase === 'orthographic' && currentCard && (
-          <div className={`text-9xl font-bold text-white ${reduceMotion ? '' : `transition-opacity duration-${FADE_DURATION}`}`}>
+          <div className={`text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-bold text-white ${reduceMotion ? '' : `transition-opacity duration-${FADE_DURATION}`}`}>
             {currentCard.hanzi}
           </div>
         )}
@@ -1073,18 +1073,18 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
             {/* Block 1 & 3: Character + pinyin + audio */}
             {(currentBlock === 1 || currentBlock === 3) && (
               <>
-                <div className="text-8xl font-bold text-white">{currentCard.hanzi}</div>
-                <div className="text-6xl text-gray-300">{currentCard.pinyin}</div>
+                <div className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-white">{currentCard.hanzi}</div>
+                <div className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-gray-300">{currentCard.pinyin}</div>
               </>
             )}
             
             {/* Block 2: Combined view - everything together */}
             {currentBlock === 2 && (
               <>
-                <div className="text-7xl font-bold text-white">{currentCard.hanzi}</div>
-                <div className="text-5xl text-gray-300">{currentCard.pinyin}</div>
+                <div className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white">{currentCard.hanzi}</div>
+                <div className="text-3xl sm:text-4xl md:text-5xl text-gray-300">{currentCard.pinyin}</div>
                 {currentCard.imageUrl && (
-                  <div className="w-64 h-64 mx-auto my-4">
+                  <div className="w-40 h-40 sm:w-48 sm:h-48 md:w-56 md:h-56 lg:w-64 lg:h-64 mx-auto my-4">
                     <img
                       src={currentCard.imageUrl}
                       alt={currentCard.hanzi}
@@ -1092,7 +1092,7 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
                     />
                   </div>
                 )}
-                <div className="text-3xl text-gray-300">{currentCard.meaning}</div>
+                <div className="text-xl sm:text-2xl md:text-3xl text-gray-300">{currentCard.meaning}</div>
               </>
             )}
           </div>
@@ -1101,26 +1101,26 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
         {/* Semantic/visual focus - image + meaning */}
         {viewPhase === 'semantic' && currentCard?.imageUrl && (
           <div className="space-y-4">
-            <div className="w-96 h-96 mx-auto mb-4">
+            <div className="w-64 h-64 sm:w-72 sm:h-72 md:w-80 md:h-80 lg:w-96 lg:h-96 mx-auto mb-4">
               <img
                 src={currentCard.imageUrl}
                 alt={currentCard.hanzi}
                 className="w-full h-full object-cover rounded-lg"
               />
             </div>
-            <div className="text-4xl text-gray-300">{currentCard.meaning}</div>
+            <div className="text-2xl sm:text-3xl md:text-4xl text-gray-300">{currentCard.meaning}</div>
           </div>
         )}
         
         {/* Self-test - character alone for retrieval practice */}
         {viewPhase === 'self-test' && currentCard && (
-          <div className="text-9xl font-bold text-white">{currentCard.hanzi}</div>
+          <div className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-bold text-white">{currentCard.hanzi}</div>
         )}
       </div>
       
       {/* Progress and status indicators - only show during active phases */}
       {(phase === 'flash' || phase === 'quiz' || phase === 'countdown' || phase === 'initial-countdown') && actualSessionCards > 0 && (
-        <div className="fixed top-8 right-8 text-sm text-gray-500 text-right">
+        <div className="fixed top-4 sm:top-8 right-4 sm:right-8 text-xs sm:text-sm text-gray-500 text-right">
           <div className="text-violet-400 font-medium mb-1">
             {mode === 'new' ? 'New Cards' : mode === 'review' ? 'Review Session' : 'Practice Mode'}
           </div>
@@ -1137,25 +1137,26 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
       
       {/* Status indicators */}
       {phase === 'flash' && (
-        <div className="fixed bottom-8 right-8 text-sm text-gray-500">
+        <div className="fixed bottom-4 sm:bottom-8 right-4 sm:right-8 text-xs sm:text-sm text-gray-500">
           Block {currentBlock}/3 • Card {currentIndex + 1}/{blockCards.length}
         </div>
       )}
       
-      <div className="fixed bottom-8 left-8 text-sm text-gray-500">
-        Press P to {isPaused ? 'resume' : 'pause'} • R to restart • Q/ESC to exit
+      <div className="fixed bottom-4 sm:bottom-8 left-4 sm:left-8 text-xs sm:text-sm text-gray-500">
+        <span className="hidden sm:inline">Press P to {isPaused ? 'resume' : 'pause'} • R to restart • Q/ESC to exit</span>
+        <span className="sm:hidden">P: {isPaused ? 'Resume' : 'Pause'} • Q: Exit</span>
       </div>
       
       {/* Block indicator for second and third passes */}
       {currentBlock > 1 && phase === 'flash' && (
-        <div className="fixed top-8 left-8 text-sm text-gray-500">
+        <div className="fixed top-4 sm:top-8 left-4 sm:left-8 text-xs sm:text-sm text-gray-500">
           Pass {currentBlock} - {currentBlock === 2 ? 'Reinforcement' : 'Final consolidation'}
         </div>
       )}
       
       {/* Pause indicator */}
       {isPaused && (
-        <div className="fixed top-8 left-1/2 transform -translate-x-1/2 text-yellow-500 text-lg">
+        <div className="fixed top-4 sm:top-8 left-1/2 transform -translate-x-1/2 text-yellow-500 text-base sm:text-lg">
           ⏸ PAUSED
         </div>
       )}

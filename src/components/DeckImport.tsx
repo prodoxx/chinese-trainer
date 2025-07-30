@@ -88,7 +88,7 @@ export default function DeckImport({ onImportComplete }: DeckImportProps) {
         onDragOver={handleDrag}
         onDrop={handleDrop}
         className={`
-          relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200
+          relative border-2 border-dashed rounded-xl p-6 sm:p-8 text-center transition-all duration-200
           ${dragActive 
             ? 'border-violet-600 bg-violet-900/10' 
             : 'border-gray-800 hover:border-gray-700 hover:bg-gray-900/30'

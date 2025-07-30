@@ -8,7 +8,6 @@ import {
 } from 'recharts';
 import CharacterInsights from './CharacterInsights';
 import LearningInsights from './LearningInsights';
-import Header from './Header';
 
 interface AnalyticsData {
   summary: {
@@ -91,14 +90,13 @@ export default function Analytics({ onBack }: AnalyticsProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-950 text-white">
-        <Header onBack={onBack} showAnalyticsLink={false} />
+      <div className="min-h-screen bg-[#0d1117] text-white font-learning">
         <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
           <div className="animate-pulse">
-            <div className="h-8 w-64 bg-gray-800 rounded mb-8"></div>
+            <div className="h-8 w-64 bg-[#21262d] rounded mb-8"></div>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="bg-gray-900 rounded-lg p-4 h-24"></div>
+                <div key={i} className="bg-[#161b22] rounded-lg p-4 h-24"></div>
               ))}
             </div>
           </div>
@@ -109,11 +107,10 @@ export default function Analytics({ onBack }: AnalyticsProps) {
 
   if (!analytics || analytics.summary.totalCards === 0) {
     return (
-      <div className="min-h-screen bg-gray-950 text-white">
-        <Header onBack={onBack} showAnalyticsLink={false} />
+      <div className="min-h-screen bg-[#0d1117] text-white font-learning">
         <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-          <h1 className="text-3xl font-bold mb-8">Learning Analytics</h1>
-          <div className="bg-gray-900 rounded-lg p-12 text-center">
+          <h1 className="text-3xl font-bold mb-8 text-transparent bg-clip-text bg-gradient-to-r from-[#f7cc48] to-orange-400">Learning Analytics</h1>
+          <div className="bg-[#21262d] border border-[#30363d] rounded-lg p-12 text-center">
             <svg className="w-24 h-24 mx-auto mb-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
@@ -138,27 +135,26 @@ export default function Analytics({ onBack }: AnalyticsProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
-      <Header onBack={onBack} showAnalyticsLink={false} />
+    <div className="min-h-screen bg-[#0d1117] text-white font-fun">
       <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Learning Analytics</h1>
+          <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#f7cc48] to-orange-400">Learning Analytics</h1>
           <div className="flex gap-2">
             <button
               onClick={() => setTimeRange(7)}
-              className={`px-4 py-2 rounded ${timeRange === 7 ? 'bg-violet-600' : 'bg-gray-800'} hover:bg-violet-700 transition-colors`}
+              className={`px-4 py-2 rounded ${timeRange === 7 ? 'bg-[#f7cc48] text-black font-semibold' : 'bg-[#21262d] border border-[#30363d]'} hover:bg-[#f7cc48]/90 hover:text-black transition-all`}
             >
               7 days
             </button>
             <button
               onClick={() => setTimeRange(30)}
-              className={`px-4 py-2 rounded ${timeRange === 30 ? 'bg-violet-600' : 'bg-gray-800'} hover:bg-violet-700 transition-colors`}
+              className={`px-4 py-2 rounded ${timeRange === 30 ? 'bg-[#f7cc48] text-black font-semibold' : 'bg-[#21262d] border border-[#30363d]'} hover:bg-[#f7cc48]/90 hover:text-black transition-all`}
             >
               30 days
             </button>
             <button
               onClick={() => setTimeRange(90)}
-              className={`px-4 py-2 rounded ${timeRange === 90 ? 'bg-violet-600' : 'bg-gray-800'} hover:bg-violet-700 transition-colors`}
+              className={`px-4 py-2 rounded ${timeRange === 90 ? 'bg-[#f7cc48] text-black font-semibold' : 'bg-[#21262d] border border-[#30363d]'} hover:bg-[#f7cc48]/90 hover:text-black transition-all`}
             >
               90 days
             </button>
@@ -167,48 +163,66 @@ export default function Analytics({ onBack }: AnalyticsProps) {
 
         {/* Summary Stats */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-8">
-          <div className="bg-gray-900/50 backdrop-blur border border-gray-800 rounded-lg p-4 hover:bg-gray-900/70 transition-colors">
-            <div className="text-xs sm:text-sm text-gray-500 font-medium uppercase tracking-wider">Total Cards</div>
-            <div className="text-xl sm:text-2xl font-bold mt-1">{analytics.summary.totalCards}</div>
-          </div>
-          <div className="bg-gray-900/50 backdrop-blur border border-gray-800 rounded-lg p-4 hover:bg-gray-900/70 transition-colors">
-            <div className="text-xs sm:text-sm text-gray-500 font-medium uppercase tracking-wider">Total Reviews</div>
-            <div className="text-xl sm:text-2xl font-bold mt-1">{analytics.summary.totalReviews}</div>
-          </div>
-          <div className="bg-gray-900/50 backdrop-blur border border-gray-800 rounded-lg p-4 hover:bg-gray-900/70 transition-colors">
-            <div className="text-xs sm:text-sm text-gray-500 font-medium uppercase tracking-wider">Accuracy</div>
-            <div className="text-xl sm:text-2xl font-bold mt-1">
-              <span className={analytics.summary.accuracy >= 80 ? 'text-green-400' : analytics.summary.accuracy >= 60 ? 'text-yellow-400' : 'text-red-400'}>
-                {analytics.summary.accuracy.toFixed(1)}%
-              </span>
+          <div className="relative bg-[#21262d] border border-[#30363d] rounded-lg p-4 hover:border-[#f7cc48]/50 transition-all group overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-[#f7cc48]/10 to-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="relative">
+              <div className="text-xs sm:text-sm text-[#f7cc48] font-medium uppercase tracking-wider">Total Cards</div>
+              <div className="text-xl sm:text-2xl font-bold mt-1 text-white">{analytics.summary.totalCards}</div>
             </div>
           </div>
-          <div className="bg-gray-900/50 backdrop-blur border border-gray-800 rounded-lg p-4 hover:bg-gray-900/70 transition-colors">
-            <div className="text-xs sm:text-sm text-gray-500 font-medium uppercase tracking-wider">Current Streak</div>
-            <div className="text-xl sm:text-2xl font-bold mt-1">
-              {analytics.summary.currentStreak > 0 ? (
-                <span className="text-orange-400">{analytics.summary.currentStreak}</span>
-              ) : (
-                <span className="text-gray-500">{analytics.summary.currentStreak}</span>
-              )}
-              <span className="text-sm text-gray-500 ml-1">days</span>
+          <div className="relative bg-[#21262d] border border-[#30363d] rounded-lg p-4 hover:border-orange-500/50 transition-all group overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-red-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="relative">
+              <div className="text-xs sm:text-sm text-orange-400 font-medium uppercase tracking-wider">Total Reviews</div>
+              <div className="text-xl sm:text-2xl font-bold mt-1 text-white">{analytics.summary.totalReviews}</div>
             </div>
           </div>
-          <div className="bg-gray-900/50 backdrop-blur border border-gray-800 rounded-lg p-4 hover:bg-gray-900/70 transition-colors">
-            <div className="text-xs sm:text-sm text-gray-500 font-medium uppercase tracking-wider">Longest Streak</div>
-            <div className="text-xl sm:text-2xl font-bold mt-1">
-              {analytics.summary.longestStreak}
-              <span className="text-sm text-gray-500 ml-1">days</span>
+          <div className="relative bg-[#21262d] border border-[#30363d] rounded-lg p-4 hover:border-green-500/50 transition-all group overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="relative">
+              <div className="text-xs sm:text-sm text-green-300 font-medium uppercase tracking-wider">Accuracy</div>
+              <div className="text-xl sm:text-2xl font-bold mt-1">
+                <span className={analytics.summary.accuracy >= 80 ? 'text-green-400' : analytics.summary.accuracy >= 60 ? 'text-yellow-400' : 'text-red-400'}>
+                  {analytics.summary.accuracy.toFixed(1)}%
+                </span>
+              </div>
             </div>
           </div>
-          <div className="bg-gray-900/50 backdrop-blur border border-gray-800 rounded-lg p-4 hover:bg-gray-900/70 transition-colors">
-            <div className="text-xs sm:text-sm text-gray-500 font-medium uppercase tracking-wider">Studied Today</div>
-            <div className="text-xl sm:text-2xl font-bold mt-1">
-              {analytics.summary.studiedToday > 0 ? (
-                <span className="text-violet-400">{analytics.summary.studiedToday}</span>
-              ) : (
-                <span className="text-gray-500">{analytics.summary.studiedToday}</span>
-              )}
+          <div className="relative bg-[#21262d] border border-[#30363d] rounded-lg p-4 hover:border-yellow-500/50 transition-all group overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/10 to-amber-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="relative">
+              <div className="text-xs sm:text-sm text-orange-300 font-medium uppercase tracking-wider">Current Streak</div>
+              <div className="text-xl sm:text-2xl font-bold mt-1">
+                {analytics.summary.currentStreak > 0 ? (
+                  <span className="text-orange-400">{analytics.summary.currentStreak}</span>
+                ) : (
+                  <span className="text-gray-500">{analytics.summary.currentStreak}</span>
+                )}
+                <span className="text-sm text-gray-500 ml-1">days</span>
+              </div>
+            </div>
+          </div>
+          <div className="relative bg-[#21262d] border border-[#30363d] rounded-lg p-4 hover:border-red-500/50 transition-all group overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-red-500/10 to-rose-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="relative">
+              <div className="text-xs sm:text-sm text-red-300 font-medium uppercase tracking-wider">Longest Streak</div>
+              <div className="text-xl sm:text-2xl font-bold mt-1 text-white">
+                {analytics.summary.longestStreak}
+                <span className="text-sm text-gray-400 ml-1">days</span>
+              </div>
+            </div>
+          </div>
+          <div className="relative bg-[#21262d] border border-[#30363d] rounded-lg p-4 hover:border-violet-500/50 transition-all group overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 to-indigo-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="relative">
+              <div className="text-xs sm:text-sm text-violet-300 font-medium uppercase tracking-wider">Studied Today</div>
+              <div className="text-xl sm:text-2xl font-bold mt-1">
+                {analytics.summary.studiedToday > 0 ? (
+                  <span className="text-violet-400">{analytics.summary.studiedToday}</span>
+                ) : (
+                  <span className="text-gray-500">{analytics.summary.studiedToday}</span>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -216,8 +230,8 @@ export default function Analytics({ onBack }: AnalyticsProps) {
         {/* Charts Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Daily Study Activity */}
-          <div className="bg-gray-900/50 backdrop-blur border border-gray-800 rounded-xl p-4 sm:p-6">
-            <h2 className="text-xl font-semibold mb-4">Daily Study Activity</h2>
+          <div className="bg-[#21262d] border border-[#30363d] rounded-xl p-4 sm:p-6 hover:border-[#f7cc48]/30 transition-all">
+            <h2 className="text-xl font-semibold mb-4 text-[#f7cc48]">Daily Study Activity</h2>
             <ResponsiveContainer width="100%" height={300}>
               <AreaChart data={analytics.dailyStats}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
@@ -235,8 +249,8 @@ export default function Analytics({ onBack }: AnalyticsProps) {
                 <Area 
                   type="monotone" 
                   dataKey="cardsStudied" 
-                  stroke="#8b5cf6" 
-                  fill="#8b5cf6" 
+                  stroke="#f7cc48" 
+                  fill="#f7cc48" 
                   fillOpacity={0.6}
                   name="Cards Studied"
                 />
@@ -245,8 +259,8 @@ export default function Analytics({ onBack }: AnalyticsProps) {
           </div>
 
           {/* Learning Curve */}
-          <div className="bg-gray-900/50 backdrop-blur border border-gray-800 rounded-xl p-4 sm:p-6">
-            <h2 className="text-xl font-semibold mb-4">Accuracy Over Time</h2>
+          <div className="bg-[#21262d] border border-[#30363d] rounded-xl p-4 sm:p-6 hover:border-[#f7cc48]/30 transition-all">
+            <h2 className="text-xl font-semibold mb-4 text-[#f7cc48]">Accuracy Over Time</h2>
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={analytics.learningCurve}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
@@ -274,8 +288,8 @@ export default function Analytics({ onBack }: AnalyticsProps) {
           </div>
 
           {/* Deck Performance */}
-          <div className="bg-gray-900/50 backdrop-blur border border-gray-800 rounded-xl p-4 sm:p-6">
-            <h2 className="text-xl font-semibold mb-4">Deck Performance</h2>
+          <div className="bg-[#21262d] border border-[#30363d] rounded-xl p-4 sm:p-6 hover:border-[#f7cc48]/30 transition-all">
+            <h2 className="text-xl font-semibold mb-4 text-[#f7cc48]">Deck Performance</h2>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={analytics.deckStats}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
@@ -294,7 +308,7 @@ export default function Analytics({ onBack }: AnalyticsProps) {
                 <Legend />
                 <Bar 
                   dataKey="studiedCards" 
-                  fill="#8b5cf6" 
+                  fill="#f7cc48" 
                   name="Studied"
                 />
                 <Bar 
@@ -307,8 +321,8 @@ export default function Analytics({ onBack }: AnalyticsProps) {
           </div>
 
           {/* Retention by Interval */}
-          <div className="bg-gray-900/50 backdrop-blur border border-gray-800 rounded-xl p-4 sm:p-6">
-            <h2 className="text-xl font-semibold mb-4">Retention by Review Interval</h2>
+          <div className="bg-[#21262d] border border-[#30363d] rounded-xl p-4 sm:p-6 hover:border-[#f7cc48]/30 transition-all">
+            <h2 className="text-xl font-semibold mb-4 text-[#f7cc48]">Retention by Review Interval</h2>
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={analytics.retentionData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
@@ -332,9 +346,9 @@ export default function Analytics({ onBack }: AnalyticsProps) {
                 <Line 
                   type="monotone" 
                   dataKey="retention" 
-                  stroke="#f59e0b" 
+                  stroke="#f7cc48" 
                   strokeWidth={2}
-                  dot={{ fill: '#f59e0b', r: 4 }}
+                  dot={{ fill: '#f7cc48', r: 4 }}
                   name="Retention Rate"
                 />
               </LineChart>
@@ -343,11 +357,11 @@ export default function Analytics({ onBack }: AnalyticsProps) {
         </div>
 
         {/* Deck Accuracy Breakdown */}
-        <div className="bg-gray-900 rounded-lg p-6 mt-8">
-          <h2 className="text-xl font-semibold mb-4">Deck Accuracy Breakdown</h2>
+        <div className="bg-[#21262d] border border-[#30363d] rounded-lg p-6 mt-8 hover:border-[#f7cc48]/30 transition-all">
+          <h2 className="text-xl font-semibold mb-4 text-[#f7cc48]">Deck Accuracy Breakdown</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {analytics.deckStats.map((deck, index) => (
-              <div key={deck.deckId} className="border border-gray-800 rounded-lg p-4">
+              <div key={deck.deckId} className="bg-[#161b22] border border-[#30363d] rounded-lg p-4 hover:border-[#f7cc48]/30 transition-all">
                 <h3 className="font-semibold mb-2">{deck.deckName}</h3>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
@@ -379,12 +393,12 @@ export default function Analytics({ onBack }: AnalyticsProps) {
         </div>
 
         {/* Study Time Distribution */}
-        <div className="bg-gray-900 rounded-lg p-6 mt-8">
-          <h2 className="text-xl font-semibold mb-4">Recent Study Sessions</h2>
+        <div className="bg-[#21262d] border border-[#30363d] rounded-lg p-6 mt-8 hover:border-[#f7cc48]/30 transition-all">
+          <h2 className="text-xl font-semibold mb-4 text-[#f7cc48]">Recent Study Sessions</h2>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-800">
+                <tr className="border-b border-[#30363d]">
                   <th className="text-left py-2 px-4">Date</th>
                   <th className="text-right py-2 px-4">Cards Studied</th>
                   <th className="text-right py-2 px-4">Correct</th>
@@ -394,7 +408,7 @@ export default function Analytics({ onBack }: AnalyticsProps) {
               </thead>
               <tbody>
                 {analytics.dailyStats.slice(-10).reverse().map((day, index) => (
-                  <tr key={day.date} className="border-b border-gray-800">
+                  <tr key={day.date} className="border-b border-[#30363d] hover:bg-[#161b22] transition-colors">
                     <td className="py-2 px-4">{formatDate(day.date)}</td>
                     <td className="text-right py-2 px-4">{day.cardsStudied}</td>
                     <td className="text-right py-2 px-4">{day.correctAnswers}/{day.totalAnswers}</td>
@@ -419,8 +433,8 @@ export default function Analytics({ onBack }: AnalyticsProps) {
 
         {/* Character Difficulty Insights */}
         {difficultyPatterns && (
-          <div className="bg-gray-900/50 backdrop-blur border border-gray-800 rounded-xl p-4 sm:p-6 mt-8">
-            <h2 className="text-xl font-semibold mb-4">Character Difficulty Insights</h2>
+          <div className="bg-[#21262d] border border-[#30363d] rounded-xl p-4 sm:p-6 mt-8 hover:border-[#f7cc48]/30 transition-all">
+            <h2 className="text-xl font-semibold mb-4 text-[#f7cc48]">Character Difficulty Insights</h2>
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Most Difficult Characters */}
@@ -431,7 +445,7 @@ export default function Analytics({ onBack }: AnalyticsProps) {
                     {difficultyPatterns.mostDifficult.slice(0, 5).map((item: any, index: number) => (
                       <div 
                         key={index}
-                        className="flex items-center justify-between p-3 bg-gray-900/50 rounded-lg hover:bg-gray-900/70 transition-colors cursor-pointer"
+                        className="flex items-center justify-between p-3 bg-[#161b22] rounded-lg hover:bg-[#21262d] transition-colors cursor-pointer border border-[#30363d] hover:border-[#f7cc48]/30"
                         onClick={() => {
                           // Find the character card to get its ID
                           if (analytics?.deckStats[0]) {

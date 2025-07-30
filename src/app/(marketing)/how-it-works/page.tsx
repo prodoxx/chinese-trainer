@@ -1,7 +1,10 @@
 import { Target, Zap, Clock, Play, Pause, RotateCcw, ArrowRight, Brain } from "lucide-react"
 import Link from "next/link"
+import { redirectIfAuthenticated } from "@/lib/auth-helpers"
 
-export default function HowItWorksPage() {
+export default async function HowItWorksPage() {
+  // Redirect to dashboard if authenticated
+  await redirectIfAuthenticated();
   return (
     <>
       {/* Hero Section */}

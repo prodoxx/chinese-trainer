@@ -1,10 +1,13 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IDeck extends Document {
+  userId: string; // Reference to User in PostgreSQL
   name: string;
   slug: string;
+  description?: string;
+  isPublic: boolean;
   cardsCount: number;
-  status: 'importing' | 'enriching' | 'ready';
+  status: 'importing' | 'enriching' | 'ready' | 'error';
   enrichmentProgress?: {
     totalCards: number;
     processedCards: number;
@@ -17,12 +20,15 @@ export interface IDeck extends Document {
 
 const DeckSchema = new Schema<IDeck>(
   {
-    name: { type: String, required: true, unique: true },
-    slug: { type: String, required: true, unique: true },
+    userId: { type: String, required: true, index: true }, // User ID from PostgreSQL
+    name: { type: String, required: true },
+    slug: { type: String, required: true },
+    description: { type: String },
+    isPublic: { type: Boolean, default: false },
     cardsCount: { type: Number, default: 0 },
     status: { 
       type: String, 
-      enum: ['importing', 'enriching', 'ready'],
+      enum: ['importing', 'enriching', 'ready', 'error'],
       default: 'importing' 
     },
     enrichmentProgress: {
@@ -34,5 +40,8 @@ const DeckSchema = new Schema<IDeck>(
   },
   { timestamps: true }
 );
+
+// Compound index for unique deck names per user
+DeckSchema.index({ userId: 1, slug: 1 }, { unique: true });
 
 export default mongoose.models.Deck || mongoose.model<IDeck>('Deck', DeckSchema);
