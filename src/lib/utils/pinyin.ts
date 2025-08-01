@@ -1,6 +1,8 @@
 /**
  * Convert pinyin with tone numbers to pinyin with tone marks
  * e.g., "ni3 hao3" → "nǐ hǎo"
+ * Handles tones 1-4 with diacritics and tone 5 (neutral tone) without marks
+ * e.g., "cong1 ming5" → "cōng ming"
  */
 export function convertPinyinToneNumbersToMarks(pinyin: string): string {
   if (!pinyin) return '';
@@ -19,12 +21,21 @@ export function convertPinyinToneNumbersToMarks(pinyin: string): string {
     // Handle u: notation (e.g., nu:3 → nǚ)
     syllable = syllable.replace('u:', 'ü');
     
-    // Extract tone number (1-4)
-    const toneMatch = syllable.match(/([a-züA-ZÜ]+)([1-4])/);
+    // Extract tone number (1-5, where 5 is neutral tone)
+    const toneMatch = syllable.match(/([a-züA-ZÜ]+)([1-5])/);
     if (!toneMatch) return syllable;
     
     const [, letters, tone] = toneMatch;
     const lowerLetters = letters.toLowerCase();
+    
+    // Tone 5 is neutral tone - just return the letters without tone marks
+    if (tone === '5') {
+      // Preserve original capitalization
+      if (letters[0] === letters[0].toUpperCase()) {
+        return letters[0].toUpperCase() + lowerLetters.slice(1);
+      }
+      return lowerLetters;
+    }
     
     // Apply tone mark according to pinyin rules
     // Priority: a/e > o > last vowel in -iu > i/u/ü

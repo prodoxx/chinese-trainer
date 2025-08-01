@@ -38,7 +38,7 @@ function generateLearningPrompt(
   }
 
   // Default: Create a scene based on the meaning
-  return `Simple illustration representing "${meaning}". If depicting a person, show a representation including East Asian, Hispanic, White, or Black individual only - one person only. No South Asian/Indian people. Cartoon or minimalist style, educational context.`;
+  return `Simple illustration representing "${meaning}". CRITICAL: ABSOLUTELY NO TEXT, words, letters, numbers, labels, captions, signs, or written characters anywhere in the image. If depicting a person, show a representation including East Asian, Hispanic, White, or Black individual only - one person only. No South Asian/Indian people. Cartoon or minimalist style, educational context.`;
 }
 
 /**
@@ -84,14 +84,14 @@ export async function generateDALLEImageR2(
       `Generating DALL-E image for ${hanzi} with prompt: "${prompt}"`,
     );
 
-    // Generate image with DALL-E 3
+    // Generate image with DALL-E 3 (most cost-effective settings)
     const response = await openai.images.generate({
-      model: "dall-e-3",
+      model: "dall-e-3", // Could switch to "dall-e-2" for 50% cost savings
       prompt: prompt,
       n: 1,
-      size: "1024x1024",
-      quality: "standard", // Use 'standard' instead of 'hd' to save costs
-      style: "natural", // Natural style for educational purposes
+      size: "1024x1024", // Cheapest DALL-E 3 option at $0.04/image
+      quality: "standard", // $0.04 vs $0.08 for "hd" quality
+      style: "natural", // Less dramatic than "vivid" style
     });
 
     const tempImageUrl = response.data?.[0]?.url;

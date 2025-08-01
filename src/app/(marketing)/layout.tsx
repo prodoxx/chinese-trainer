@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Menu, X } from "lucide-react";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 
 export default function MarketingLayout({
 	children,
@@ -11,6 +12,7 @@ export default function MarketingLayout({
 	children: React.ReactNode;
 }) {
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+	const pathname = usePathname();
 
 	const toggleMobileMenu = () => {
 		setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -29,7 +31,7 @@ export default function MarketingLayout({
 						<div className="flex items-center space-x-3">
 							<Link
 								href="/"
-								className="flex items-center space-x-2 sm:space-x-3 cursor-pointer"
+								className="flex items-center space-x-2 sm:space-x-3 cursor-pointer hover:opacity-90 transition-opacity"
 								onClick={closeMobileMenu}
 							>
 								<Image
@@ -52,25 +54,41 @@ export default function MarketingLayout({
 						<div className="hidden md:flex items-center space-x-8">
 							<Link
 								href="/how-it-works"
-								className="text-[#7d8590] hover:text-white transition-colors cursor-pointer"
+								className={`${
+									pathname === "/how-it-works"
+										? "text-[#f7cc48] font-medium"
+										: "text-[#7d8590] hover:text-white"
+								} transition-colors cursor-pointer`}
 							>
 								How It Works
 							</Link>
 							<Link
 								href="/science"
-								className="text-[#7d8590] hover:text-white transition-colors cursor-pointer"
+								className={`${
+									pathname === "/science"
+										? "text-[#f7cc48] font-medium"
+										: "text-[#7d8590] hover:text-white"
+								} transition-colors cursor-pointer`}
 							>
 								The Science
 							</Link>
 							<Link
 								href="/features"
-								className="text-[#7d8590] hover:text-white transition-colors cursor-pointer"
+								className={`${
+									pathname === "/features"
+										? "text-[#f7cc48] font-medium"
+										: "text-[#7d8590] hover:text-white"
+								} transition-colors cursor-pointer`}
 							>
 								Features
 							</Link>
 							<Link
 								href="/pricing"
-								className="text-[#7d8590] hover:text-white transition-colors cursor-pointer"
+								className={`${
+									pathname === "/pricing"
+										? "text-[#f7cc48] font-medium"
+										: "text-[#7d8590] hover:text-white"
+								} transition-colors cursor-pointer`}
 							>
 								Pricing
 							</Link>
@@ -113,28 +131,44 @@ export default function MarketingLayout({
 						<div className="container mx-auto px-4 py-4 space-y-4">
 							<Link
 								href="/how-it-works"
-								className="block text-[#7d8590] hover:text-white transition-colors py-2"
+								className={`block ${
+									pathname === "/how-it-works"
+										? "text-[#f7cc48] font-medium"
+										: "text-[#7d8590] hover:text-white"
+								} transition-colors py-2`}
 								onClick={closeMobileMenu}
 							>
 								How It Works
 							</Link>
 							<Link
 								href="/science"
-								className="block text-[#7d8590] hover:text-white transition-colors py-2"
+								className={`block ${
+									pathname === "/science"
+										? "text-[#f7cc48] font-medium"
+										: "text-[#7d8590] hover:text-white"
+								} transition-colors py-2`}
 								onClick={closeMobileMenu}
 							>
 								The Science
 							</Link>
 							<Link
 								href="/features"
-								className="block text-[#7d8590] hover:text-white transition-colors py-2"
+								className={`block ${
+									pathname === "/features"
+										? "text-[#f7cc48] font-medium"
+										: "text-[#7d8590] hover:text-white"
+								} transition-colors py-2`}
 								onClick={closeMobileMenu}
 							>
 								Features
 							</Link>
 							<Link
 								href="/pricing"
-								className="block text-[#7d8590] hover:text-white transition-colors py-2"
+								className={`block ${
+									pathname === "/pricing"
+										? "text-[#f7cc48] font-medium"
+										: "text-[#7d8590] hover:text-white"
+								} transition-colors py-2`}
 								onClick={closeMobileMenu}
 							>
 								Pricing
@@ -210,19 +244,31 @@ export default function MarketingLayout({
 							<div className="space-y-2">
 								<Link
 									href="/how-it-works"
-									className="block text-[#7d8590] hover:text-white transition-colors cursor-pointer"
+									className={`block ${
+										pathname === "/how-it-works"
+											? "text-[#f7cc48]"
+											: "text-[#7d8590] hover:text-white"
+									} transition-colors cursor-pointer`}
 								>
 									How It Works
 								</Link>
 								<Link
 									href="/features"
-									className="block text-[#7d8590] hover:text-white transition-colors cursor-pointer"
+									className={`block ${
+										pathname === "/features"
+											? "text-[#f7cc48]"
+											: "text-[#7d8590] hover:text-white"
+									} transition-colors cursor-pointer`}
 								>
 									Features
 								</Link>
 								<Link
 									href="/pricing"
-									className="block text-[#7d8590] hover:text-white transition-colors cursor-pointer"
+									className={`block ${
+										pathname === "/pricing"
+											? "text-[#f7cc48]"
+											: "text-[#7d8590] hover:text-white"
+									} transition-colors cursor-pointer`}
 								>
 									Pricing
 								</Link>
@@ -234,19 +280,31 @@ export default function MarketingLayout({
 							<div className="space-y-2">
 								<Link
 									href="/science"
-									className="block text-[#7d8590] hover:text-white transition-colors cursor-pointer"
+									className={`block ${
+										pathname === "/science"
+											? "text-[#f7cc48]"
+											: "text-[#7d8590] hover:text-white"
+									} transition-colors cursor-pointer`}
 								>
 									The Science
 								</Link>
 								<Link
 									href="/methodology"
-									className="block text-[#7d8590] hover:text-white transition-colors cursor-pointer"
+									className={`block ${
+										pathname === "/methodology"
+											? "text-[#f7cc48]"
+											: "text-[#7d8590] hover:text-white"
+									} transition-colors cursor-pointer`}
 								>
 									Methodology
 								</Link>
 								<Link
 									href="/research"
-									className="block text-[#7d8590] hover:text-white transition-colors cursor-pointer"
+									className={`block ${
+										pathname === "/research"
+											? "text-[#f7cc48]"
+											: "text-[#7d8590] hover:text-white"
+									} transition-colors cursor-pointer`}
 								>
 									Research
 								</Link>

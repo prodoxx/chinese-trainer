@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Quiz from './Quiz';
+import FlashSessionDemo from './FlashSessionDemo';
 import { useAlert } from '@/hooks/useAlert';
-import { Eye, EyeOff, Zap, ZapOff } from 'lucide-react';
+// Removed Eye, EyeOff, Zap, ZapOff icons - accessibility controls moved to settings
 
 interface Card {
   id: string;
@@ -38,8 +39,8 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
   const [currentBlock, setCurrentBlock] = useState(1); // Track which block we're in (1, 2, or 3)
   const [isPaused, setIsPaused] = useState(false);
   const [showPreview, setShowPreview] = useState(true);
-  const [fadeIntensity, setFadeIntensity] = useState(1.0); // For accessibility
-  const [reduceMotion, setReduceMotion] = useState(false);
+  const [fadeIntensity, setFadeIntensity] = useState(1.0); // From user settings
+  const [reduceMotion, setReduceMotion] = useState(false); // From user settings
   const [consolidationCountdown, setConsolidationCountdown] = useState(3); // Countdown between blocks
   
   // Practice mode states
@@ -62,12 +63,15 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
   const [totalAvailableCards, setTotalAvailableCards] = useState(0);
   const [actualSessionCards, setActualSessionCards] = useState(0); // Track actual cards for this session
   const [isInitialized, setIsInitialized] = useState(false); // Track if cards have been loaded
+  const [showDemo, setShowDemo] = useState<boolean | null>(true); // Default to true, will be updated by preference
+  const [demoCompleted, setDemoCompleted] = useState(false);
   
   // Cognitive load constants based on research
-  const OPTIMAL_SESSION_SIZE = 7; // Working memory capacity
+  const OPTIMAL_SESSION_SIZE = 8; // Optimized for modern attention spans
+  const MINI_QUIZ_INTERVAL = 3; // Quiz after every 3 characters to maintain engagement
   
   // Optimized timing constants based on cognitive science (slower for better learning)
-  const PREVIEW_TIME = 2000; // 2s preview of upcoming characters
+  const PREVIEW_TIME = 3500; // 3.5s preview of upcoming characters (increased from 2s)
   const ORTHOGRAPHIC_TIME = 800; // 800ms - Character alone
   const PHONOLOGICAL_TIME = 2000; // 2s - Character + pinyin + audio
   const SEMANTIC_TIME = 2000; // 2s - Image + meaning
@@ -79,7 +83,28 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
   
   useEffect(() => {
     fetchCards();
+    fetchDemoPreference();
   }, [deckId]);
+
+  const fetchDemoPreference = async () => {
+    try {
+      const response = await fetch('/api/user/settings/flash-session');
+      if (response.ok) {
+        const data = await response.json();
+        setShowDemo(data.showFlashDemo);
+        setReduceMotion(data.reduceMotion);
+        setFadeIntensity(data.brightness);
+      } else {
+        // Default settings if fetch fails
+        setShowDemo(true);
+        setReduceMotion(false);
+        setFadeIntensity(1.0);
+      }
+    } catch (error) {
+      console.error('Failed to fetch flash session preferences:', error);
+      setShowDemo(true);
+    }
+  };
   
   // Elapsed time tracker
   useEffect(() => {
@@ -177,15 +202,19 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
           setShowPracticeModeSelection(true);
         } else {
           // Normal flash session for new and review modes
-          const blockSize = Math.min(Math.floor(Math.random() * 3) + 4, sessionCards.length); // 4, 5, or 6
+          // Use smaller blocks for more frequent engagement
+          const blockSize = Math.min(MINI_QUIZ_INTERVAL, sessionCards.length); // 3 cards max per block
           setCurrentBlockSize(blockSize);
           setBlockCards(sessionCards.slice(0, blockSize));
           setCurrentBlock(1);
           setViewPhase('preview');
           setShowPreview(true);
           
-          // Show warning or initial countdown
-          if (showWarning && mode === 'new') {
+          // Always check for demo first
+          if (showDemo !== false && !demoCompleted) {
+            // Show demo unless explicitly disabled
+            setPhase('idle'); // Wait for demo to complete
+          } else if (showWarning && mode === 'new') {
             setPhase('initial-countdown'); // We'll add the warning to this phase
           } else {
             setCountdownSeconds(10);
@@ -581,11 +610,11 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
   
   const continueToNextBlock = () => {
     const nextBlockStart = currentBlockStartIndex + currentBlockSize;
-    const nextBlockSize = Math.floor(Math.random() * 3) + 4; // 4, 5, or 6
-    const actualBlockSize = Math.min(nextBlockSize, cards.length - nextBlockStart);
-    setCurrentBlockSize(actualBlockSize);
+    // Use mini-quiz interval for frequent engagement
+    const nextBlockSize = Math.min(MINI_QUIZ_INTERVAL, cards.length - nextBlockStart);
+    setCurrentBlockSize(nextBlockSize);
     setCurrentBlockStartIndex(nextBlockStart);
-    setBlockCards(cards.slice(nextBlockStart, nextBlockStart + actualBlockSize));
+    setBlockCards(cards.slice(nextBlockStart, nextBlockStart + nextBlockSize));
     setCurrentIndex(0);
     setCurrentBlock(1);
     setViewPhase('preview');
@@ -639,6 +668,55 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
+
+  const handleDemoComplete = () => {
+    setDemoCompleted(true);
+    
+    // Start appropriate phase based on mode
+    if (mode === 'practice' && selectedPracticeMode) {
+      // For practice mode, start quiz directly
+      if (selectedPracticeMode === 'quick') {
+        const quickCards = [...cards].sort(() => Math.random() - 0.5).slice(0, Math.min(7, cards.length));
+        setCards(quickCards);
+        setBlockCards(quickCards);
+        setCurrentBlockSize(quickCards.length);
+        setCurrentBlockStartIndex(0);
+        setPracticeRound(1);
+        setPhase('quiz');
+        setSessionStartTime(Date.now());
+      } else {
+        const practiceChunkSize = Math.min(7, cards.length);
+        const firstChunk = cards.slice(0, practiceChunkSize);
+        setBlockCards(firstChunk);
+        setCurrentBlockSize(practiceChunkSize);
+        setCurrentBlockStartIndex(0);
+        setPracticeRound(1);
+        setPhase('quiz');
+        setSessionStartTime(Date.now());
+      }
+    } else {
+      // For new/review modes, start countdown
+      setCountdownSeconds(10);
+      setPhase('initial-countdown');
+    }
+  };
+
+  const handleDemoSkip = () => {
+    handleDemoComplete();
+  };
+
+  const handleDemoDontShowAgain = async () => {
+    try {
+      await fetch('/api/user/settings/flash-demo', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ showFlashDemo: false }),
+      });
+    } catch (error) {
+      console.error('Failed to update demo preference:', error);
+    }
+    handleDemoComplete();
+  };
   
   // Handle continuing practice after break
   const continuePractice = () => {
@@ -668,12 +746,24 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
     }
   };
   
-  if (phase === 'loading') {
-    return <div className="fixed inset-0 bg-black flex items-center justify-center">Loading cards...</div>;
+  if (phase === 'loading' || showDemo === null) {
+    return <div className="fixed inset-0 bg-black flex items-center justify-center">Loading...</div>;
+  }
+
+  // Show demo if needed (before any countdown or flash session)
+  if (showDemo && !demoCompleted && phase === 'idle' && cards.length > 0) {
+    return (
+      <FlashSessionDemo
+        onComplete={handleDemoComplete}
+        onSkip={handleDemoSkip}
+        onDontShowAgain={handleDemoDontShowAgain}
+        onQuit={onExit}
+      />
+    );
   }
   
-  // Show practice mode selection
-  if (showPracticeModeSelection && mode === 'practice') {
+  // Show practice mode selection (but not if demo should show first)
+  if (showPracticeModeSelection && mode === 'practice' && !(!demoCompleted && showDemo !== false)) {
     return (
       <div className="fixed inset-0 bg-black flex items-center justify-center p-4">
         <div className="bg-gray-900 p-6 sm:p-8 rounded-lg max-w-2xl w-full text-center">
@@ -739,6 +829,12 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
             <button
               onClick={() => {
                 setShowPracticeModeSelection(false);
+                
+                // Check if demo should be shown first
+                if (showDemo !== false && !demoCompleted) {
+                  // Keep phase as 'idle' to show demo
+                  return;
+                }
                 
                 // Start practice based on selected mode
                 if (selectedPracticeMode === 'quick') {
@@ -1019,45 +1115,6 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
   // Render different views based on current phase
   return (
     <div className="fixed inset-0 bg-black flex items-center justify-center" style={{ opacity: fadeIntensity }}>
-      {/* Accessibility controls - only show when paused */}
-      {isPaused && (
-        <div className="fixed bottom-24 left-1/2 transform -translate-x-1/2 flex gap-3 z-20">
-          <button
-            onClick={() => setReduceMotion(!reduceMotion)}
-            className="px-4 py-2.5 bg-gray-900/80 hover:bg-gray-800 backdrop-blur-sm text-gray-300 hover:text-white rounded-xl transition-all duration-200 flex items-center gap-2 border border-gray-800 hover:border-gray-700 group"
-            title="Toggle reduce motion"
-          >
-            {reduceMotion ? (
-              <>
-                <Zap className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                <span className="text-sm font-medium">Enable Motion</span>
-              </>
-            ) : (
-              <>
-                <ZapOff className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                <span className="text-sm font-medium">Reduce Motion</span>
-              </>
-            )}
-          </button>
-          <button
-            onClick={() => setFadeIntensity(fadeIntensity === 1 ? 0.7 : 1)}
-            className="px-4 py-2.5 bg-gray-900/80 hover:bg-gray-800 backdrop-blur-sm text-gray-300 hover:text-white rounded-xl transition-all duration-200 flex items-center gap-2 border border-gray-800 hover:border-gray-700 group"
-            title="Adjust brightness"
-          >
-            {fadeIntensity === 1 ? (
-              <>
-                <EyeOff className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                <span className="text-sm font-medium">Dim Display</span>
-              </>
-            ) : (
-              <>
-                <Eye className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                <span className="text-sm font-medium">Full Brightness</span>
-              </>
-            )}
-          </button>
-        </div>
-      )}
       
       <div className="text-center">
         {/* Orthographic focus - character alone */}
@@ -1074,7 +1131,7 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
             {(currentBlock === 1 || currentBlock === 3) && (
               <>
                 <div className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-white">{currentCard.hanzi}</div>
-                <div className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-gray-300">{currentCard.pinyin}</div>
+                <div className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-[#f7cc48]">{currentCard.pinyin}</div>
               </>
             )}
             
@@ -1082,7 +1139,7 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
             {currentBlock === 2 && (
               <>
                 <div className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white">{currentCard.hanzi}</div>
-                <div className="text-3xl sm:text-4xl md:text-5xl text-gray-300">{currentCard.pinyin}</div>
+                <div className="text-3xl sm:text-4xl md:text-5xl text-[#f7cc48]">{currentCard.pinyin}</div>
                 {currentCard.imageUrl && (
                   <div className="w-40 h-40 sm:w-48 sm:h-48 md:w-56 md:h-56 lg:w-64 lg:h-64 mx-auto my-4">
                     <img

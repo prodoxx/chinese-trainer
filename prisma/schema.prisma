@@ -93,6 +93,7 @@ model UserSettings {
   theme                 String   @default("dark") // light, dark, auto
   emailNotifications    Boolean  @default(true)
   reviewReminders       Boolean  @default(true)
+  showFlashDemo         Boolean  @default(true) // Show flash session demo
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 

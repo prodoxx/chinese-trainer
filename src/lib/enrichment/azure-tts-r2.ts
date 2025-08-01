@@ -77,13 +77,13 @@ export async function generateTTSAudioR2(
     const voice = VOICE_NAME;
     const audioBuffer = await generateSpeech(text, voice);
     
-    // Upload to R2
+    // Upload to R2 (avoid Chinese characters in metadata headers)
     const audioUrl = await uploadToR2(audioKey, audioBuffer, {
       contentType: 'audio/mpeg',
       metadata: {
-        text,
         voice,
         generatedAt: new Date().toISOString(),
+        type: 'tts-audio'
       }
     });
     

@@ -18,21 +18,34 @@ export async function interpretChinese(
 	try {
 		const contextHint = context ? ` in the context of ${context}` : "";
 
-		const prompt = `Interpret the Chinese characters "${hanzi}"${contextHint}. Provide:
-1. A concise English meaning (2-5 words)
-2. Pinyin with tone numbers (e.g., ni3 hao3)
-3. Context if relevant (e.g., emotion, action, state)
+		const prompt = `Interpret the Chinese characters "${hanzi}"${contextHint} for students learning Chinese in Taiwan. Provide:
+1. A SHORT, SIMPLE English meaning (2-5 words MAX) using COMMON everyday words that everyone knows
+2. Pinyin with tone MARKS as used in TAIWAN (e.g., cōng míng for 聰明, not cōng ming)
+3. Context or common usage (when/how this word is typically used)
 4. A visual description for image generation (one sentence, focusing on observable actions or expressions)
+
+For example:
+- 隨便 should be "casual/whatever" (simple), not "as one wishes" (too formal)
+- 麻煩 should be "trouble/hassle" (common words), not "bothersome" (less common)
+- 責任 should be "responsibility" (clear), not "duty and obligation" (too long)
+- 固執 should be "stubborn" (simple), not "obstinate" (too advanced)
+- 聰明 should be "smart/clever" (easy), not "intelligent" (more formal)
 
 Format your response as JSON:
 {
-  "meaning": "the English meaning",
-  "pinyin": "pīn yīn (with tone marks, not numbers)",
-  "context": "emotional/physical state",
-  "imagePrompt": "Simple illustration showing [action/expression] that represents [meaning]. If showing a person, use diverse representation of either East Asian, Hispanic, White, or Black individual. Avoid South Asian/Indian representation. Cartoon or minimalist style preferred."
+  "meaning": "SHORT, SIMPLE meaning using BASIC English words (2-5 words MAX)",
+  "pinyin": "pīn yīn (with tone MARKS, Taiwan pronunciation)",
+  "context": "common usage or situation where this is used",
+  "imagePrompt": "Simple illustration showing [action/expression] that represents [meaning]. CRITICAL: ZERO TEXT, words, letters, numbers, labels, captions, signs, or written characters anywhere in the image. If showing a person, use diverse representation of either East Asian, Hispanic, White, or Black individual. Avoid South Asian/Indian representation. Cartoon or minimalist style preferred."
 }
 
-Important: For emotional or state words, focus on visual expressions or body language that represents the feeling.`;
+Important: 
+- Focus on HOW the word is actually used in everyday Taiwan Mandarin, not dictionary definitions
+- Provide meanings that students would hear in real conversations
+- Use Taiwan Mandarin pronunciation standards, not mainland China pronunciations
+- Use tone MARKS (ā á ǎ à), not tone numbers
+- Be clear and specific - avoid vague or overly formal meanings
+- For imagePrompt: This is for educational quizzing - ANY TEXT in the image would give away the answer and ruin the learning experience`;
 
 		const response = await openai.chat.completions.create({
 			model: "gpt-4o-mini",
@@ -40,7 +53,7 @@ Important: For emotional or state words, focus on visual expressions or body lan
 				{
 					role: "system",
 					content:
-						"You are a Chinese language expert helping create educational flashcards. Always provide accurate, concise interpretations suitable for language learners.",
+						"You are a Taiwan Mandarin teacher creating flash cards for all English levels. Use SIMPLE, COMMON English words that everyone knows (avoid advanced vocabulary like 'obstinate', 'diligent', 'prudent'). Keep meanings SHORT (2-5 words max). Examples: 固執='stubborn' NOT 'obstinate', 聰明='smart' NOT 'intelligent', 努力='hardworking' NOT 'diligent'. Always use Taiwan pronunciation with tone marks. Be simple and clear.",
 				},
 				{
 					role: "user",
@@ -56,20 +69,49 @@ Important: For emotional or state words, focus on visual expressions or body lan
 			throw new Error("No response from OpenAI");
 		}
 
-		// Parse the JSON response
+		// Parse the JSON response - handle markdown code blocks
 		try {
-			const result = JSON.parse(content);
+			// Remove markdown code blocks if present
+			let jsonContent = content.trim();
+			if (jsonContent.startsWith('```json')) {
+				jsonContent = jsonContent.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+			} else if (jsonContent.startsWith('```')) {
+				jsonContent = jsonContent.replace(/^```\s*/, '').replace(/\s*```$/, '');
+			}
+			
+			const result = JSON.parse(jsonContent);
+			
+			// Validate that we got meaningful results
+			if (!result.meaning || result.meaning.toLowerCase().includes('unknown')) {
+				console.warn("OpenAI returned unknown meaning, falling back");
+				throw new Error("Invalid meaning returned");
+			}
+			
 			return {
 				meaning: result.meaning || "Unknown",
-				pinyin: result.pinyin,
-				context: result.context,
-				imagePrompt: result.imagePrompt,
+				pinyin: result.pinyin || "",
+				context: result.context || "",
+				imagePrompt: result.imagePrompt || `A clear illustration representing the concept of "${hanzi}"`,
 			};
 		} catch (parseError) {
 			console.error("Failed to parse OpenAI response:", content);
-			// Fallback to basic interpretation
+			console.error("Parse error:", parseError);
+			
+			// Better fallback - try to extract meaning from the raw content
+			let fallbackMeaning = "Unknown";
+			try {
+				// Look for meaning in quotes or after "meaning"
+				const meaningMatch = content.match(/"meaning":\s*"([^"]+)"/i) || 
+				                   content.match(/meaning[:\s]+([^\n,}]+)/i);
+				if (meaningMatch && meaningMatch[1] && !meaningMatch[1].toLowerCase().includes('unknown')) {
+					fallbackMeaning = meaningMatch[1].trim().replace(/[",]/g, '');
+				}
+			} catch (e) {
+				console.warn("Could not extract meaning from fallback parsing");
+			}
+			
 			return {
-				meaning: "Unknown phrase",
+				meaning: fallbackMeaning,
 				pinyin: "",
 				context: "",
 				imagePrompt: `A clear illustration representing the concept of "${hanzi}"`,

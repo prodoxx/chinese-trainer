@@ -24,6 +24,36 @@ export interface ICard extends Document {
   overallDifficulty?: number;
   mnemonics?: string[];
   etymology?: string;
+  // AI Insights (cached from OpenAI)
+  aiInsights?: {
+    etymology?: {
+      origin: string;
+      evolution: string[];
+      culturalContext: string;
+    };
+    mnemonics: {
+      visual: string;
+      story: string;
+      components: string;
+    };
+    commonErrors: {
+      similarCharacters: string[];
+      wrongContexts: string[];
+      toneConfusions: string[];
+    };
+    usage: {
+      commonCollocations: string[];
+      registerLevel: 'formal' | 'informal' | 'neutral' | 'literary';
+      frequency: 'high' | 'medium' | 'low';
+      domains: string[];
+    };
+    learningTips: {
+      forBeginners: string[];
+      forIntermediate: string[];
+      forAdvanced: string[];
+    };
+  };
+  aiInsightsGeneratedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
   // Virtual field for deck associations
@@ -55,6 +85,36 @@ const CardSchema = new Schema<ICard>(
     overallDifficulty: { type: Number },
     mnemonics: [{ type: String }],
     etymology: { type: String },
+    // AI Insights (cached from OpenAI)
+    aiInsights: {
+      etymology: {
+        origin: { type: String },
+        evolution: [{ type: String }],
+        culturalContext: { type: String },
+      },
+      mnemonics: {
+        visual: { type: String },
+        story: { type: String },
+        components: { type: String },
+      },
+      commonErrors: {
+        similarCharacters: [{ type: String }],
+        wrongContexts: [{ type: String }],
+        toneConfusions: [{ type: String }],
+      },
+      usage: {
+        commonCollocations: [{ type: String }],
+        registerLevel: { type: String, enum: ['formal', 'informal', 'neutral', 'literary'] },
+        frequency: { type: String, enum: ['high', 'medium', 'low'] },
+        domains: [{ type: String }],
+      },
+      learningTips: {
+        forBeginners: [{ type: String }],
+        forIntermediate: [{ type: String }],
+        forAdvanced: [{ type: String }],
+      },
+    },
+    aiInsightsGeneratedAt: { type: Date },
   },
   { timestamps: true }
 );

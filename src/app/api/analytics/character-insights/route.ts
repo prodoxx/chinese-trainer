@@ -92,7 +92,27 @@ export async function POST(request: NextRequest) {
     let aiInsights = null;
     if (includeAI) {
       try {
-        aiInsights = await analyzeCharacterWithOpenAI(card.hanzi);
+        // Check if AI insights are already cached in the card
+        if (card.aiInsights && card.aiInsightsGeneratedAt) {
+          // Check if cached insights are recent (less than 30 days old)
+          const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+          if (card.aiInsightsGeneratedAt > thirtyDaysAgo) {
+            console.log('Using cached AI insights for character:', card.hanzi);
+            aiInsights = card.aiInsights;
+          }
+        }
+        
+        // If no cached insights or they're stale, generate new ones
+        if (!aiInsights) {
+          console.log('Generating new AI insights for character:', card.hanzi);
+          aiInsights = await analyzeCharacterWithOpenAI(card.hanzi);
+          
+          // Cache the AI insights in the card
+          await Card.findByIdAndUpdate(characterId, {
+            aiInsights,
+            aiInsightsGeneratedAt: new Date(),
+          });
+        }
       } catch (error) {
         console.error('AI analysis failed:', error);
       }

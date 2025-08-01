@@ -89,7 +89,7 @@ export default function Quiz({ cards, deckId, onComplete, onExit }: QuizProps) {
     }
   }, [currentQuestion, questions, audioPlayed, showResult]);
   
-  const generateQuestions = () => {
+  const generateQuestions = async () => {
     const shuffled = [...cards].sort(() => Math.random() - 0.5);
     // Quiz all cards that are passed in
     const numQuestions = cards.length;
@@ -98,17 +98,46 @@ export default function Quiz({ cards, deckId, onComplete, onExit }: QuizProps) {
     // Define question types to cycle through
     const questionTypes: Question['type'][] = ['meaning-to-hanzi', 'audio-to-hanzi', 'image-match'];
     
+    // Fetch commonly confused characters for better distractors
+    let confusedCharactersMap: Record<string, string[]> = {};
+    try {
+      const response = await fetch('/api/cards/confused-characters', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          characters: cards.map(c => c.hanzi),
+          limit: 3 
+        }),
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        confusedCharactersMap = data.confusables || {};
+      }
+    } catch (error) {
+      console.error('Failed to fetch confused characters:', error);
+    }
+    
     for (let i = 0; i < numQuestions; i++) {
       const correctCard = shuffled[i];
       const options = [correctCard];
       
-      // Add 3 distractors
-      const distractors = cards
-        .filter(c => c.id !== correctCard.id)
-        .sort(() => Math.random() - 0.5)
+      // First, try to use commonly confused characters as distractors
+      const confusedChars = confusedCharactersMap[correctCard.hanzi] || [];
+      const confusedDistractors = cards
+        .filter(c => c.id !== correctCard.id && confusedChars.includes(c.hanzi))
         .slice(0, 3);
       
-      options.push(...distractors);
+      // If not enough confused characters, add random distractors
+      const remainingCount = 3 - confusedDistractors.length;
+      const randomDistractors = remainingCount > 0 
+        ? cards
+            .filter(c => c.id !== correctCard.id && !confusedDistractors.some(d => d.id === c.id))
+            .sort(() => Math.random() - 0.5)
+            .slice(0, remainingCount)
+        : [];
+      
+      options.push(...confusedDistractors, ...randomDistractors);
       options.sort(() => Math.random() - 0.5);
       
       // Cycle through question types
@@ -340,18 +369,24 @@ export default function Quiz({ cards, deckId, onComplete, onExit }: QuizProps) {
               onClick={() => handleAnswer(option.id)}
               disabled={showResult}
               className={`
-                p-4 sm:p-6 rounded-lg border-2 transition-all cursor-pointer
+                p-4 sm:p-6 rounded-lg border-2 transition-all cursor-pointer relative overflow-hidden
                 ${showResult && option.id === question.correctCard.id
-                  ? 'border-green-500 bg-green-500 bg-opacity-20'
-                  : showResult && option.id !== question.correctCard.id && selectedAnswer === option.id
-                  ? 'border-red-500 bg-red-500 bg-opacity-20'
+                  ? 'border-green-400 bg-green-900 text-green-100'
+                  : showResult && option.id !== question.correctCard.id
+                  ? 'border-red-400 bg-red-900 text-red-100'
                   : 'border-gray-700 hover:border-gray-500'
                 }
                 ${!showResult && 'hover:bg-gray-900'}
               `}
             >
-              <div className="flex items-center space-x-2">
-                <span className="text-gray-500">{index + 1}.</span>
+              {showResult && option.id === question.correctCard.id && (
+                <div className="absolute inset-0 bg-green-500 opacity-20 pointer-events-none" />
+              )}
+              {showResult && option.id !== question.correctCard.id && (
+                <div className="absolute inset-0 bg-red-500 opacity-20 pointer-events-none" />
+              )}
+              <div className="flex items-center space-x-2 relative z-10">
+                <span className={showResult ? '' : 'text-gray-500'}>{index + 1}.</span>
                 {question.type === 'meaning-to-hanzi' || question.type === 'audio-to-hanzi' ? (
                   <span className="text-3xl sm:text-4xl">{option.hanzi}</span>
                 ) : (

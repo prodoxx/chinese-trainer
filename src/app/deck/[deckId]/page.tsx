@@ -421,7 +421,7 @@ export default function DeckView() {
           {deck.cards.map((card) => (
             <div 
               key={card._id} 
-              className={`bg-[#21262d] backdrop-blur-sm rounded-2xl border border-[#30363d] p-6 hover:border-[#f7cc48]/30 transition-all cursor-pointer flex flex-col relative shadow-lg hover:shadow-xl hover:scale-[1.02] ${
+              className={`group bg-[#21262d] backdrop-blur-sm rounded-2xl border border-[#30363d] p-6 hover:border-[#f7cc48]/30 transition-all cursor-pointer flex flex-col relative shadow-lg hover:shadow-xl hover:scale-[1.02] ${
                 enrichingCards.has(card._id) ? 'opacity-60' : ''
               }`}
               onClick={() => setSelectedCharacter({ id: card._id, hanzi: card.hanzi })}
@@ -464,7 +464,7 @@ export default function DeckView() {
               )}
 
               <div className="text-center mb-4">
-                <div className="text-6xl font-bold mb-2 text-white hanzi hover:text-[#f7cc48] transition-colors">{card.hanzi}</div>
+                <div className="text-6xl font-bold mb-2 text-white hanzi group-hover:text-[#f7cc48] transition-colors">{card.hanzi}</div>
                 <div className="text-xl text-[#f7cc48]/80 mb-2">{card.pinyin}</div>
                 <div className="text-sm text-gray-300">{card.english.join(', ')}</div>
               </div>

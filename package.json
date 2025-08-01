@@ -18,7 +18,8 @@
 		"db:migrate:prod": "prisma migrate deploy",
 		"db:push": "prisma db push",
 		"db:studio": "prisma studio",
-		"db:reset": "prisma migrate reset"
+		"db:reset": "prisma migrate reset",
+		"set-admin": "bun run scripts/set-admin-role.ts"
 	},
 	"dependencies": {
 		"@auth/prisma-adapter": "^2.10.0",
@@ -29,6 +30,7 @@
 		"bcryptjs": "^3.0.2",
 		"bullmq": "^5.56.7",
 		"dotenv": "^17.2.1",
+		"framer-motion": "^12.23.12",
 		"ioredis": "^5.6.1",
 		"lucide-react": "^0.526.0",
 		"mongodb": "^6.18.0",

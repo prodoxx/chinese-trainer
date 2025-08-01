@@ -28,6 +28,7 @@ export default withAuth(
             req.nextUrl.pathname === "/features" ||
             req.nextUrl.pathname === "/privacy" ||
             req.nextUrl.pathname === "/terms" ||
+            req.nextUrl.pathname === "/demo" ||
             req.nextUrl.pathname.startsWith("/_next")) {
           return true;
         }

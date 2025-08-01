@@ -101,7 +101,7 @@ export const deckEnrichmentR2Worker = new Worker<DeckEnrichmentJobData>(
               card.pinyin = convertPinyinToneNumbersToMarks(card.pinyin);
             }
           } else {
-            // Look up in CEDICT
+            // Look up in CEDICT for meaning only
             const dictEntries = await Dictionary.find({ 
               traditional: card.hanzi 
             });
@@ -109,32 +109,28 @@ export const deckEnrichmentR2Worker = new Worker<DeckEnrichmentJobData>(
             if (dictEntries.length > 0) {
               console.log(`   ✓ Found in dictionary`);
               
-              // If multiple entries exist, use the multi-pronunciation handler
+              // Get meaning from dictionary
               if (dictEntries.length > 1) {
                 const preferredEntry = getPreferredEntry(card.hanzi, dictEntries);
                 card.meaning = preferredEntry.definitions[0] || 'No definition';
-                card.pinyin = preferredEntry.pinyin;
-                console.log(`   Multiple pronunciations found, selected: ${card.pinyin}`);
+                console.log(`   Multiple entries found, selected meaning: ${card.meaning}`);
               } else {
                 // Single entry
                 card.meaning = dictEntries[0].definitions[0] || 'No definition';
-                card.pinyin = dictEntries[0].pinyin;
               }
               
-              // Convert tone numbers to marks if needed
-              if (!hasToneMarks(card.pinyin)) {
-                card.pinyin = convertPinyinToneNumbersToMarks(card.pinyin);
-              }
+              // Don't use dictionary pinyin - we'll get Taiwan pronunciation from AI
+              console.log(`   Will use AI for Taiwan-specific pronunciation`);
             } else {
               console.log(`   ✗ Not in dictionary, will use AI interpretation`);
             }
           }
           
-          // If not in dictionary or meaning is unclear, use AI interpretation
-          const needsInterpretation = card.disambiguated ? false : (!card.meaning || card.meaning === 'No definition' || !card.pinyin);
+          // Always use AI interpretation for student-friendly meanings and Taiwan pronunciation unless already disambiguated
+          const needsInterpretation = !card.disambiguated || !card.pinyin || !card.meaning || card.meaning === 'Unknown character';
           
           if (needsInterpretation) {
-            console.log(`   🤖 Using AI interpretation...`);
+            console.log(`   🤖 Using AI interpretation for student-friendly meaning...`);
             
             await Deck.findByIdAndUpdate(deckId, {
               enrichmentProgress: {
@@ -148,6 +144,7 @@ export const deckEnrichmentR2Worker = new Worker<DeckEnrichmentJobData>(
             const interpretation = await interpretChinese(card.hanzi);
             
             if (interpretation) {
+              // Always use AI meaning for clearer, student-friendly explanations
               card.meaning = interpretation.meaning || card.meaning;
               card.pinyin = interpretation.pinyin || card.pinyin;
               console.log(`   ✓ AI provided: ${card.pinyin} - ${card.meaning}`);

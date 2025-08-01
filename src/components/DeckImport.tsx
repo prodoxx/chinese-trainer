@@ -192,7 +192,7 @@ export default function DeckImport({ onImportComplete }: DeckImportProps) {
         className={`
           relative border-2 border-dashed rounded-xl p-6 sm:p-8 text-center transition-all duration-200
           ${dragActive 
-            ? 'border-violet-600 bg-violet-900/10' 
+            ? 'border-[#f7cc48] bg-[#f7cc48]/10' 
             : 'border-gray-800 hover:border-gray-700 hover:bg-gray-900/30'
           }
           ${isImporting ? 'opacity-50 pointer-events-none' : ''}
@@ -208,11 +208,11 @@ export default function DeckImport({ onImportComplete }: DeckImportProps) {
         />
         
         <div className="space-y-4">
-          <div className="w-16 h-16 bg-gradient-to-br from-violet-600/20 to-purple-600/20 rounded-2xl flex items-center justify-center mx-auto">
+          <div className="w-16 h-16 bg-gradient-to-br from-[#f7cc48]/20 to-[#f7cc48]/10 rounded-2xl flex items-center justify-center mx-auto">
             {isImporting ? (
-              <RefreshCw className="w-8 h-8 text-violet-400 animate-spin" />
+              <RefreshCw className="w-8 h-8 text-[#f7cc48] animate-spin" />
             ) : (
-              <Upload className="w-8 h-8 text-violet-400" />
+              <Upload className="w-8 h-8 text-[#f7cc48]" />
             )}
           </div>
           
@@ -221,7 +221,7 @@ export default function DeckImport({ onImportComplete }: DeckImportProps) {
               {isImporting ? 'Importing...' : 'Drop CSV file here'}
             </p>
             <p className="text-sm text-gray-500">
-              or <label htmlFor="file-upload" className="text-violet-400 hover:text-violet-300 cursor-pointer">browse</label> to upload
+              or <label htmlFor="file-upload" className="text-[#f7cc48] hover:text-[#f7cc48]/80 cursor-pointer">browse</label> to upload
             </p>
           </div>
           

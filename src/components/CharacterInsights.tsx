@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { EnhancedCharacterComplexity } from '@/lib/analytics/enhanced-linguistic-complexity';
 import { DeepLinguisticAnalysis } from '@/lib/analytics/openai-linguistic-analysis';
 
@@ -45,7 +45,6 @@ interface InsightsData {
 export default function CharacterInsights({ characterId, character, onClose }: CharacterInsightsProps) {
   const [insights, setInsights] = useState<InsightsData | null>(null);
   const [loading, setLoading] = useState(false);
-  const [includeAI, setIncludeAI] = useState(false);
 
   const fetchInsights = async () => {
     setLoading(true);
@@ -53,12 +52,15 @@ export default function CharacterInsights({ characterId, character, onClose }: C
       const response = await fetch('/api/analytics/character-insights', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ characterId, includeAI }),
+        body: JSON.stringify({ characterId, includeAI: true }),
       });
       
       const data = await response.json();
+      
       if (data.success) {
         setInsights(data.insights);
+      } else {
+        console.error('API returned error:', data.error);
       }
     } catch (error) {
       console.error('Failed to fetch insights:', error);
@@ -68,9 +70,9 @@ export default function CharacterInsights({ characterId, character, onClose }: C
   };
 
   // Fetch on mount
-  useState(() => {
+  useEffect(() => {
     fetchInsights();
-  });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getDifficultyColor = (difficulty: number) => {
     if (difficulty < 0.3) return 'text-green-400';
@@ -137,60 +139,129 @@ export default function CharacterInsights({ characterId, character, onClose }: C
   const processTextWithPinyin = (text: string) => {
     if (!text) return text;
     
+    // Common character-to-pinyin mappings for frequently used characters
+    const commonPinyin: Record<string, string> = {
+      '固': 'gù',
+      '執': 'zhí', 
+      '堅': 'jiān',
+      '持': 'chí',
+      '頑': 'wán',
+      '固': 'gù',
+      '岩': 'yán',
+      '石': 'shí',
+      '人': 'rén',
+      '手': 'shǒu',
+      '握': 'wò',
+      '拿': 'ná',
+      '拒': 'jù',
+      '絕': 'jué',
+      '放': 'fàng',
+      '棄': 'qì',
+      '改': 'gǎi',
+      '變': 'biàn',
+      '心': 'xīn',
+      '意': 'yì',
+      '見': 'jiàn',
+      '想': 'xiǎng',
+      '法': 'fǎ',
+      '念': 'niàn',
+      '信': 'xìn',
+      '仰': 'yǎng',
+      '物': 'wù',
+      '體': 'tǐ',
+      '東': 'dōng',
+      '西': 'xī',
+      '時': 'shí',
+      '候': 'hòu',
+      '代': 'dài',
+      '表': 'biǎo',
+      '示': 'shì',
+      '現': 'xiàn',
+      '代': 'dài',
+      '當': 'dāng',
+      '今': 'jīn',
+      '現': 'xiàn',
+      '在': 'zài'
+    };
+    
     // For the current character being studied
     const currentChar = insights?.character.hanzi;
     const currentPinyin = insights?.character.pinyin;
     
     if (currentChar && currentPinyin && text.includes(currentChar)) {
-      text = text.replace(new RegExp(currentChar, 'g'), `${currentChar} (${currentPinyin})`);
+      text = text.replace(new RegExp(`(?<!\\()${currentChar}(?!\\s*\\()`, 'g'), `${currentChar} (${currentPinyin})`);
     }
     
     // For confused characters
     if (insights?.confusionAnalysis) {
       insights.confusionAnalysis.forEach(item => {
-        if (text.includes(item.character)) {
-          text = text.replace(new RegExp(item.character, 'g'), `${item.character} (${item.pinyin})`);
+        if (text.includes(item.character) && item.pinyin) {
+          text = text.replace(new RegExp(`(?<!\\()${item.character}(?!\\s*\\()`, 'g'), `${item.character} (${item.pinyin})`);
         }
       });
     }
+    
+    // Add pinyin for other common Chinese characters
+    Object.entries(commonPinyin).forEach(([char, pinyin]) => {
+      if (text.includes(char)) {
+        text = text.replace(new RegExp(`(?<!\\()${char}(?!\\s*\\()`, 'g'), `${char} (${pinyin})`);
+      }
+    });
     
     return text;
   };
 
   return (
-    <div className="fixed inset-0 bg-[#0f1419]/90 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-[#1a1f2e]/95 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden border border-[#2d3548] shadow-2xl">
+    <div className="fixed inset-0 bg-[#0f1419]/90 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50">
+      <div className="bg-[#1a1f2e]/95 rounded-2xl max-w-4xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-hidden border border-[#2d3548] shadow-2xl flex flex-col">
         {/* Header */}
-        <div className="p-6 border-b border-[#2d3548] bg-[#232937] flex justify-between items-start">
-          <div>
-            <h2 className="text-3xl font-bold mb-2">
+        <div className="p-4 sm:p-4 sm:p-6 border-b border-[#2d3548] bg-[#232937] flex justify-between items-start flex-shrink-0">
+          <div className="pr-2">
+            <h2 className="text-xl sm:text-3xl font-bold mb-1 sm:mb-2">
               <span className="text-[#f7cc48]">Character Insights: </span>
               <span className="text-white">{character}</span>
             </h2>
-            <p className="text-gray-300">Deep linguistic analysis and learning patterns</p>
+            <p className="text-sm sm:text-base text-gray-300 hidden sm:block">Deep linguistic analysis and learning patterns</p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-[#2d3548] rounded-lg transition-colors text-gray-400 hover:text-white"
+            className="p-1.5 sm:p-2 hover:bg-[#2d3548] rounded-lg transition-colors text-gray-400 hover:text-white flex-shrink-0"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
-          {loading ? (
-            <div className="animate-pulse space-y-4">
-              <div className="h-32 bg-[#2d3548] rounded-lg"></div>
-              <div className="h-48 bg-[#2d3548] rounded-lg"></div>
-              <div className="h-64 bg-[#2d3548] rounded-lg"></div>
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1 pb-safe">
+          {loading && !insights ? (
+            <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
+              <div className="mb-6">
+                <svg className="animate-spin h-12 w-12 text-[#f7cc48] mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              </div>
+              <h3 className="text-2xl font-semibold mb-3 text-[#f7cc48]">Analyzing Character</h3>
+              <p className="text-gray-300 mb-6 max-w-md">
+                Loading linguistic analysis, complexity metrics, and learning patterns for this character
+              </p>
+              <div className="bg-[#232937] rounded-lg p-4 border border-[#2d3548] max-w-sm">
+                <div className="flex items-center justify-center gap-3 text-sm text-gray-400">
+                  <div className="flex space-x-1">
+                    <div className="w-2 h-2 bg-[#f7cc48] rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-[#f7cc48] rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                    <div className="w-2 h-2 bg-[#f7cc48] rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                  </div>
+                  <span>Preparing insights...</span>
+                </div>
+              </div>
             </div>
           ) : insights ? (
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6 pb-8">
               {/* Character Overview */}
-              <div className="bg-[#232937] rounded-lg p-6 border border-[#2d3548]">
+              <div className="bg-[#232937] rounded-lg p-4 sm:p-4 sm:p-6 border border-[#2d3548]">
                 <div className="flex items-start gap-6">
                   {insights.character.imageUrl && (
                     <img 
@@ -208,7 +279,7 @@ export default function CharacterInsights({ characterId, character, onClose }: C
               </div>
 
               {/* Complexity Analysis */}
-              <div className="bg-[#232937] rounded-lg p-6 border border-[#2d3548]">
+              <div className="bg-[#232937] rounded-lg p-4 sm:p-4 sm:p-6 border border-[#2d3548]">
                 <h3 className="text-xl font-semibold mb-4 text-[#f7cc48]">Complexity Analysis</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -255,7 +326,7 @@ export default function CharacterInsights({ characterId, character, onClose }: C
 
               {/* Review Performance */}
               {insights.reviewHistory && (
-                <div className="bg-[#232937] rounded-lg p-6 border border-[#2d3548]">
+                <div className="bg-[#232937] rounded-lg p-4 sm:p-6 border border-[#2d3548]">
                   <h3 className="text-xl font-semibold mb-4 text-[#f7cc48]">Your Performance</h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div>
@@ -285,7 +356,7 @@ export default function CharacterInsights({ characterId, character, onClose }: C
 
               {/* Confusion Analysis */}
               {insights.confusionAnalysis.length > 0 && (
-                <div className="bg-[#232937] rounded-lg p-6 border border-[#2d3548]">
+                <div className="bg-[#232937] rounded-lg p-4 sm:p-6 border border-[#2d3548]">
                   <h3 className="text-xl font-semibold mb-4 text-[#f7cc48]">Commonly Confused With</h3>
                   <div className="space-y-3">
                     {insights.confusionAnalysis.map((item, index) => (
@@ -313,9 +384,9 @@ export default function CharacterInsights({ characterId, character, onClose }: C
                 </div>
               )}
 
-              {/* Memory Aids (from enrichment) */}
-              {insights.complexity.mnemonics && insights.complexity.mnemonics.length > 0 && (
-                <div className="bg-[#232937] rounded-lg p-6 border border-[#2d3548]">
+              {/* Memory Aids (from enrichment) - only show if no AI insights */}
+              {insights.complexity.mnemonics && insights.complexity.mnemonics.length > 0 && !insights.aiInsights && (
+                <div className="bg-[#232937] rounded-lg p-4 sm:p-6 border border-[#2d3548]">
                   <h3 className="text-xl font-semibold mb-4 text-[#f7cc48]">Memory Aids</h3>
                   <div className="space-y-3">
                     {insights.complexity.mnemonics.map((mnemonic, index) => (
@@ -327,28 +398,21 @@ export default function CharacterInsights({ characterId, character, onClose }: C
                 </div>
               )}
 
-              {/* Etymology (from enrichment) */}
-              {insights.complexity.etymology && (
-                <div className="bg-[#232937] rounded-lg p-6 border border-[#2d3548]">
+              {/* Etymology (from enrichment) - only show if no AI insights */}
+              {insights.complexity.etymology && !insights.aiInsights && (
+                <div className="bg-[#232937] rounded-lg p-4 sm:p-6 border border-[#2d3548]">
                   <h3 className="text-xl font-semibold mb-4 text-[#f7cc48]">Etymology</h3>
                   <p className="text-gray-100">{processTextWithPinyin(insights.complexity.etymology)}</p>
                 </div>
               )}
 
-              {/* AI Insights Toggle */}
+              {/* AI Insights Note (only if no AI insights available) */}
               {!insights.aiInsights && (
-                <div className="bg-[#232937] rounded-lg p-6 text-center border border-[#2d3548]">
-                  <h3 className="text-xl font-semibold mb-2 text-[#f7cc48]">Want Deeper Insights?</h3>
-                  <p className="text-gray-300 mb-4">Get AI-powered mnemonics, etymology, and personalized learning tips</p>
-                  <button
-                    onClick={() => {
-                      setIncludeAI(true);
-                      fetchInsights();
-                    }}
-                    className="px-6 py-2 bg-[#f7cc48] hover:bg-[#f7cc48]/90 text-black font-semibold rounded-lg transition-all hover:shadow-[0_0_20px_rgba(247,204,72,0.4)]"
-                  >
-                    Generate AI Insights
-                  </button>
+                <div className="bg-[#232937] rounded-lg p-4 sm:p-6 text-center border border-[#2d3548]">
+                  <h3 className="text-lg font-semibold mb-2 text-gray-300">💡 AI Insights Coming Soon</h3>
+                  <p className="text-gray-400 text-sm">
+                    AI-powered mnemonics, etymology, and learning tips will be automatically generated when this character is re-enriched.
+                  </p>
                 </div>
               )}
 
@@ -356,7 +420,7 @@ export default function CharacterInsights({ characterId, character, onClose }: C
               {insights.aiInsights && (
                 <>
                   {/* Mnemonics */}
-                  <div className="bg-[#232937] rounded-lg p-6 border border-[#2d3548]">
+                  <div className="bg-[#232937] rounded-lg p-4 sm:p-6 border border-[#2d3548]">
                     <h3 className="text-xl font-semibold mb-4 text-[#f7cc48]">Memory Aids</h3>
                     <div className="space-y-4">
                       <div>
@@ -376,7 +440,7 @@ export default function CharacterInsights({ characterId, character, onClose }: C
 
                   {/* Etymology */}
                   {insights.aiInsights.etymology && (
-                    <div className="bg-[#232937] rounded-lg p-6 border border-[#2d3548]">
+                    <div className="bg-[#232937] rounded-lg p-4 sm:p-6 border border-[#2d3548]">
                       <h3 className="text-xl font-semibold mb-4 text-[#f7cc48]">Etymology</h3>
                       <div className="space-y-3">
                         <div>
@@ -396,7 +460,7 @@ export default function CharacterInsights({ characterId, character, onClose }: C
                   )}
 
                   {/* Learning Tips */}
-                  <div className="bg-[#232937] rounded-lg p-6 border border-[#2d3548]">
+                  <div className="bg-[#232937] rounded-lg p-4 sm:p-6 border border-[#2d3548]">
                     <h3 className="text-xl font-semibold mb-4 text-[#f7cc48]">Learning Tips</h3>
                     <div className="space-y-3">
                       {insights.aiInsights.learningTips.forBeginners.length > 0 && (

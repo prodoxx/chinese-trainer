@@ -123,25 +123,41 @@ export async function generateSharedImage(
     // Create an intelligent prompt that focuses solely on the English meaning
     const meaningLower = meaning.toLowerCase();
     
-    // Build a comprehensive prompt that ensures correct interpretation
-    let prompt = `Create an educational illustration that accurately represents ONLY this specific meaning: "${meaning}". `;
+    // Generate dynamic prompt using AI interpretation
+    let prompt = '';
     
-    // Add specific instructions based on what type of concept it might be
-    if (meaningLower.match(/\b(person|people|human|man|woman|child)\b/) || 
-        meaningLower.match(/\b(feel|feeling|emotion|state)\b/) ||
-        meaningLower.match(/ing\b/) || // likely an action or state
-        meaningLower.match(/ed\b/)) {   // likely a state or condition
-      prompt += `If this involves a person, show them clearly demonstrating this concept through appropriate facial expressions, body language, or actions. `;
+    try {
+      // Use our existing OpenAI interpretation to get a better image prompt
+      const interpretation = await interpretChinese(hanzi);
+      if (interpretation && interpretation.imagePrompt) {
+        // Use the AI-generated image prompt with DALL-E 3 prefix to prevent revision
+        prompt = `I NEED to test how the tool works with extremely simple prompts. DO NOT add any detail, just use it AS-IS: ${interpretation.imagePrompt} CRITICAL: Absolutely no text, words, letters, numbers, or written characters anywhere in the image.`;
+        console.log(`Using AI-generated image prompt for ${hanzi}: "${meaning}"`);
+      } else {
+        throw new Error('No AI image prompt available');
+      }
+    } catch (error) {
+      // Fallback to dynamic prompt generation
+      console.log(`Falling back to dynamic prompt generation for: "${meaning}"`);
+      
+      // Create intelligent prompt based on meaning type with DALL-E 3 prefix
+      let basePrompt = '';
+      if (meaningLower.match(/\b(feel|emotion|mood|sad|happy|angry|excited|calm|nervous|proud)\b/)) {
+        basePrompt = `Simple cartoon illustration of a person clearly showing the emotion "${meaning}" through facial expression and body language. No text, words, or letters anywhere in the image. Educational style, clean background.`;
+      } else if (meaningLower.match(/\b(action|move|run|walk|jump|sit|stand|dance|work)\b/)) {
+        basePrompt = `Simple cartoon illustration of a person performing the action "${meaning}" with clear movement. No text, words, or letters anywhere in the image. Educational style, clean background.`;
+      } else if (meaningLower.match(/\b(size|big|small|large|tiny|huge|little)\b/)) {
+        basePrompt = `Simple cartoon illustration showing "${meaning}" through clear size comparison or visual representation. No text, words, or letters anywhere in the image. Educational style, clean background.`;
+      } else if (meaningLower.match(/\b(quality|good|bad|beautiful|ugly|clean|dirty|new|old)\b/)) {
+        basePrompt = `Simple cartoon illustration clearly demonstrating the quality "${meaning}" through visual comparison or obvious characteristics. No text, words, or letters anywhere in the image. Educational style, clean background.`;
+      } else {
+        // Generic but dynamic approach
+        basePrompt = `Simple cartoon illustration that clearly and obviously represents "${meaning}" through visual elements, expressions, or actions that any student would immediately understand. No text, words, letters, or written characters anywhere in the image. Educational style, clean background.`;
+      }
+      
+      // Add DALL-E 3 prefix to prevent automatic revision
+      prompt = `I NEED to test how the tool works with extremely simple prompts. DO NOT add any detail, just use it AS-IS: ${basePrompt}`;
     }
-    
-    // Add clarification to avoid ambiguity
-    prompt += `Focus exclusively on visualizing "${meaning}" without any alternative interpretations. Make the meaning immediately obvious to a language learner. `;
-    
-    // Add style instructions
-    prompt += `Use a simple, clear cartoon style suitable for educational flashcards. If showing people, depict one person only (East Asian, Hispanic, White, or Black individual). Avoid complex scenes or multiple interpretations.`;
-    
-    // Add explicit instruction to ignore any other possible meanings
-    prompt += ` IMPORTANT: This image must represent "${meaning}" and nothing else.`;
     
     console.log(`Generating shared DALL-E image for ${hanzi} with meaning: "${meaning}" and pinyin: "${pinyin}"`);
     console.log(`Generated prompt: ${prompt}`);
@@ -152,15 +168,48 @@ export async function generateSharedImage(
       apiKey: process.env.OPENAI_API_KEY,
     });
     
-    // Generate image with DALL-E 3
-    const response = await openai.images.generate({
-      model: "dall-e-3",
-      prompt,
-      n: 1,
-      size: "1024x1024",
-      quality: "standard",
-      style: "vivid",
-    });
+    // Alternative prompt strategies if the main one fails
+    const alternativePrompts = [
+      // Strategy 1: Ultra minimal approach
+      `I NEED to test how the tool works with extremely simple prompts. DO NOT add any detail, just use it AS-IS: Minimalist line drawing showing "${meaning}" concept through simple visual elements. No text anywhere. Clean style.`,
+      
+      // Strategy 2: Focus on symbolic representation
+      `I NEED to test how the tool works with extremely simple prompts. DO NOT add any detail, just use it AS-IS: Simple symbol or icon representing "${meaning}". No words, letters, or text. Educational illustration.`,
+      
+      // Strategy 3: Object-focused approach  
+      `I NEED to test how the tool works with extremely simple prompts. DO NOT add any detail, just use it AS-IS: Basic objects that represent "${meaning}". No text, words, or letters. Simple cartoon style.`
+    ];
+    
+    let response;
+    let attempt = 0;
+    const maxAttempts = 1; // Start with just the main attempt for now
+    
+    while (attempt < maxAttempts) {
+      try {
+        const currentPrompt = attempt === 0 ? prompt : alternativePrompts[Math.min(attempt - 1, alternativePrompts.length - 1)];
+        
+        console.log(`   Attempt ${attempt + 1}: Using ${attempt === 0 ? 'main' : 'alternative'} prompt strategy`);
+        
+        // Generate image with DALL-E 3 (latest widely available model)
+        response = await openai.images.generate({
+          model: "dall-e-3", // Latest widely available model (GPT-image-1 is limited access)
+          prompt: currentPrompt,
+          n: 1,
+          size: "1024x1024", // Cheapest DALL-E 3 option
+          quality: "standard", // Standard vs HD for cost savings
+          style: "natural", // More realistic than "vivid" style
+        });
+        
+        break; // Success, exit retry loop
+      } catch (error) {
+        attempt++;
+        if (attempt >= maxAttempts) {
+          throw error;
+        }
+        console.log(`   Attempt ${attempt} failed, trying alternative approach...`);
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Brief delay between attempts
+      }
+    }
 
     const dalleImageUrl = response.data[0]?.url;
     if (!dalleImageUrl) {

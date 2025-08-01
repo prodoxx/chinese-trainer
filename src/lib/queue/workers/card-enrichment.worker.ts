@@ -7,6 +7,8 @@ import Dictionary from '@/lib/db/models/Dictionary';
 import { generateSharedAudio, generateSharedImage } from '@/lib/enrichment/shared-media';
 import { getPreferredEntry } from '@/lib/enrichment/multi-pronunciation-handler';
 import { convertPinyinToneNumbersToMarks } from '@/lib/utils/pinyin';
+import { interpretChinese } from '@/lib/enrichment/openai-interpret';
+import { analyzeCharacterWithOpenAI } from '@/lib/analytics/openai-linguistic-analysis';
 
 export const cardEnrichmentWorker = new Worker<CardEnrichmentJobData>(
   'card-enrichment',
@@ -35,19 +37,46 @@ export const cardEnrichmentWorker = new Worker<CardEnrichmentJobData>(
         card.meaning = disambiguationSelection.meaning;
         card.pinyin = convertPinyinToneNumbersToMarks(disambiguationSelection.pinyin);
         card.disambiguated = true;
-      } else if (!card.meaning || !card.pinyin || card.meaning === 'Unknown character' || force) {
-        // Look up in dictionary if not already disambiguated
-        const dictEntries = await Dictionary.find({ 
+      }
+      
+      // Look up in dictionary for meaning
+      let dictEntries: any[] = [];
+      if (!card.meaning || card.meaning === 'Unknown character' || force) {
+        dictEntries = await Dictionary.find({ 
           traditional: card.hanzi 
         });
         
         if (dictEntries.length > 0) {
           const selectedEntry = getPreferredEntry(card.hanzi, dictEntries);
           card.meaning = selectedEntry.definitions[0] || 'No definition';
-          card.pinyin = convertPinyinToneNumbersToMarks(selectedEntry.pinyin);
           
           if (dictEntries.length > 1) {
-            console.log(`   Multiple pronunciations found, selected: ${card.pinyin} - ${card.meaning}`);
+            console.log(`   Multiple entries found, selected meaning: ${card.meaning}`);
+          }
+        }
+      }
+      
+      // Use AI interpretation to get Taiwan-specific pronunciation and student-friendly meanings
+      if (!card.pinyin || !card.meaning || card.meaning === 'Unknown character' || force) {
+        console.log(`   🤖 Using AI interpretation for Taiwan pronunciation and meaning...`);
+        
+        const interpretation = await interpretChinese(card.hanzi);
+        
+        if (interpretation) {
+          // Always use AI pinyin for Taiwan pronunciation
+          card.pinyin = interpretation.pinyin || card.pinyin;
+          
+          // Always use AI meaning for clearer, student-friendly explanations
+          card.meaning = interpretation.meaning || card.meaning;
+          
+          console.log(`   ✓ AI provided: ${card.pinyin} - ${card.meaning}`);
+        } else {
+          console.log(`   ⚠️ AI interpretation failed`);
+          // Fallback to dictionary if available
+          if (!card.pinyin && dictEntries.length > 0) {
+            const selectedEntry = getPreferredEntry(card.hanzi, dictEntries);
+            card.pinyin = convertPinyinToneNumbersToMarks(selectedEntry.pinyin);
+            console.log(`   Falling back to dictionary pinyin: ${card.pinyin}`);
           }
         }
       }
@@ -104,7 +133,25 @@ export const cardEnrichmentWorker = new Worker<CardEnrichmentJobData>(
       }
       
       // Update progress
-      await job.updateProgress(90);
+      await job.updateProgress(80);
+      
+      // Generate AI insights if they don't exist or if forced
+      if (!card.aiInsights || force) {
+        console.log(`   Generating AI insights...`);
+        
+        try {
+          const aiInsights = await analyzeCharacterWithOpenAI(card.hanzi);
+          card.aiInsights = aiInsights;
+          card.aiInsightsGeneratedAt = new Date();
+          console.log(`   ✓ AI insights generated`);
+        } catch (aiError) {
+          console.error(`   ✗ AI insights generation failed:`, aiError);
+          // Continue without AI insights - it's not critical for basic functionality
+        }
+      }
+      
+      // Update progress
+      await job.updateProgress(95);
       
       // Save the updated card
       await card.save();
