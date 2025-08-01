@@ -1,4 +1,4 @@
-import { Target, Zap, Clock, Play, Pause, RotateCcw, ArrowRight, Brain } from "lucide-react"
+import { Target, Zap, Clock, Play, Pause, RotateCcw, Brain } from "lucide-react"
 import Link from "next/link"
 import { redirectIfAuthenticated } from "@/lib/auth-helpers"
 
@@ -87,7 +87,7 @@ export default async function HowItWorksPage() {
                   <div className="w-1/2 pr-8">
                     <div className="bg-[#21262d] rounded-lg p-6 border border-[#30363d]">
                       <div className="text-center">
-                        <div className="text-4xl mb-2">愛 + ài + ❤️ + "love" + 🔊</div>
+                        <div className="text-4xl mb-2">愛 + ài + ❤️ + &quot;love&quot; + 🔊</div>
                         <div className="text-sm text-[#7d8590] space-y-1">
                           <div>All information (3-5s)</div>
                           <div>↓ Blank screen (200-500ms)</div>
@@ -110,7 +110,7 @@ export default async function HowItWorksPage() {
                           Character + pinyin + image + meaning + audio presented simultaneously. Creates multiple memory
                           pathways and reinforces all associations.
                         </p>
-                        <div className="text-sm text-[#f7cc48] font-mono">Based on Paivio's Dual Coding Theory</div>
+                        <div className="text-sm text-[#f7cc48] font-mono">Based on Paivio&apos;s Dual Coding Theory</div>
                       </div>
                     </div>
                   </div>
@@ -139,7 +139,7 @@ export default async function HowItWorksPage() {
                   <div className="w-1/2 pl-8">
                     <div className="bg-[#21262d] rounded-lg p-6 border border-[#30363d]">
                       <div className="text-center">
-                        <div className="text-lg mb-2">Which character means "love"?</div>
+                        <div className="text-lg mb-2">Which character means &quot;love&quot;?</div>
                         <div className="grid grid-cols-2 gap-2 text-2xl mb-2">
                           <div className="bg-[#f7cc48]/20 p-2 rounded">愛</div>
                           <div className="bg-[#30363d] p-2 rounded">好</div>
@@ -391,7 +391,7 @@ export default async function HowItWorksPage() {
                   <div className="text-sm text-[#7d8590] space-y-2">
                     <div>✓ All studied characters</div>
                     <div>✓ No session size limit</div>
-                    <div>✓ Doesn't affect scheduling</div>
+                    <div>✓ Doesn&apos;t affect scheduling</div>
                     <div>✓ Great for exam prep</div>
                   </div>
                 </div>

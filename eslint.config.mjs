@@ -17,6 +17,9 @@ const eslintConfig = [
       "@next/next/no-img-element": "off",
       "@typescript-eslint/no-explicit-any": "warn"
     }
+  },
+  {
+    ignores: ["src/generated/**/*"],
   }
 ];
 

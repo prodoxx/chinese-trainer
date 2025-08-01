@@ -1176,7 +1176,7 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
       </div>
       
       {/* Progress and status indicators - only show during active phases */}
-      {(phase === 'flash' || phase === 'quiz' || phase === 'countdown' || phase === 'initial-countdown') && actualSessionCards > 0 && (
+      {(['flash', 'quiz', 'countdown', 'initial-countdown'] as const).includes(phase as any) && actualSessionCards > 0 && (
         <div className="fixed top-4 sm:top-8 right-4 sm:right-8 text-xs sm:text-sm text-gray-500 text-right">
           <div className="text-violet-400 font-medium mb-1">
             {mode === 'new' ? 'New Cards' : mode === 'review' ? 'Review Session' : 'Practice Mode'}

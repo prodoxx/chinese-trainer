@@ -70,7 +70,7 @@ export default function SignUpPage() {
 							Check your email
 						</h2>
 						<p className="text-gray-400 mb-6">
-							We've sent you a verification link to{" "}
+							We&apos;ve sent you a verification link to{" "}
 							<span className="font-medium text-white">{email}</span>
 						</p>
 						<Link

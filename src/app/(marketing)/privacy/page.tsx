@@ -15,7 +15,7 @@ export default function PrivacyPage() {
             <section className="mt-12">
               <h2 className="text-3xl font-semibold text-white mb-4">1. Introduction</h2>
               <p className="text-[#7d8590]">
-                Danbing AI ("we", "our", or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our Traditional Chinese learning platform.
+                Danbing AI (&quot;we&quot;, &quot;our&quot;, or &quot;us&quot;) is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our Traditional Chinese learning platform.
               </p>
             </section>
 
@@ -130,7 +130,7 @@ export default function PrivacyPage() {
             </section>
 
             <section className="mt-12">
-              <h2 className="text-3xl font-semibold text-white mb-4">9. Children's Privacy</h2>
+              <h2 className="text-3xl font-semibold text-white mb-4">9. Children&apos;s Privacy</h2>
               <p className="text-[#7d8590]">
                 Danbing AI is not intended for children under 13. We do not knowingly collect personal 
                 information from children under 13. If you believe we have collected such information, 
@@ -142,7 +142,7 @@ export default function PrivacyPage() {
               <h2 className="text-3xl font-semibold text-white mb-4">10. Changes to This Policy</h2>
               <p className="text-[#7d8590]">
                 We may update this Privacy Policy from time to time. We will notify you of any changes 
-                by posting the new Privacy Policy on this page and updating the "Last updated" date.
+                by posting the new Privacy Policy on this page and updating the &quot;Last updated&quot; date.
               </p>
             </section>
 

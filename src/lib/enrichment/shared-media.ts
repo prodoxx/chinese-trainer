@@ -4,6 +4,7 @@
 
 import { uploadToR2, existsInR2, deleteFromR2, generateMediaKeysByHanzi } from '@/lib/r2-storage';
 import OpenAI from 'openai';
+import { interpretChinese } from '@/lib/enrichment/openai-interpret';
 
 export interface SharedMediaResult {
   audioUrl: string;
@@ -211,7 +212,11 @@ export async function generateSharedImage(
       }
     }
 
-    const dalleImageUrl = response.data[0]?.url;
+    if (!response) {
+      throw new Error("Failed to generate image after all attempts");
+    }
+    
+    const dalleImageUrl = response.data?.[0]?.url;
     if (!dalleImageUrl) {
       throw new Error("No image URL returned from DALL-E");
     }

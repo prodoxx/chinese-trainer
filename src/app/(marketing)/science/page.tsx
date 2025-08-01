@@ -271,14 +271,14 @@ export default async function SciencePage() {
                   </div>
                   <p className="text-[#7d8590]">
                     <strong>Ebbinghaus (1885):</strong> Without review, we forget exponentially. This is why cramming
-                    doesn't work.
+                    doesn&apos;t work.
                   </p>
                 </div>
               </div>
 
               <div className="bg-[#21262d] border-[#30363d] rounded-lg">
                 <div className="p-8">
-                  <h3 className="text-2xl font-bold text-white mb-6">With Danbing AI's SM-2</h3>
+                  <h3 className="text-2xl font-bold text-white mb-6">With Danbing AI&apos;s SM-2</h3>
                   <div className="space-y-4 mb-6">
                     <div className="flex justify-between items-center p-3 bg-[#f7cc48]/20 rounded-lg">
                       <span className="text-white">Day 1 review</span>

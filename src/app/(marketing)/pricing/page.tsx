@@ -20,7 +20,7 @@ export default async function PricingPage() {
               <span className="text-[#f7cc48]">learning plan</span>
             </h1>
             <p className="text-xl text-[#7d8590] mb-12 max-w-3xl mx-auto leading-relaxed">
-              Start with a free account and upgrade when you're ready. All plans include cross-device sync and our core
+              Start with a free account and upgrade when you&apos;re ready. All plans include cross-device sync and our core
               AI-powered learning system.
             </p>
           </div>
@@ -238,7 +238,7 @@ export default async function PricingPage() {
                   <h4 className="text-lg font-semibold text-white mb-3">Can I cancel my subscription anytime?</h4>
                   <p className="text-[#7d8590]">
                     Absolutely. You can cancel your subscription at any time from your account settings. Your data will
-                    remain accessible, but you'll be limited to free plan features after cancellation.
+                    remain accessible, but you&apos;ll be limited to free plan features after cancellation.
                   </p>
                 </div>
               </div>
@@ -257,8 +257,8 @@ export default async function PricingPage() {
                 <div className="p-6">
                   <h4 className="text-lg font-semibold text-white mb-3">What happens to my data if I downgrade?</h4>
                   <p className="text-[#7d8590]">
-                    Your learning progress and character data are always preserved. If you exceed the free plan's
-                    100-character limit, you'll still have access to all your data but won't be able to add new
+                    Your learning progress and character data are always preserved. If you exceed the free plan&apos;s
+                    100-character limit, you&apos;ll still have access to all your data but won&apos;t be able to add new
                     characters until you upgrade again.
                   </p>
                 </div>
@@ -268,7 +268,7 @@ export default async function PricingPage() {
                 <div className="p-6">
                   <h4 className="text-lg font-semibold text-white mb-3">Is there a mobile app?</h4>
                   <p className="text-[#7d8590]">
-                    Danbing AI is a web-based application that works perfectly on mobile browsers. We're considering
+                    Danbing AI is a web-based application that works perfectly on mobile browsers. We&apos;re considering
                     native mobile apps for the future based on user demand.
                   </p>
                 </div>

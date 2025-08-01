@@ -7,6 +7,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { Upload } from "@aws-sdk/lib-storage";
+import crypto from "crypto";
 
 // Initialize R2 client
 const r2Client = new S3Client({
@@ -243,7 +244,6 @@ export function generateMediaKeys(deckId: string, cardId: string) {
  */
 export function generateMediaKeysByHanzi(hanzi: string) {
   // Create a hash of the hanzi to prevent predictable URLs
-  const crypto = require('crypto');
   const hash = crypto.createHash('sha256').update(hanzi).digest('hex');
   
   // Use first 12 characters of hash for shorter paths

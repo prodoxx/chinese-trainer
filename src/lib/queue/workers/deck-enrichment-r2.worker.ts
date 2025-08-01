@@ -169,8 +169,8 @@ export const deckEnrichmentR2Worker = new Worker<DeckEnrichmentJobData>(
           
           const analysis = await getCharacterAnalysisWithCache(card.hanzi);
           if (analysis) {
-            card.complexity = analysis.complexity;
-            card.linguisticData = analysis.linguisticData;
+            card.complexity = analysis; // analysis IS the complexity data
+            // Note: linguisticData might not exist on the analysis object
           }
           
           // Generate image with R2

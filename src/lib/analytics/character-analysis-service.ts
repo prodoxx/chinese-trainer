@@ -9,13 +9,19 @@ import connectDB from '@/lib/db/mongodb';
 import { analyzeCharacterComprehensively, ComprehensiveCharacterAnalysis } from './openai-linguistic-analysis';
 import { EnhancedCharacterComplexity } from './enhanced-linguistic-complexity';
 
+// Extended type that includes enrichment data
+export interface EnhancedCharacterComplexityWithEnrichment extends EnhancedCharacterComplexity {
+  mnemonics?: string[];
+  etymology?: string;
+}
+
 /**
  * Get character analysis with caching
  * First checks cache, then uses OpenAI if needed
  */
 export async function getCharacterAnalysisWithCache(
   character: string
-): Promise<EnhancedCharacterComplexity> {
+): Promise<EnhancedCharacterComplexityWithEnrichment> {
   await connectDB();
   
   // Try to get from cache first
@@ -165,7 +171,7 @@ export async function getSimilarCharacters(
     character: { $ne: character },
     $or: [
       { semanticCategory: analysis.semanticCategory },
-      { 'radicals.radical': { $in: analysis.radicals.map(r => r.radical) } },
+      { 'radicals.radical': { $in: analysis.radicals.map((r: any) => r.radical) } },
       { semanticFields: { $in: analysis.semanticFields } }
     ]
   })
@@ -182,8 +188,8 @@ export async function getSimilarCharacters(
       reasons.push('same category');
     }
     
-    const sharedRadicals = other.radicals.filter(r1 => 
-      analysis.radicals.some(r2 => r1.radical === r2.radical)
+    const sharedRadicals = other.radicals.filter((r1: any) => 
+      analysis.radicals.some((r2: any) => r1.radical === r2.radical)
     );
     if (sharedRadicals.length > 0) {
       score += 0.3 * (sharedRadicals.length / Math.max(other.radicals.length, analysis.radicals.length));

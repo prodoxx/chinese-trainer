@@ -74,7 +74,7 @@ export default async function MarketingHomePage() {
                   </div>
                   <div className="text-4xl font-bold text-white mb-2">7±2</div>
                   <div className="text-[#7d8590] mb-4">characters per session</div>
-                  <div className="text-xs sm:text-sm text-[#7d8590]">Miller's Law: optimal working memory capacity</div>
+                  <div className="text-xs sm:text-sm text-[#7d8590]">Miller&apos;s Law: optimal working memory capacity</div>
                 </div>
               </div>
 
@@ -100,7 +100,7 @@ export default async function MarketingHomePage() {
             <div className="text-center mb-16">
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3 sm:mb-4">The Dual-Phase Flash System</h2>
               <p className="text-xl text-[#7d8590] max-w-3xl mx-auto">
-                Based on Paivio's Dual Coding Theory: information encoded both visually and verbally creates stronger,
+                Based on Paivio&apos;s Dual Coding Theory: information encoded both visually and verbally creates stronger,
                 more retrievable memories
               </p>
             </div>
@@ -124,7 +124,7 @@ export default async function MarketingHomePage() {
                     Character + pinyin + image + meaning + audio presented simultaneously for 3-5 seconds. Creates
                     multiple memory pathways and reinforces all associations.
                   </p>
-                  <div className="text-xs sm:text-sm text-[#f7cc48]">Based on Mayer's Multimedia Learning Principles</div>
+                  <div className="text-xs sm:text-sm text-[#f7cc48]">Based on Mayer&apos;s Multimedia Learning Principles</div>
                 </div>
 
                 <div className="border-l-4 border-[#f7cc48]/40 pl-6">
@@ -158,14 +158,14 @@ export default async function MarketingHomePage() {
                     <div className="flex items-center space-x-4">
                       <div className="w-4 h-4 bg-[#f7cc48]/60 rounded-full"></div>
                       <div className="flex-1">
-                        <div className="text-white font-medium">Phase 2: 愛 + ài + ❤️ + "love" + 🔊 (3-5s)</div>
+                        <div className="text-white font-medium">Phase 2: 愛 + ài + ❤️ + &quot;love&quot; + 🔊 (3-5s)</div>
                         <div className="text-[#7d8590] text-sm">Multi-modal integration</div>
                       </div>
                     </div>
                     <div className="flex items-center space-x-4">
                       <div className="w-4 h-4 bg-[#f7cc48]/40 rounded-full"></div>
                       <div className="flex-1">
-                        <div className="text-white font-medium">Quiz: Which means "love"?</div>
+                        <div className="text-white font-medium">Quiz: Which means &quot;love&quot;?</div>
                         <div className="text-[#7d8590] text-sm">Active retrieval practice</div>
                       </div>
                     </div>
@@ -262,7 +262,7 @@ export default async function MarketingHomePage() {
                 </div>
                 <h3 className="text-base sm:text-lg font-semibold text-white mb-2">SM-2 Spaced Repetition</h3>
                 <p className="text-sm sm:text-base text-[#7d8590]">
-                  Scientifically-proven algorithm schedules reviews at optimal intervals. Never forget what you've
+                  Scientifically-proven algorithm schedules reviews at optimal intervals. Never forget what you&apos;ve
                   learned.
                 </p>
               </div>

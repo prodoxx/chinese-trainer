@@ -15,7 +15,7 @@ export default function TermsPage() {
             <section className="mt-12">
               <h2 className="text-3xl font-semibold text-white mb-4">1. Acceptance of Terms</h2>
               <p className="text-[#7d8590]">
-                By accessing and using Danbing AI ("Service"), you accept and agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, please do not use our Service.
+                By accessing and using Danbing AI (&quot;Service&quot;), you accept and agree to be bound by these Terms of Service (&quot;Terms&quot;). If you do not agree to these Terms, please do not use our Service.
               </p>
             </section>
 
@@ -76,7 +76,7 @@ export default function TermsPage() {
               <h2 className="text-3xl font-semibold text-white mb-4">5. User Content</h2>
               <div className="space-y-4 text-[#7d8590]">
                 <p>
-                  You retain ownership of any content you upload ("User Content"). By uploading User Content, you grant us a license to:
+                  You retain ownership of any content you upload (&quot;User Content&quot;). By uploading User Content, you grant us a license to:
                 </p>
                 <ul className="space-y-2">
                   <li>• Store and display your content within the Service</li>
@@ -134,7 +134,7 @@ export default function TermsPage() {
               <h2 className="text-3xl font-semibold text-white mb-4">9. Disclaimers</h2>
               <div className="space-y-4 text-[#7d8590]">
                 <p>
-                  THE SERVICE IS PROVIDED "AS IS" WITHOUT WARRANTIES OF ANY KIND. WE DISCLAIM ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING:
+                  THE SERVICE IS PROVIDED &quot;AS IS&quot; WITHOUT WARRANTIES OF ANY KIND. WE DISCLAIM ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING:
                 </p>
                 <ul className="space-y-2 uppercase">
                   <li>• MERCHANTABILITY</li>
@@ -186,7 +186,7 @@ export default function TermsPage() {
             <section className="mt-12">
               <h2 className="text-3xl font-semibold text-white mb-4">15. Changes to Terms</h2>
               <p className="text-[#7d8590]">
-                We may update these Terms from time to time. We will notify you of material changes by posting the new Terms and updating the "Last updated" date. Continued use of the Service after changes constitutes acceptance of the new Terms.
+                We may update these Terms from time to time. We will notify you of material changes by posting the new Terms and updating the &quot;Last updated&quot; date. Continued use of the Service after changes constitutes acceptance of the new Terms.
               </p>
             </section>
 

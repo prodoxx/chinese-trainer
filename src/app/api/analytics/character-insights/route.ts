@@ -196,7 +196,7 @@ export async function POST(request: NextRequest) {
           // Find cards that share at least one character
           const similarCards = await Card.find({
             hanzi: { $ne: card.hanzi },
-            $or: card.hanzi.split('').map(char => ({ hanzi: new RegExp(char) }))
+            $or: card.hanzi.split('').map((char: string) => ({ hanzi: new RegExp(char) }))
           }).limit(3);
           
           confusionAnalysis = await Promise.all(similarCards.map(async similar => {

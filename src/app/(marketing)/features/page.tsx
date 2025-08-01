@@ -91,7 +91,7 @@ export default async function FeaturesPage() {
                     • Adaptive intervals (1 day → 6 days → 15 days...)
                     <br />• Memory strength calculation
                     <br />• Forgetting curve optimization
-                    <br />• Never forget what you've learned
+                    <br />• Never forget what you&apos;ve learned
                   </div>
                 </div>
               </div>
@@ -219,7 +219,7 @@ export default async function FeaturesPage() {
                   <div className="space-y-2 text-sm text-[#7d8590]">
                     <div>✓ All studied characters</div>
                     <div>✓ Flexible session size</div>
-                    <div>✓ Doesn't affect scheduling</div>
+                    <div>✓ Doesn&apos;t affect scheduling</div>
                     <div>✓ Great for exam prep</div>
                   </div>
                 </div>

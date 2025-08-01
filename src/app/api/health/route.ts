@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db/mongodb';
 import redis from '@/lib/queue/redis';
+import mongoose from 'mongoose';
 
 export async function GET() {
   const startTime = Date.now();
@@ -24,7 +25,6 @@ export async function GET() {
       await Promise.race([
         // Try a simple database operation with timeout
         new Promise(async (resolve) => {
-          const mongoose = require('mongoose');
           if (mongoose.connection.readyState === 1) {
             resolve('connected');
           } else {

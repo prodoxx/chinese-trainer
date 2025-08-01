@@ -103,6 +103,14 @@ export async function POST(req: Request) {
 
     await connectDB();
     const db = mongoose.connection.db;
+    
+    if (!db) {
+      return NextResponse.json(
+        { error: "Database connection failed" },
+        { status: 500 }
+      );
+    }
+    
     const confusableMap = new Map<string, Set<string>>();
 
     // For each character, find confusable ones

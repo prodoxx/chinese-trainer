@@ -146,7 +146,6 @@ export default function CharacterInsights({ characterId, character, onClose }: C
       '堅': 'jiān',
       '持': 'chí',
       '頑': 'wán',
-      '固': 'gù',
       '岩': 'yán',
       '石': 'shí',
       '人': 'rén',
@@ -177,10 +176,8 @@ export default function CharacterInsights({ characterId, character, onClose }: C
       '表': 'biǎo',
       '示': 'shì',
       '現': 'xiàn',
-      '代': 'dài',
       '當': 'dāng',
       '今': 'jīn',
-      '現': 'xiàn',
       '在': 'zài'
     };
     
@@ -385,11 +382,11 @@ export default function CharacterInsights({ characterId, character, onClose }: C
               )}
 
               {/* Memory Aids (from enrichment) - only show if no AI insights */}
-              {insights.complexity.mnemonics && insights.complexity.mnemonics.length > 0 && !insights.aiInsights && (
+              {(insights.complexity as any).mnemonics && (insights.complexity as any).mnemonics.length > 0 && !insights.aiInsights && (
                 <div className="bg-[#232937] rounded-lg p-4 sm:p-6 border border-[#2d3548]">
                   <h3 className="text-xl font-semibold mb-4 text-[#f7cc48]">Memory Aids</h3>
                   <div className="space-y-3">
-                    {insights.complexity.mnemonics.map((mnemonic, index) => (
+                    {(insights.complexity as any).mnemonics.map((mnemonic: string, index: number) => (
                       <div key={index} className="p-3 bg-[#1a1f2e] rounded-lg border border-[#2d3548]">
                         <p className="text-gray-100">{processTextWithPinyin(mnemonic)}</p>
                       </div>
@@ -399,10 +396,10 @@ export default function CharacterInsights({ characterId, character, onClose }: C
               )}
 
               {/* Etymology (from enrichment) - only show if no AI insights */}
-              {insights.complexity.etymology && !insights.aiInsights && (
+              {(insights.complexity as any).etymology && !insights.aiInsights && (
                 <div className="bg-[#232937] rounded-lg p-4 sm:p-6 border border-[#2d3548]">
                   <h3 className="text-xl font-semibold mb-4 text-[#f7cc48]">Etymology</h3>
-                  <p className="text-gray-100">{processTextWithPinyin(insights.complexity.etymology)}</p>
+                  <p className="text-gray-100">{processTextWithPinyin((insights.complexity as any).etymology)}</p>
                 </div>
               )}
 
