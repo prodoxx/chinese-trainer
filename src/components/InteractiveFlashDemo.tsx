@@ -24,7 +24,7 @@ const DEMO_CARDS: DemoCard[] = [
 		hanzi: "大",
 		pinyin: "dà",
 		meaning: "big, large",
-		imageUrl: "https://static.danbing.ai/demo-deck/demo-大/image.png?v=3",
+		imageUrl: "https://static.danbing.ai/demo-deck/demo-大/image.png?v=4",
 		audioUrl: "https://static.danbing.ai/demo-deck/demo-大/audio.mp3?v=1",
 	},
 	{
@@ -32,7 +32,7 @@ const DEMO_CARDS: DemoCard[] = [
 		hanzi: "小",
 		pinyin: "xiǎo",
 		meaning: "small, little",
-		imageUrl: "https://static.danbing.ai/demo-deck/demo-小/image.png?v=3",
+		imageUrl: "https://static.danbing.ai/demo-deck/demo-小/image.png?v=4",
 		audioUrl: "https://static.danbing.ai/demo-deck/demo-小/audio.mp3?v=1",
 	},
 	{
@@ -40,7 +40,7 @@ const DEMO_CARDS: DemoCard[] = [
 		hanzi: "人",
 		pinyin: "rén",
 		meaning: "person, people",
-		imageUrl: "https://static.danbing.ai/demo-deck/demo-人/image.png?v=3",
+		imageUrl: "https://static.danbing.ai/demo-deck/demo-人/image.png?v=4",
 		audioUrl: "https://static.danbing.ai/demo-deck/demo-人/audio.mp3?v=1",
 	},
 ];
@@ -59,21 +59,21 @@ const QUIZ_QUESTIONS: QuizQuestion[] = [
 		type: "meaning-to-hanzi",
 		correctCard: DEMO_CARDS[0], // 大 (big)
 		options: [
-			{ 
-				id: "opt1-1", 
-				hanzi: "太", 
-				pinyin: "tài", 
-				meaning: "too/extremely", 
-				imageUrl: "https://static.danbing.ai/demo-deck/demo-太/image.png?v=3", 
-				audioUrl: "https://static.danbing.ai/demo-deck/demo-太/audio.mp3?v=1" 
+			{
+				id: "opt1-1",
+				hanzi: "太",
+				pinyin: "tài",
+				meaning: "too/extremely",
+				imageUrl: "https://static.danbing.ai/demo-deck/demo-太/image.png?v=3",
+				audioUrl: "https://static.danbing.ai/demo-deck/demo-太/audio.mp3?v=1",
 			},
-			{ 
-				id: "opt1-2", 
-				hanzi: "天", 
-				pinyin: "tiān", 
-				meaning: "sky/heaven", 
-				imageUrl: "https://static.danbing.ai/demo-deck/demo-天/image.png?v=3", 
-				audioUrl: "https://static.danbing.ai/demo-deck/demo-天/audio.mp3?v=1" 
+			{
+				id: "opt1-2",
+				hanzi: "天",
+				pinyin: "tiān",
+				meaning: "sky/heaven",
+				imageUrl: "https://static.danbing.ai/demo-deck/demo-天/image.png?v=3",
+				audioUrl: "https://static.danbing.ai/demo-deck/demo-天/audio.mp3?v=1",
 			},
 			DEMO_CARDS[1], // 小
 			DEMO_CARDS[0], // 大 (correct answer)
@@ -83,21 +83,21 @@ const QUIZ_QUESTIONS: QuizQuestion[] = [
 		type: "audio-to-hanzi",
 		correctCard: DEMO_CARDS[1], // 小 (small)
 		options: [
-			{ 
-				id: "opt2-1", 
-				hanzi: "少", 
-				pinyin: "shǎo", 
-				meaning: "few/little", 
-				imageUrl: "https://static.danbing.ai/demo-deck/demo-少/image.png?v=3", 
-				audioUrl: "https://static.danbing.ai/demo-deck/demo-少/audio.mp3?v=1" 
+			{
+				id: "opt2-1",
+				hanzi: "少",
+				pinyin: "shǎo",
+				meaning: "few/little",
+				imageUrl: "https://static.danbing.ai/demo-deck/demo-少/image.png?v=3",
+				audioUrl: "https://static.danbing.ai/demo-deck/demo-少/audio.mp3?v=1",
 			},
-			{ 
-				id: "opt2-2", 
-				hanzi: "水", 
-				pinyin: "shuǐ", 
-				meaning: "water", 
-				imageUrl: "https://static.danbing.ai/demo-deck/demo-水/image.png?v=3", 
-				audioUrl: "https://static.danbing.ai/demo-deck/demo-水/audio.mp3?v=1" 
+			{
+				id: "opt2-2",
+				hanzi: "水",
+				pinyin: "shuǐ",
+				meaning: "water",
+				imageUrl: "https://static.danbing.ai/demo-deck/demo-水/image.png?v=3",
+				audioUrl: "https://static.danbing.ai/demo-deck/demo-水/audio.mp3?v=1",
 			},
 			DEMO_CARDS[1], // 小 (correct answer)
 			DEMO_CARDS[2], // 人
@@ -107,23 +107,23 @@ const QUIZ_QUESTIONS: QuizQuestion[] = [
 		type: "image-match",
 		correctCard: DEMO_CARDS[2], // 人 (person)
 		options: [
-			{ 
-				id: "opt3-1", 
-				hanzi: "入", 
-				pinyin: "rù", 
-				meaning: "enter", 
-				imageUrl: "https://static.danbing.ai/demo-deck/demo-入/image.png?v=3", 
-				audioUrl: "https://static.danbing.ai/demo-deck/demo-入/audio.mp3?v=1" 
+			{
+				id: "opt3-1",
+				hanzi: "入",
+				pinyin: "rù",
+				meaning: "enter",
+				imageUrl: "https://static.danbing.ai/demo-deck/demo-入/image.png?v=4",
+				audioUrl: "https://static.danbing.ai/demo-deck/demo-入/audio.mp3?v=1",
 			},
 			DEMO_CARDS[2], // 人 (correct answer)
 			DEMO_CARDS[0], // 大
-			{ 
-				id: "opt3-2", 
-				hanzi: "八", 
-				pinyin: "bā", 
-				meaning: "eight", 
-				imageUrl: "https://static.danbing.ai/demo-deck/demo-八/image.png?v=3", 
-				audioUrl: "https://static.danbing.ai/demo-deck/demo-八/audio.mp3?v=1" 
+			{
+				id: "opt3-2",
+				hanzi: "八",
+				pinyin: "bā",
+				meaning: "eight",
+				imageUrl: "https://static.danbing.ai/demo-deck/demo-八/image.png?v=4",
+				audioUrl: "https://static.danbing.ai/demo-deck/demo-八/audio.mp3?v=1",
 			},
 		],
 	},
