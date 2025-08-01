@@ -8,6 +8,7 @@ import { generateSharedAudio, generateSharedImage } from '@/lib/enrichment/share
 import { getPreferredEntry } from '@/lib/enrichment/multi-pronunciation-handler';
 import { convertPinyinToneNumbersToMarks } from '@/lib/utils/pinyin';
 import { interpretChinese } from '@/lib/enrichment/openai-interpret';
+import { registerWorker } from '../worker-monitor';
 import { analyzeCharacterWithOpenAI } from '@/lib/analytics/openai-linguistic-analysis';
 
 export const cardEnrichmentWorker = new Worker<CardEnrichmentJobData>(
@@ -184,3 +185,6 @@ export const cardEnrichmentWorker = new Worker<CardEnrichmentJobData>(
     concurrency: 3, // Process up to 3 cards at once
   }
 );
+
+// Register worker for monitoring
+registerWorker(cardEnrichmentWorker, 'card-enrichment');

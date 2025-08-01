@@ -6,6 +6,7 @@ import Deck from '@/lib/db/models/Deck';
 import Card from '@/lib/db/models/Card';
 import DeckCard from '@/lib/db/models/DeckCard';
 import Review from '@/lib/db/models/Review';
+import { registerWorker } from '../worker-monitor';
 
 export const deckImportWorker = new Worker<DeckImportJobData>(
   'deck-import',
@@ -154,6 +155,9 @@ export const deckImportWorker = new Worker<DeckImportJobData>(
     concurrency: 2, // Process 2 imports at a time
   }
 );
+
+// Register worker for monitoring
+registerWorker(deckImportWorker, 'deck-import');
 
 deckImportWorker.on('completed', (job) => {
   console.log(`✅ Deck import completed for ${job.data.deckName}`);

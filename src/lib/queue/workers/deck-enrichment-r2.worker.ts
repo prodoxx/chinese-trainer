@@ -14,6 +14,7 @@ import { convertPinyinToneNumbersToMarks, hasToneMarks } from '@/lib/utils/pinyi
 import { getPreferredEntry } from '@/lib/enrichment/multi-pronunciation-handler';
 import { getCharacterAnalysisWithCache } from '@/lib/analytics/character-analysis-service';
 import { EnhancedCharacterComplexity } from '@/lib/analytics/enhanced-linguistic-complexity';
+import { registerWorker } from '../worker-monitor';
 
 export const deckEnrichmentR2Worker = new Worker<DeckEnrichmentJobData>(
   'deck-enrichment',
@@ -290,3 +291,6 @@ export const deckEnrichmentR2Worker = new Worker<DeckEnrichmentJobData>(
     concurrency: 2, // Process 2 decks at a time
   }
 );
+
+// Register worker for monitoring
+registerWorker(deckEnrichmentR2Worker, 'deck-enrichment');

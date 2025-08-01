@@ -1,6 +1,11 @@
 import './workers/deck-import.worker';
 import './workers/deck-enrichment-r2.worker';
 import './workers/card-enrichment.worker';
+import { startHealthCheckServer } from './worker-health-server';
+
+// Start health check server
+const healthPort = parseInt(process.env.WORKER_HEALTH_PORT || '3001');
+startHealthCheckServer(healthPort);
 
 console.log('✅ Workers started:');
 console.log('   - Deck Import Worker');

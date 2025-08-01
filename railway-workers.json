@@ -1,0 +1,20 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "builder": "NIXPACKS",
+    "buildCommand": "echo 'Skipping build for workers'"
+  },
+  "deploy": {
+    "startCommand": "bun run workers",
+    "healthcheckPath": "/health",
+    "healthcheckTimeout": 30,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 3
+  },
+  "variables": {
+    "WORKER_HEALTH_PORT": {
+      "description": "Port for worker health check server",
+      "default": "3001"
+    }
+  }
+}
