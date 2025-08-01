@@ -1,0 +1,32 @@
+# Nixpacks configuration for Bun
+[phases.setup]
+nixPkgs = ["bun"]
+aptPkgs = ["curl", "unzip"]
+
+[phases.install]
+# Use frozen lockfile for consistent installs
+cmds = ["bun install --frozen-lockfile"]
+
+[phases.build]
+# Build the Next.js application
+# Generate Prisma client and build Next.js
+cmds = [
+  "bunx prisma generate",
+  "bun run build"
+]
+
+[phases.deploy]
+# Run Prisma migrations before starting
+cmds = ["bun run db:migrate:prod"]
+
+[start]
+# Start the production server
+cmd = "bun run start"
+
+[variables]
+# Environment variables
+NODE_ENV = "production"
+# Ensure Bun uses production optimizations
+BUN_ENV = "production"
+# Prisma needs to know we're in production
+PRISMA_GENERATE_DATAPROXY = "false"
