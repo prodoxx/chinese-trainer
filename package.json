@@ -28,6 +28,7 @@
 		"@aws-sdk/lib-storage": "^3.850.0",
 		"@aws-sdk/s3-request-presigner": "^3.850.0",
 		"@prisma/client": "^6.12.0",
+		"prisma": "^6.12.0",
 		"bcryptjs": "^3.0.2",
 		"bullmq": "^5.56.7",
 		"dotenv": "^17.2.1",
@@ -55,7 +56,6 @@
 		"eslint": "^9",
 		"eslint-config-next": "15.4.4",
 		"postcss-import": "^16.1.1",
-		"prisma": "^6.12.0",
 		"tailwindcss": "^4",
 		"typescript": "^5"
 	}
