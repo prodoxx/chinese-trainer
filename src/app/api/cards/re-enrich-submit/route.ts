@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Queue the job with disambiguation selection
-    const job = await cardEnrichmentQueue.add(
+    const job = await cardEnrichmentQueue().add(
       `enrich-${cardId}`,
       {
         cardId: cardId,

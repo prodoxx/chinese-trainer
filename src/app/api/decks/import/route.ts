@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
     });
     
     // Queue import job with disambiguation selections
-    const job = await deckImportQueue.add(
+    const job = await deckImportQueue().add(
       `import-${deck._id}`,
       {
         deckId: deck._id.toString(),

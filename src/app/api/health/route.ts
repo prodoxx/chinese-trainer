@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db/mongodb';
-import redis from '@/lib/queue/redis';
+import getRedis from '@/lib/queue/redis';
 import mongoose from 'mongoose';
 
 export async function GET() {
@@ -42,7 +42,7 @@ export async function GET() {
     // Check Redis connection
     try {
       await Promise.race([
-        redis.ping(),
+        getRedis().ping(),
         new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
       ]);
       healthCheck.services.redis = 'healthy';

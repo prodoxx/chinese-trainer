@@ -1,19 +1,28 @@
 import Redis from 'ioredis';
 
-// Create Redis connection
-export const redis = new Redis({
-  host: process.env.REDIS_HOST || 'localhost',
-  port: parseInt(process.env.REDIS_PORT || '6379'),
-  maxRetriesPerRequest: null,
-});
+let redis: Redis | null = null;
 
-// Test connection
-redis.on('connect', () => {
-  console.log('✅ Connected to Redis');
-});
+// Lazy-load Redis connection
+export function getRedis(): Redis {
+  if (!redis) {
+    redis = new Redis({
+      host: process.env.REDIS_HOST || 'localhost',
+      port: parseInt(process.env.REDIS_PORT || '6379'),
+      maxRetriesPerRequest: null,
+    });
 
-redis.on('error', (err) => {
-  console.error('❌ Redis connection error:', err);
-});
+    // Test connection
+    redis.on('connect', () => {
+      console.log('✅ Connected to Redis');
+    });
 
-export default redis;
+    redis.on('error', (err) => {
+      console.error('❌ Redis connection error:', err);
+    });
+  }
+  
+  return redis;
+}
+
+// Export the getter function as default
+export default getRedis;

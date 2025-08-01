@@ -1,5 +1,5 @@
 import { Worker, Job } from 'bullmq';
-import redis from '../redis';
+import getRedis from '../redis';
 import { DeckImportJobData, deckEnrichmentQueue } from '../queues';
 import connectDB from '@/lib/db/mongodb';
 import Deck from '@/lib/db/models/Deck';
@@ -111,7 +111,7 @@ export const deckImportWorker = new Worker<DeckImportJobData>(
       });
       
       // Queue enrichment job
-      await deckEnrichmentQueue.add(
+      await deckEnrichmentQueue().add(
         `enrich-${deck._id}`,
         {
           deckId: deck._id.toString(),
@@ -150,7 +150,7 @@ export const deckImportWorker = new Worker<DeckImportJobData>(
     }
   },
   {
-    connection: redis,
+    connection: getRedis(),
     concurrency: 2, // Process 2 imports at a time
   }
 );

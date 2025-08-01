@@ -1,13 +1,13 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Mail, Lock, AlertCircle } from "lucide-react";
 import Image from "next/image";
 
-export default function SignInPage() {
+function SignInContent() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
@@ -245,5 +245,20 @@ export default function SignInPage() {
 				</p>
 			</div>
 		</div>
+	);
+}
+
+export default function SignInPage() {
+	return (
+		<Suspense fallback={
+			<div className="min-h-screen flex items-center justify-center bg-black">
+				<div className="text-center">
+					<div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+					<p className="text-gray-400">Loading...</p>
+				</div>
+			</div>
+		}>
+			<SignInContent />
+		</Suspense>
 	);
 }

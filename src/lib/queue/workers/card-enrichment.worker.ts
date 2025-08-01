@@ -1,5 +1,5 @@
 import { Worker, Job } from 'bullmq';
-import redis from '../redis';
+import getRedis from '../redis';
 import { CardEnrichmentJobData } from '../queues';
 import connectDB from '@/lib/db/mongodb';
 import Card from '@/lib/db/models/Card';
@@ -180,7 +180,7 @@ export const cardEnrichmentWorker = new Worker<CardEnrichmentJobData>(
     }
   },
   {
-    connection: redis,
+    connection: getRedis(),
     concurrency: 3, // Process up to 3 cards at once
   }
 );

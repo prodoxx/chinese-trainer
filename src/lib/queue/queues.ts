@@ -1,47 +1,72 @@
 import { Queue } from 'bullmq';
-import redis from './redis';
+import getRedis from './redis';
+
+// Lazy-initialize queues
+let _deckEnrichmentQueue: Queue | null = null;
+let _deckImportQueue: Queue | null = null;
+let _cardEnrichmentQueue: Queue | null = null;
 
 // Queue for deck enrichment jobs
-export const deckEnrichmentQueue = new Queue('deck-enrichment', {
-  connection: redis,
-  defaultJobOptions: {
-    attempts: 1,
-    removeOnComplete: {
-      count: 20,
-    },
-    removeOnFail: {
-      count: 10,
-    },
-  },
-});
+export function getDeckEnrichmentQueue(): Queue {
+  if (!_deckEnrichmentQueue) {
+    _deckEnrichmentQueue = new Queue('deck-enrichment', {
+      connection: getRedis(),
+      defaultJobOptions: {
+        attempts: 1,
+        removeOnComplete: {
+          count: 20,
+        },
+        removeOnFail: {
+          count: 10,
+        },
+      },
+    });
+  }
+  return _deckEnrichmentQueue;
+}
 
 // Queue for deck import jobs
-export const deckImportQueue = new Queue('deck-import', {
-  connection: redis,
-  defaultJobOptions: {
-    attempts: 2,
-    removeOnComplete: {
-      count: 20,
-    },
-    removeOnFail: {
-      count: 10,
-    },
-  },
-});
+export function getDeckImportQueue(): Queue {
+  if (!_deckImportQueue) {
+    _deckImportQueue = new Queue('deck-import', {
+      connection: getRedis(),
+      defaultJobOptions: {
+        attempts: 2,
+        removeOnComplete: {
+          count: 20,
+        },
+        removeOnFail: {
+          count: 10,
+        },
+      },
+    });
+  }
+  return _deckImportQueue;
+}
 
 // Queue for single card enrichment jobs
-export const cardEnrichmentQueue = new Queue('card-enrichment', {
-  connection: redis,
-  defaultJobOptions: {
-    attempts: 3,
-    removeOnComplete: {
-      count: 50,
-    },
-    removeOnFail: {
-      count: 20,
-    },
-  },
-});
+export function getCardEnrichmentQueue(): Queue {
+  if (!_cardEnrichmentQueue) {
+    _cardEnrichmentQueue = new Queue('card-enrichment', {
+      connection: getRedis(),
+      defaultJobOptions: {
+        attempts: 3,
+        removeOnComplete: {
+          count: 50,
+        },
+        removeOnFail: {
+          count: 20,
+        },
+      },
+    });
+  }
+  return _cardEnrichmentQueue;
+}
+
+// Export getters with the same names for compatibility
+export const deckEnrichmentQueue = getDeckEnrichmentQueue;
+export const deckImportQueue = getDeckImportQueue;
+export const cardEnrichmentQueue = getCardEnrichmentQueue;
 
 export interface DeckEnrichmentJobData {
   deckId: string;

@@ -16,7 +16,7 @@ export async function GET(
     const { jobId } = await context.params;
     
     // Get job from queue
-    const job = await cardEnrichmentQueue.getJob(jobId);
+    const job = await cardEnrichmentQueue().getJob(jobId);
     
     if (!job) {
       return NextResponse.json({ error: 'Job not found' }, { status: 404 });

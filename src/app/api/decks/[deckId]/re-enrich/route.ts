@@ -45,7 +45,7 @@ export async function POST(
     });
     
     // Queue the enrichment job
-    const job = await deckEnrichmentQueue.add(
+    const job = await deckEnrichmentQueue().add(
       `re-enrich-${deckId}`,
       {
         deckId,

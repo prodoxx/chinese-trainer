@@ -1,5 +1,5 @@
 import { Worker, Job } from 'bullmq';
-import redis from '../redis';
+import getRedis from '../redis';
 import { DeckEnrichmentJobData } from '../queues';
 import connectDB from '@/lib/db/mongodb';
 import Card from '@/lib/db/models/Card';
@@ -286,7 +286,7 @@ export const deckEnrichmentR2Worker = new Worker<DeckEnrichmentJobData>(
     }
   },
   {
-    connection: redis,
+    connection: getRedis(),
     concurrency: 2, // Process 2 decks at a time
   }
 );

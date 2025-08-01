@@ -1,16 +1,16 @@
 import { deckEnrichmentQueue } from '../src/lib/queue/queues';
-import redis from '../src/lib/queue/redis';
+import getRedis from '../src/lib/queue/redis';
 
 async function testWorkers() {
   console.log('Testing worker system...\n');
   
   try {
     // Test Redis connection
-    await redis.ping();
+    await getRedis().ping();
     console.log('✅ Redis connected');
     
     // Add a test job
-    const job = await deckEnrichmentQueue.add(
+    const job = await deckEnrichmentQueue().add(
       'test-job',
       {
         deckId: 'test-deck-123',
