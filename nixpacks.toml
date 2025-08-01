@@ -15,10 +15,6 @@ cmds = [
   "bun run build"
 ]
 
-[phases.deploy]
-# Run Prisma migrations before starting
-cmds = ["bunx prisma migrate deploy"]
-
 [start]
 # Start the production server
 cmd = "bun run start"
