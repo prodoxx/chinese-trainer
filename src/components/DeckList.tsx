@@ -39,7 +39,6 @@ interface DeckListProps {
 export default function DeckList({ onSelectDeck }: DeckListProps) {
 	const [decks, setDecks] = useState<Deck[]>([]);
 	const [loading, setLoading] = useState(true);
-	const [enrichingDeck, setEnrichingDeck] = useState<string | null>(null);
 	const [deletingDeck, setDeletingDeck] = useState<string | null>(null);
 	const [editingDeck, setEditingDeck] = useState<string | null>(null);
 	const [editName, setEditName] = useState("");
@@ -118,47 +117,6 @@ export default function DeckList({ onSelectDeck }: DeckListProps) {
 		}
 	};
 
-	const handleReEnrich = async (e: React.MouseEvent, deckId: string) => {
-		e.stopPropagation(); // Prevent deck selection
-
-		const isForce = e.shiftKey;
-		const message = isForce
-			? "Force re-enrich ALL images in this deck? This will update ALL images (but only add missing audio)."
-			: "Re-enrich cards with missing/placeholder images and audio in this deck?";
-
-		const confirmed = await showConfirm(message);
-		if (!confirmed) {
-			return;
-		}
-
-		setEnrichingDeck(deckId);
-
-		try {
-			const response = await fetch(`/api/decks/${deckId}/re-enrich`, {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					force: isForce,
-					sessionId: `session-${Date.now()}`,
-				}),
-			});
-
-			const data = await response.json();
-
-			if (response.ok) {
-				console.log(`Re-enrichment job queued: ${data.jobId}`);
-				// Refresh decks to show the updated status
-				await fetchDecks();
-			} else {
-				showAlert(`Re-enrichment failed: ${data.error}`, { type: 'error' });
-			}
-		} catch (error) {
-			console.error("Re-enrichment error:", error);
-			showAlert("Re-enrichment failed. Please try again.", { type: 'error' });
-		} finally {
-			setEnrichingDeck(null);
-		}
-	};
 
 	const handleDelete = async (
 		e: React.MouseEvent,
@@ -425,21 +383,7 @@ export default function DeckList({ onSelectDeck }: DeckListProps) {
 									</div>
 								</div>
 							)}
-							<div className="absolute top-4 right-4 flex gap-1">
-									<button
-										onClick={(e) => handleReEnrich(e, deck.id)}
-										disabled={
-											enrichingDeck === deck.id || deck.status !== "ready"
-										}
-										className="p-2 text-gray-400 hover:text-[#f7cc48] hover:bg-white/5 rounded-xl transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed backdrop-blur-sm"
-										title="Re-enrich missing images/audio (Shift+click to force update ALL)"
-									>
-										{enrichingDeck === deck.id ? (
-											<RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
-										) : (
-											<RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-										)}
-									</button>
+							<div className="absolute top-4 right-4">
 									<button
 										onClick={(e) => handleDelete(e, deck.id, deck.name)}
 										disabled={deletingDeck === deck.id || deck.status !== "ready"}
@@ -493,9 +437,6 @@ export default function DeckList({ onSelectDeck }: DeckListProps) {
 						)}
 					</div>
 				))}
-			</div>
-			<div className="mt-6 text-xs text-gray-500 text-center">
-				Tip: Hold Shift while clicking 🔄 to force re-enrich all cards
 			</div>
 		</>
 	);

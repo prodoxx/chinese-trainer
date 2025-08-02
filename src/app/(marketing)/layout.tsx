@@ -193,23 +193,6 @@ export default function MarketingLayout({
 				)}
 			</nav>
 
-			{/* Announcement Bar */}
-			<div className="bg-[#21262d] border-b border-[#30363d] py-3">
-				<div className="container mx-auto px-4 sm:px-6">
-					<div className="flex items-center justify-center space-x-2 text-xs sm:text-sm">
-						<span className="text-[#7d8590] text-center">
-							<span className="hidden sm:inline">
-								New: Cloud-based learning with cross-device sync - learn
-								anywhere, anytime
-							</span>
-							<span className="sm:hidden">
-								New: Cross-device sync available
-							</span>
-						</span>
-						<ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 text-[#f7cc48] flex-shrink-0" />
-					</div>
-				</div>
-			</div>
 
 			{children}
 

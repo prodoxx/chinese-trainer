@@ -122,3 +122,6 @@ If you have existing media in MongoDB GridFS:
 - Direct browser streaming for audio
 - Automatic image optimization available
 - Better scalability for large media libraries
+
+## Best Practices and Reminders
+- Always update the documentations when we change things that needs the documentations to be updated or we add new features or changes that require new documentations

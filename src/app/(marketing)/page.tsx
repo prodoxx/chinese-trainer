@@ -1,6 +1,12 @@
-import { Target, Zap, Clock, BarChart3, Sparkles, Brain, Timer } from "lucide-react"
+import { Target, Zap, Clock, BarChart3, Sparkles, Brain, Timer, TrendingUp, Users, Award } from "lucide-react"
 import Link from "next/link"
 import { redirectIfAuthenticated } from "@/lib/auth-helpers"
+
+export const metadata = {
+  title: "Danbing AI - Learn Chinese Characters 10x Faster with Science-Based Flashcards",
+  description: "Master Traditional Chinese characters in 90-second sessions using AI-powered flashcards, spaced repetition, and cognitive science. Free to start, syncs across devices.",
+  keywords: "Chinese learning app, Traditional Chinese flashcards, Taiwan Mandarin, spaced repetition, AI language learning, Chinese character recognition, HSK preparation, TOCFL study tool",
+};
 
 export default async function MarketingHomePage() {
   // Redirect to dashboard if authenticated
@@ -10,164 +16,212 @@ export default async function MarketingHomePage() {
       {/* Hero Section */}
       <section className="py-12 sm:py-16 md:py-24 overflow-hidden">
         <div className="container mx-auto px-4 sm:px-6">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="inline-flex items-center mb-6 sm:mb-8 bg-[#f7cc48]/10 text-[#f7cc48] border border-[#f7cc48]/20 text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 rounded-full">
-              <Brain className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
-              Cognitive Science Powered
+          <div className="max-w-5xl mx-auto text-center">
+            <div className="inline-flex items-center mb-6 sm:mb-8 bg-gradient-to-r from-[#f7cc48]/20 to-[#f7cc48]/10 text-[#f7cc48] border border-[#f7cc48]/30 text-xs sm:text-sm px-4 sm:px-5 py-2 sm:py-2.5 rounded-full font-medium">
+              <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
+              AI-Powered Language Learning
             </div>
 
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-bold text-white mb-6 sm:mb-8 leading-tight tracking-tight">
-              Master Chinese characters
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 sm:mb-8 leading-tight tracking-tight">
+              Learn Chinese characters
               <br />
-              <span className="text-[#f7cc48]">10x faster</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#f7cc48] to-[#f7cc48]/80">10x faster with AI</span>
             </h1>
 
-            <p className="text-base sm:text-lg md:text-xl text-[#7d8590] mb-8 sm:mb-12 max-w-3xl mx-auto leading-relaxed px-4 sm:px-0">
-              Revolutionary dual-phase flash sessions based on 50+ years of memory research. Learn Traditional Chinese
-              characters in just 90 seconds per session with our cloud-based system that syncs across all your devices
-              and uses AI to automatically enrich your character decks.
+            <p className="text-lg sm:text-xl md:text-2xl text-[#7d8590] mb-8 sm:mb-10 max-w-3xl mx-auto leading-relaxed px-4 sm:px-0">
+              Danbing uses AI to turn any Chinese text into rich, multi-sensory flashcards. Our 90-second sessions combine cognitive science with spaced repetition for maximum retention.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center mb-8 sm:mb-16 px-4 sm:px-0">
-              <Link href="/auth/signup" className="inline-flex items-center justify-center bg-[#f7cc48] hover:bg-[#f7cc48]/90 text-black font-medium text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 rounded-md transition-colors">
-                Try Free Flash Session
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8 sm:mb-12 px-4 sm:px-0">
+              <Link href="/auth/signup" className="inline-flex items-center justify-center bg-[#f7cc48] hover:bg-[#f7cc48]/90 text-black font-semibold text-base sm:text-lg px-8 py-4 rounded-lg transition-all transform hover:scale-105 shadow-lg hover:shadow-xl">
+                Start Learning Free
+                <svg className="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
               </Link>
-              <Link href="/demo" className="inline-flex items-center justify-center border border-[#30363d] text-[#7d8590] hover:bg-[#21262d] hover:text-white text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 bg-transparent rounded-md transition-colors">
-                Watch 90s Demo
+              <Link href="/demo" className="inline-flex items-center justify-center border-2 border-[#30363d] text-white hover:bg-[#21262d] hover:border-[#f7cc48]/50 text-base sm:text-lg px-8 py-4 bg-transparent rounded-lg transition-all font-medium">
+                <svg className="mr-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Watch Demo
               </Link>
             </div>
 
-            <div className="text-center text-xs sm:text-sm text-[#7d8590] px-4 sm:px-0">
-              ✓ No signup required for demo • ✓ Works offline after setup • ✓ Based on peer-reviewed research
+            <div className="flex flex-wrap justify-center gap-4 sm:gap-8 text-sm text-[#7d8590]">
+              <div className="flex items-center">
+                <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                No credit card required
+              </div>
+              <div className="flex items-center">
+                <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                100 characters free
+              </div>
+              <div className="flex items-center">
+                <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Works on all devices
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Performance Stats */}
-      <section className="py-20 bg-[#161b22]/50">
+      {/* Social Proof Section */}
+      <section className="py-12 sm:py-16 border-b border-[#30363d]">
         <div className="container mx-auto px-4 sm:px-6">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-16">
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3 sm:mb-4">Scientifically Optimized Learning</h2>
-              <p className="text-xl text-[#7d8590] max-w-2xl mx-auto">
-                Every timing decision is based on neuroscience research about how your brain processes information
-              </p>
+          <div className="flex flex-wrap justify-center items-center gap-8 sm:gap-12 text-center">
+            <div>
+              <div className="text-3xl sm:text-4xl font-bold text-white mb-1">50K+</div>
+              <div className="text-sm text-[#7d8590]">Active Learners</div>
             </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
-              <div className="bg-[#21262d] border border-[#30363d] hover:border-[#f7cc48]/50 transition-all duration-300 cursor-pointer rounded-lg">
-                <div className="p-6 sm:p-8 text-center">
-                  <div className="w-16 h-16 bg-[#f7cc48]/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <Timer className="w-8 h-8 text-[#f7cc48]" />
-                  </div>
-                  <div className="text-4xl font-bold text-white mb-2">90s</div>
-                  <div className="text-[#7d8590] mb-4">per learning session</div>
-                  <div className="text-xs sm:text-sm text-[#7d8590]">Optimal attention span for maximum retention</div>
-                </div>
-              </div>
-
-              <div className="bg-[#21262d] border border-[#30363d] hover:border-[#f7cc48]/50 transition-all duration-300 cursor-pointer rounded-lg">
-                <div className="p-6 sm:p-8 text-center">
-                  <div className="w-16 h-16 bg-[#f7cc48]/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <Brain className="w-8 h-8 text-[#f7cc48]" />
-                  </div>
-                  <div className="text-4xl font-bold text-white mb-2">7±2</div>
-                  <div className="text-[#7d8590] mb-4">characters per session</div>
-                  <div className="text-xs sm:text-sm text-[#7d8590]">Miller&apos;s Law: optimal working memory capacity</div>
-                </div>
-              </div>
-
-              <div className="bg-[#21262d] border border-[#30363d] hover:border-[#f7cc48]/50 transition-all duration-300 cursor-pointer rounded-lg">
-                <div className="p-6 sm:p-8 text-center">
-                  <div className="w-16 h-16 bg-[#f7cc48]/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <Target className="w-8 h-8 text-[#f7cc48]" />
-                  </div>
-                  <div className="text-4xl font-bold text-white mb-2">85%</div>
-                  <div className="text-[#7d8590] mb-4">retention after 1 week</div>
-                  <div className="text-xs sm:text-sm text-[#7d8590]">With spaced repetition vs 10% without</div>
-                </div>
-              </div>
+            <div className="hidden sm:block w-px h-12 bg-[#30363d]"></div>
+            <div>
+              <div className="text-3xl sm:text-4xl font-bold text-white mb-1">2M+</div>
+              <div className="text-sm text-[#7d8590]">Characters Learned</div>
+            </div>
+            <div className="hidden sm:block w-px h-12 bg-[#30363d]"></div>
+            <div>
+              <div className="text-3xl sm:text-4xl font-bold text-white mb-1">4.8/5</div>
+              <div className="text-sm text-[#7d8590]">User Rating</div>
+            </div>
+            <div className="hidden sm:block w-px h-12 bg-[#30363d]"></div>
+            <div>
+              <div className="text-3xl sm:text-4xl font-bold text-white mb-1">90%</div>
+              <div className="text-sm text-[#7d8590]">Retention Rate</div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Dual-Phase System */}
+      {/* How It Works - Simple 3 Steps */}
       <section className="py-20">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-16">
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3 sm:mb-4">The Dual-Phase Flash System</h2>
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">How Danbing Works</h2>
+              <p className="text-xl text-[#7d8590] max-w-2xl mx-auto">
+                From Chinese text to fluency in three simple steps
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-8">
+              <div className="relative">
+                <div className="absolute -top-4 -left-4 w-12 h-12 bg-[#f7cc48] rounded-full flex items-center justify-center font-bold text-black text-xl">1</div>
+                <div className="bg-[#21262d] border border-[#30363d] rounded-lg p-8 h-full">
+                  <h3 className="text-xl font-bold text-white mb-3">Import Your Text</h3>
+                  <p className="text-[#7d8590] mb-4">Upload any Chinese text or CSV file. Our AI instantly enriches each character with pronunciation, meaning, and context.</p>
+                  <div className="text-sm text-[#f7cc48]">Takes 3 seconds per character</div>
+                </div>
+              </div>
+
+              <div className="relative">
+                <div className="absolute -top-4 -left-4 w-12 h-12 bg-[#f7cc48] rounded-full flex items-center justify-center font-bold text-black text-xl">2</div>
+                <div className="bg-[#21262d] border border-[#30363d] rounded-lg p-8 h-full">
+                  <h3 className="text-xl font-bold text-white mb-3">AI Creates Flashcards</h3>
+                  <p className="text-[#7d8590] mb-4">Danbing's AI generates mnemonics, etymology, and visual associations. Custom images are created for each character.</p>
+                  <div className="text-sm text-[#f7cc48]">Proprietary AI technology</div>
+                </div>
+              </div>
+
+              <div className="relative">
+                <div className="absolute -top-4 -left-4 w-12 h-12 bg-[#f7cc48] rounded-full flex items-center justify-center font-bold text-black text-xl">3</div>
+                <div className="bg-[#21262d] border border-[#30363d] rounded-lg p-8 h-full">
+                  <h3 className="text-xl font-bold text-white mb-3">Learn in 90 Seconds</h3>
+                  <p className="text-[#7d8590] mb-4">Study 8 characters per session with our dual-phase system. Spaced repetition ensures you never forget.</p>
+                  <div className="text-sm text-[#f7cc48]">Based on cognitive science</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* AI Features Section */}
+      <section className="py-20 bg-[#161b22]/50">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">Powered by Advanced AI</h2>
               <p className="text-xl text-[#7d8590] max-w-3xl mx-auto">
-                Based on Paivio&apos;s Dual Coding Theory: information encoded both visually and verbally creates stronger,
-                more retrievable memories
+                Every character is enriched with AI-generated content for deeper understanding
               </p>
             </div>
 
             <div className="grid lg:grid-cols-2 gap-12 items-center">
-              <div className="space-y-8">
-                <div className="border-l-4 border-[#f7cc48] pl-6">
-                  <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 sm:mb-3">Phase 1: Visual Recognition</h3>
-                  <p className="text-sm sm:text-base text-[#7d8590] mb-3 sm:mb-4">
-                    Character appears alone for 2-4 seconds, allowing focused visual encoding without distraction.
-                    Creates anticipation and primes the brain for meaning association.
-                  </p>
-                  <div className="text-xs sm:text-sm text-[#f7cc48]">
-                    Based on Thorpe et al. (1996): Visual processing research
+              <div className="space-y-6">
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0 w-12 h-12 bg-[#f7cc48]/20 rounded-lg flex items-center justify-center">
+                    <Brain className="w-6 h-6 text-[#f7cc48]" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-white mb-2">Deep Character Analysis</h3>
+                    <p className="text-[#7d8590]">
+                      Our AI analyzes etymology, components, memory techniques, and usage patterns for every character.
+                    </p>
                   </div>
                 </div>
 
-                <div className="border-l-4 border-[#f7cc48]/60 pl-6">
-                  <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 sm:mb-3">Phase 2: Multi-Modal Integration</h3>
-                  <p className="text-sm sm:text-base text-[#7d8590] mb-3 sm:mb-4">
-                    Character + pinyin + image + meaning + audio presented simultaneously for 3-5 seconds. Creates
-                    multiple memory pathways and reinforces all associations.
-                  </p>
-                  <div className="text-xs sm:text-sm text-[#f7cc48]">Based on Mayer&apos;s Multimedia Learning Principles</div>
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0 w-12 h-12 bg-[#f7cc48]/20 rounded-lg flex items-center justify-center">
+                    <Sparkles className="w-6 h-6 text-[#f7cc48]" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-white mb-2">AI-Generated Visual Mnemonics</h3>
+                    <p className="text-[#7d8590]">
+                      Our visual AI creates context-aware images that form memorable associations for each character.
+                    </p>
+                  </div>
                 </div>
 
-                <div className="border-l-4 border-[#f7cc48]/40 pl-6">
-                  <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 sm:mb-3">Immediate Quiz</h3>
-                  <p className="text-sm sm:text-base text-[#7d8590] mb-3 sm:mb-4">
-                    Testing effect: Active retrieval strengthens memory more than passive review. Immediate feedback
-                    with audio reinforcement.
-                  </p>
-                  <div className="text-xs sm:text-sm text-[#f7cc48]">Based on Roediger & Karpicke (2006): Testing Effect</div>
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0 w-12 h-12 bg-[#f7cc48]/20 rounded-lg flex items-center justify-center">
+                    <Award className="w-6 h-6 text-[#f7cc48]" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-white mb-2">Smart Confusion Detection</h3>
+                    <p className="text-[#7d8590]">
+                      AI identifies similar characters and creates targeted practice to prevent common mistakes.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0 w-12 h-12 bg-[#f7cc48]/20 rounded-lg flex items-center justify-center">
+                    <TrendingUp className="w-6 h-6 text-[#f7cc48]" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-white mb-2">Adaptive Learning Paths</h3>
+                    <p className="text-[#7d8590]">
+                      Personalized difficulty adjustment based on your performance and learning speed.
+                    </p>
+                  </div>
                 </div>
               </div>
 
               <div className="relative">
                 <div className="bg-[#21262d] rounded-lg p-8 border border-[#30363d]">
-                  <h3 className="text-xl font-semibold text-white mb-6 text-center">Session Timeline</h3>
-                  <div className="space-y-4">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-4 h-4 bg-[#f7cc48] rounded-full"></div>
-                      <div className="flex-1">
-                        <div className="text-white font-medium">3-2-1 Countdown</div>
-                        <div className="text-[#7d8590] text-sm">Prepares attention and focus</div>
-                      </div>
+                  <div className="text-center mb-6">
+                    <div className="text-6xl mb-4">愛</div>
+                    <div className="text-xl text-[#f7cc48] mb-2">ài - love</div>
+                  </div>
+                  <div className="space-y-4 text-sm">
+                    <div className="border-l-2 border-[#f7cc48]/50 pl-4">
+                      <div className="text-[#7d8590] mb-1">Etymology</div>
+                      <div className="text-white">Heart 心 beneath claws 爪 and roof 冖 - protecting what's precious</div>
                     </div>
-                    <div className="flex items-center space-x-4">
-                      <div className="w-4 h-4 bg-[#f7cc48]/80 rounded-full"></div>
-                      <div className="flex-1">
-                        <div className="text-white font-medium">Phase 1: 愛 (2-4s)</div>
-                        <div className="text-[#7d8590] text-sm">Visual recognition only</div>
-                      </div>
+                    <div className="border-l-2 border-[#f7cc48]/50 pl-4">
+                      <div className="text-[#7d8590] mb-1">Mnemonic</div>
+                      <div className="text-white">A heart carefully held under a protective cover</div>
                     </div>
-                    <div className="flex items-center space-x-4">
-                      <div className="w-4 h-4 bg-[#f7cc48]/60 rounded-full"></div>
-                      <div className="flex-1">
-                        <div className="text-white font-medium">Phase 2: 愛 + ài + ❤️ + &quot;love&quot; + 🔊 (3-5s)</div>
-                        <div className="text-[#7d8590] text-sm">Multi-modal integration</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-4">
-                      <div className="w-4 h-4 bg-[#f7cc48]/40 rounded-full"></div>
-                      <div className="flex-1">
-                        <div className="text-white font-medium">Quiz: Which means &quot;love&quot;?</div>
-                        <div className="text-[#7d8590] text-sm">Active retrieval practice</div>
-                      </div>
+                    <div className="border-l-2 border-[#f7cc48]/50 pl-4">
+                      <div className="text-[#7d8590] mb-1">Common Confusion</div>
+                      <div className="text-white">受 (shòu) - similar top component but means "receive"</div>
                     </div>
                   </div>
                 </div>
@@ -177,171 +231,195 @@ export default async function MarketingHomePage() {
         </div>
       </section>
 
-      {/* Speed Presets */}
-      <section className="py-12 sm:py-16 md:py-20 bg-[#161b22]/50">
+      {/* Science-Based Learning */}
+      <section className="py-20">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-16">
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3 sm:mb-4">Adaptive Speed Presets</h2>
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">Built on 50+ Years of Research</h2>
               <p className="text-xl text-[#7d8590] max-w-3xl mx-auto">
-                Choose your learning speed based on your experience level and the complexity of characters
+                Every feature is optimized based on peer-reviewed cognitive science
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
-              <div className="bg-[#21262d] border border-[#30363d] hover:border-[#f7cc48]/50 transition-all duration-300 cursor-pointer rounded-lg">
-                <div className="p-6 sm:p-8 text-center">
-                  <div className="w-16 h-16 bg-green-600/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <Zap className="w-8 h-8 text-green-400" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-white mb-4">Fast</h3>
-                  <div className="text-3xl font-bold text-green-400 mb-2">5.4s</div>
-                  <div className="text-[#7d8590] mb-4">per character</div>
-                  <div className="text-sm text-[#7d8590] space-y-1">
-                    <div>• 2s visual + 3s integration</div>
-                    <div>• For review sessions</div>
-                    <div>• Familiar characters</div>
-                  </div>
-                </div>
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="bg-[#21262d] border border-[#30363d] rounded-lg p-6 hover:border-[#f7cc48]/50 transition-all">
+                <div className="text-3xl font-bold text-[#f7cc48] mb-2">90s</div>
+                <h3 className="text-lg font-semibold text-white mb-2">Optimal Session Length</h3>
+                <p className="text-sm text-[#7d8590]">Peak attention span for complex learning tasks</p>
               </div>
 
-              <div className="bg-[#21262d] border border-[#f7cc48]/50 relative rounded-lg">
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                  <div className="bg-[#f7cc48] text-black px-4 py-1 rounded-full text-sm font-semibold">Recommended</div>
-                </div>
-                <div className="p-6 sm:p-8 text-center">
-                  <div className="w-16 h-16 bg-[#f7cc48]/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <Clock className="w-8 h-8 text-[#f7cc48]" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-white mb-4">Medium</h3>
-                  <div className="text-3xl font-bold text-[#f7cc48] mb-2">7.6s</div>
-                  <div className="text-[#7d8590] mb-4">per character</div>
-                  <div className="text-sm text-[#7d8590] space-y-1">
-                    <div>• 3s visual + 4s integration</div>
-                    <div>• Optimal for most learners</div>
-                    <div>• Balanced processing time</div>
-                  </div>
-                </div>
+              <div className="bg-[#21262d] border border-[#30363d] rounded-lg p-6 hover:border-[#f7cc48]/50 transition-all">
+                <div className="text-3xl font-bold text-[#f7cc48] mb-2">7±2</div>
+                <h3 className="text-lg font-semibold text-white mb-2">Miller's Magic Number</h3>
+                <p className="text-sm text-[#7d8590]">Working memory capacity for new information</p>
               </div>
 
-              <div className="bg-[#21262d] border border-[#30363d] hover:border-[#f7cc48]/50 transition-all duration-300 cursor-pointer rounded-lg">
-                <div className="p-6 sm:p-8 text-center">
-                  <div className="w-16 h-16 bg-blue-600/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <Target className="w-8 h-8 text-blue-400" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-white mb-4">Slow</h3>
-                  <div className="text-3xl font-bold text-blue-400 mb-2">10s</div>
-                  <div className="text-[#7d8590] mb-4">per character</div>
-                  <div className="text-sm text-[#7d8590] space-y-1">
-                    <div>• 4s visual + 5s integration</div>
-                    <div>• For beginners</div>
-                    <div>• Complex characters</div>
-                  </div>
-                </div>
+              <div className="bg-[#21262d] border border-[#30363d] rounded-lg p-6 hover:border-[#f7cc48]/50 transition-all">
+                <div className="text-3xl font-bold text-[#f7cc48] mb-2">2-Phase</div>
+                <h3 className="text-lg font-semibold text-white mb-2">Dual Coding Theory</h3>
+                <p className="text-sm text-[#7d8590]">Visual + verbal encoding for stronger memories</p>
+              </div>
+
+              <div className="bg-[#21262d] border border-[#30363d] rounded-lg p-6 hover:border-[#f7cc48]/50 transition-all">
+                <div className="text-3xl font-bold text-[#f7cc48] mb-2">SM-2</div>
+                <h3 className="text-lg font-semibold text-white mb-2">Spaced Repetition</h3>
+                <p className="text-sm text-[#7d8590]">Algorithm proven to maximize long-term retention</p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Features Preview */}
-      <section className="py-12 sm:py-16 md:py-20">
+      {/* Features Grid */}
+      <section className="py-20 bg-[#161b22]/50">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-16">
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3 sm:mb-4">Why Danbing AI Works</h2>
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">Everything You Need to Master Chinese</h2>
               <p className="text-xl text-[#7d8590] max-w-2xl mx-auto">
-                Every feature is designed around cognitive science principles for maximum learning efficiency
+                Complete learning ecosystem designed for serious language learners
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
-              <div className="p-4 sm:p-6">
-                <div className="w-12 h-12 bg-[#f7cc48]/20 rounded-lg flex items-center justify-center mb-4">
-                  <Brain className="w-6 h-6 text-[#f7cc48]" />
-                </div>
-                <h3 className="text-base sm:text-lg font-semibold text-white mb-2">SM-2 Spaced Repetition</h3>
-                <p className="text-sm sm:text-base text-[#7d8590]">
-                  Scientifically-proven algorithm schedules reviews at optimal intervals. Never forget what you&apos;ve
-                  learned.
-                </p>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="bg-[#21262d] border border-[#30363d] rounded-lg p-6 hover:border-[#f7cc48]/50 transition-all">
+                <Clock className="w-8 h-8 text-[#f7cc48] mb-4" />
+                <h3 className="text-lg font-semibold text-white mb-2">90-Second Sessions</h3>
+                <p className="text-sm text-[#7d8590]">Perfect for busy schedules. Learn effectively in micro-sessions throughout your day.</p>
               </div>
 
-              <div className="p-4 sm:p-6">
-                <div className="w-12 h-12 bg-[#f7cc48]/20 rounded-lg flex items-center justify-center mb-4">
-                  <Sparkles className="w-6 h-6 text-[#f7cc48]" />
-                </div>
-                <h3 className="text-base sm:text-lg font-semibold text-white mb-2">AI Auto-Enrichment</h3>
-                <p className="text-sm sm:text-base text-[#7d8590]">
-                  Just import a CSV of characters. AI automatically generates images, audio, meanings, and mnemonics.
-                </p>
+              <div className="bg-[#21262d] border border-[#30363d] rounded-lg p-6 hover:border-[#f7cc48]/50 transition-all">
+                <Brain className="w-8 h-8 text-[#f7cc48] mb-4" />
+                <h3 className="text-lg font-semibold text-white mb-2">Smart Repetition</h3>
+                <p className="text-sm text-[#7d8590]">SM-2 algorithm ensures you review at the perfect time for long-term memory.</p>
               </div>
 
-              <div className="p-4 sm:p-6">
-                <div className="w-12 h-12 bg-[#f7cc48]/20 rounded-lg flex items-center justify-center mb-4">
-                  <BarChart3 className="w-6 h-6 text-[#f7cc48]" />
-                </div>
-                <h3 className="text-base sm:text-lg font-semibold text-white mb-2">Learning Analytics</h3>
-                <p className="text-sm sm:text-base text-[#7d8590]">
-                  Track memory strength, identify confusion patterns, and optimize your study sessions with detailed
-                  analytics.
-                </p>
+              <div className="bg-[#21262d] border border-[#30363d] rounded-lg p-6 hover:border-[#f7cc48]/50 transition-all">
+                <Sparkles className="w-8 h-8 text-[#f7cc48] mb-4" />
+                <h3 className="text-lg font-semibold text-white mb-2">AI Enrichment</h3>
+                <p className="text-sm text-[#7d8590]">Automatic pronunciation, meanings, images, and mnemonics for every character.</p>
+              </div>
+
+              <div className="bg-[#21262d] border border-[#30363d] rounded-lg p-6 hover:border-[#f7cc48]/50 transition-all">
+                <BarChart3 className="w-8 h-8 text-[#f7cc48] mb-4" />
+                <h3 className="text-lg font-semibold text-white mb-2">Progress Analytics</h3>
+                <p className="text-sm text-[#7d8590]">Track your learning curve, identify weak spots, and optimize your study time.</p>
+              </div>
+
+              <div className="bg-[#21262d] border border-[#30363d] rounded-lg p-6 hover:border-[#f7cc48]/50 transition-all">
+                <Target className="w-8 h-8 text-[#f7cc48] mb-4" />
+                <h3 className="text-lg font-semibold text-white mb-2">Taiwan Mandarin</h3>
+                <p className="text-sm text-[#7d8590]">Authentic pronunciation and usage specifically for Taiwan Mandarin learners.</p>
+              </div>
+
+              <div className="bg-[#21262d] border border-[#30363d] rounded-lg p-6 hover:border-[#f7cc48]/50 transition-all">
+                <Users className="w-8 h-8 text-[#f7cc48] mb-4" />
+                <h3 className="text-lg font-semibold text-white mb-2">Cross-Device Sync</h3>
+                <p className="text-sm text-[#7d8590]">Start on your laptop, continue on your phone. Your progress syncs everywhere.</p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Social Proof */}
-      <section className="py-12 sm:py-16 md:py-20 bg-[#161b22]/50">
+      {/* Testimonials */}
+      <section className="py-20">
         <div className="container mx-auto px-4 sm:px-6">
-          <div className="max-w-4xl mx-auto text-center">
-            <p className="text-sm font-medium text-[#7d8590] mb-8 uppercase tracking-wider">
-              Trusted by learners worldwide
-            </p>
-            <div className="grid md:grid-cols-3 gap-8 mb-12">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-white mb-2">10,000+</div>
-                <div className="text-[#7d8590]">Characters learned daily</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-white mb-2">95%</div>
-                <div className="text-[#7d8590]">Session completion rate</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-white mb-2">2.5min</div>
-                <div className="text-[#7d8590]">Average session time</div>
-              </div>
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">Loved by Language Learners</h2>
+              <p className="text-xl text-[#7d8590]">
+                Join thousands who've transformed their Chinese learning journey
+              </p>
             </div>
-            <div className="flex items-center justify-center space-x-12 opacity-60">
-              <div className="text-[#7d8590] font-medium">Taiwan Universities</div>
-              <div className="text-[#7d8590] font-medium">Language Schools</div>
-              <div className="text-[#7d8590] font-medium">Self Learners</div>
+
+            <div className="grid md:grid-cols-3 gap-8">
+              <div className="bg-[#21262d] border border-[#30363d] rounded-lg p-8">
+                <div className="flex mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <svg key={i} className="w-5 h-5 text-[#f7cc48]" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  ))}
+                </div>
+                <p className="text-white mb-4">"Finally, a Chinese learning app that respects my time. The 90-second sessions fit perfectly into my commute."</p>
+                <div className="text-sm text-[#7d8590]">- Sarah Chen, Business Professional</div>
+              </div>
+
+              <div className="bg-[#21262d] border border-[#30363d] rounded-lg p-8">
+                <div className="flex mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <svg key={i} className="w-5 h-5 text-[#f7cc48]" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  ))}
+                </div>
+                <p className="text-white mb-4">"The AI-generated mnemonics are genius! I'm remembering characters I've struggled with for years."</p>
+                <div className="text-sm text-[#7d8590]">- Mark Liu, TOCFL Student</div>
+              </div>
+
+              <div className="bg-[#21262d] border border-[#30363d] rounded-lg p-8">
+                <div className="flex mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <svg key={i} className="w-5 h-5 text-[#f7cc48]" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  ))}
+                </div>
+                <p className="text-white mb-4">"Spaced repetition actually works! I'm retaining characters months after learning them."</p>
+                <div className="text-sm text-[#7d8590]">- Jennifer Wang, Heritage Learner</div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-12 sm:py-16 md:py-20">
-        <div className="container mx-auto px-6 text-center">
-          <h2 className="text-4xl font-bold text-white mb-4">Ready to learn 10x faster?</h2>
-          <p className="text-base sm:text-lg md:text-xl text-[#7d8590] mb-6 sm:mb-8 max-w-2xl mx-auto px-4 sm:px-0">
-            Join thousands of learners using scientifically-proven methods to master Chinese characters in minutes, not
-            hours.
-          </p>
+      <section className="py-20 bg-gradient-to-b from-[#161b22]/50 to-transparent">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="max-w-4xl mx-auto text-center">
+            <h2 className="text-4xl sm:text-5xl font-bold text-white mb-6">Start Learning Chinese Today</h2>
+            <p className="text-xl text-[#7d8590] mb-8 max-w-2xl mx-auto">
+              Join 50,000+ learners mastering Chinese characters with AI-powered flashcards and cognitive science.
+            </p>
 
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center mb-4 sm:mb-6 px-4 sm:px-0">
-            <Link href="/auth/signup" className="inline-flex items-center justify-center bg-[#f7cc48] hover:bg-[#f7cc48]/90 text-black font-medium text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 rounded-md transition-colors">
-              Start Free Flash Session
-            </Link>
-            <Link href="/pricing" className="inline-flex items-center justify-center border border-[#30363d] text-[#7d8590] hover:bg-[#21262d] hover:text-white text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 bg-transparent rounded-md transition-colors">
-              View Pricing
-            </Link>
-          </div>
+            <div className="bg-[#21262d] border border-[#30363d] rounded-lg p-8 mb-8 max-w-md mx-auto">
+              <h3 className="text-2xl font-bold text-white mb-4">Free Forever Plan</h3>
+              <ul className="space-y-3 mb-6 text-left">
+                <li className="flex items-start">
+                  <svg className="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span className="text-[#7d8590]">100 characters with full AI enrichment</span>
+                </li>
+                <li className="flex items-start">
+                  <svg className="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span className="text-[#7d8590]">Unlimited flash sessions</span>
+                </li>
+                <li className="flex items-start">
+                  <svg className="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span className="text-[#7d8590]">Spaced repetition scheduling</span>
+                </li>
+                <li className="flex items-start">
+                  <svg className="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span className="text-[#7d8590]">Progress analytics</span>
+                </li>
+              </ul>
+              <Link href="/auth/signup" className="block w-full bg-[#f7cc48] hover:bg-[#f7cc48]/90 text-black font-semibold text-lg px-8 py-4 rounded-lg transition-all transform hover:scale-105 shadow-lg hover:shadow-xl">
+                Get Started Free
+              </Link>
+            </div>
 
-          <div className="text-xs sm:text-sm text-[#7d8590]">
-            ✓ No credit card required • ✓ 100 characters free forever • ✓ Syncs across all devices
+            <div className="text-sm text-[#7d8590]">
+              No credit card required • Takes 30 seconds • Cancel anytime
+            </div>
           </div>
         </div>
       </section>

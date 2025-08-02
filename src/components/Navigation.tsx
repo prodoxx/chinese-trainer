@@ -4,7 +4,7 @@ import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
-import { Home, BarChart3, Settings, LogOut, User, Menu, X } from "lucide-react";
+import { Home, BarChart3, Settings, LogOut, User, Menu, X, Shield } from "lucide-react";
 import { useState } from "react";
 
 export default function Navigation() {
@@ -89,6 +89,20 @@ export default function Navigation() {
 							<>
 								{/* Desktop user menu */}
 								<div className="hidden md:flex items-center space-x-4">
+									{session.user.role === "admin" && (
+										<Link
+											href="/admin"
+											className={`p-2 rounded-md transition-all ${
+												pathname === "/admin"
+													? "text-black bg-[#f7cc48]"
+													: "text-[#7d8590] hover:text-white hover:bg-[#21262d]"
+											}`}
+											title="Admin Panel"
+										>
+											<Shield className="w-5 h-5" />
+										</Link>
+									)}
+									
 									<Link
 										href="/settings"
 										className={`p-2 rounded-md transition-all ${
@@ -263,6 +277,21 @@ export default function Navigation() {
 									<Settings className="w-4 h-4" />
 									Settings
 								</Link>
+
+								{session?.user?.role === "admin" && (
+									<Link
+										href="/admin"
+										onClick={() => setIsMobileMenuOpen(false)}
+										className={`px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 transition-all ${
+											pathname === "/admin"
+												? "text-black bg-[#f7cc48] font-semibold"
+												: "text-[#7d8590] hover:text-white hover:bg-[#21262d]"
+										}`}
+									>
+										<Shield className="w-4 h-4" />
+										Admin Panel
+									</Link>
+								)}
 
 								<button
 									onClick={handleSignOut}

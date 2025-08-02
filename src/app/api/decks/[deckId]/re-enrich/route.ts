@@ -10,11 +10,11 @@ export async function POST(
   context: { params: Promise<{ deckId: string }> }
 ) {
   try {
-    // Get authenticated user
+    // Check authentication and admin role
     const session = await getServerSession(authOptions);
-    if (!session?.user) {
+    if (!session?.user || session.user.role !== 'admin') {
       return NextResponse.json(
-        { error: 'Unauthorized' }, 
+        { error: 'Unauthorized. Admin access required.' }, 
         { status: 401 }
       );
     }

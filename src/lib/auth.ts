@@ -69,6 +69,13 @@ export const authOptions: NextAuthOptions = {
     async signIn({ user, account, profile }) {
       // Allow OAuth sign-ins
       if (account?.provider === "google") {
+        // For Google OAuth, set emailVerified if not already set
+        if (user.email && !user.emailVerified) {
+          await prisma.user.update({
+            where: { email: user.email },
+            data: { emailVerified: new Date() }
+          });
+        }
         return true;
       }
       
