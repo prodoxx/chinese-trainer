@@ -70,11 +70,17 @@ export const authOptions: NextAuthOptions = {
       // Allow OAuth sign-ins
       if (account?.provider === "google") {
         // For Google OAuth, set emailVerified if not already set
-        if (user.email && !user.emailVerified) {
-          await prisma.user.update({
-            where: { email: user.email },
-            data: { emailVerified: new Date() }
+        if (user.email) {
+          const dbUser = await prisma.user.findUnique({
+            where: { email: user.email }
           });
+          
+          if (dbUser && !dbUser.emailVerified) {
+            await prisma.user.update({
+              where: { email: user.email },
+              data: { emailVerified: new Date() }
+            });
+          }
         }
         return true;
       }

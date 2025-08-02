@@ -54,6 +54,9 @@ REDIS_URL=redis://localhost:6379
 OPENAI_API_KEY=sk-...your-key-here
 OPENAI_ORG_ID=org-...your-org-id
 
+# Fal.ai API (Image Generation)
+FAL_KEY=...your-fal-key-here
+
 # Email Service (Resend)
 RESEND_API_KEY=re_...your-key-here
 
@@ -137,7 +140,13 @@ mongosh mongodb://localhost:27017/chinese-app --eval "db.stats()"
 3. Generate API key
 4. Add to `.env.local`
 
-### 3. Cloudflare R2 Storage
+### 3. Fal.ai Image Generation
+1. Sign up at https://fal.ai
+2. Generate API key from dashboard
+3. Add to `.env.local`
+4. Model used: `fal-ai/flux-krea-lora`
+
+### 4. Cloudflare R2 Storage
 1. Create Cloudflare account
 2. Enable R2 storage
 3. Create bucket named `chinese-app-media-dev`
@@ -156,7 +165,7 @@ mongosh mongodb://localhost:27017/chinese-app --eval "db.stats()"
 ]
 ```
 
-### 4. Azure Text-to-Speech
+### 5. Azure Text-to-Speech
 1. Create Azure account
 2. Create Speech Service resource
 3. Get key and region

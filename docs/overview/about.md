@@ -19,7 +19,7 @@ Danbing is a cloud-based Traditional Chinese learning platform that helps users 
 ### 🧠 AI-Powered Enrichment
 - **Automatic Content Generation During Import**: 
   - Dictionary lookup (CC-CEDICT with 123,557 entries)
-  - AI-powered image selection (context-aware via DALL-E)
+  - AI-powered mnemonic image generation (visual memory aids via fal.ai)
   - Text-to-speech with Taiwan Mandarin pronunciation (Azure TTS)
   - AI insights automatically generated during enrichment (etymology, mnemonics, learning tips)
 - **Deep Linguistic Analysis**:
@@ -68,7 +68,7 @@ Danbing is a cloud-based Traditional Chinese learning platform that helps users 
 
 ### External Services
 - **OpenAI GPT-4**: Deep character analysis, etymology, mnemonics, and learning insights
-- **OpenAI DALL-E**: Context-aware image generation for character visualization
+- **Fal.ai Flux-Krea-Lora**: Mnemonic image generation for visual memory aids
 - **Azure TTS**: Taiwan Mandarin voice synthesis with authentic pronunciation
 - **CC-CEDICT**: Comprehensive Traditional Chinese dictionary (123,557 entries)
 - **Resend**: Professional email delivery with branded templates

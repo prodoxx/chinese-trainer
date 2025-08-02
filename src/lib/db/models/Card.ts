@@ -5,7 +5,7 @@ export interface ICard extends Document {
   meaning: string;
   pinyin: string;
   imageUrl?: string;
-  imageSource?: 'unsplash' | 'pexels' | 'placeholder';
+  imageSource?: 'unsplash' | 'pexels' | 'placeholder' | 'dalle' | 'fal';
   imageSourceId?: string;
   imageFileId?: string;
   audioFileId?: string;
@@ -66,7 +66,7 @@ const CardSchema = new Schema<ICard>(
     meaning: { type: String, default: '' },
     pinyin: { type: String, default: '' },
     imageUrl: { type: String },
-    imageSource: { type: String, enum: ['unsplash', 'pexels', 'placeholder', 'dalle'] },
+    imageSource: { type: String, enum: ['unsplash', 'pexels', 'placeholder', 'dalle', 'fal'] },
     imageSourceId: { type: String },
     imageFileId: { type: String },
     audioFileId: { type: String },

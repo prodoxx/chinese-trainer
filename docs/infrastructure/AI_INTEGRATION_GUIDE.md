@@ -2,9 +2,9 @@
 
 ## Overview
 
-Danbing integrates OpenAI's GPT-4 and DALL-E throughout the system to provide comprehensive AI-powered character analysis, visual content generation, and personalized learning insights. This guide documents how AI is used, when it's triggered, and how to optimize costs.
+Danbing integrates OpenAI's GPT-4 for text analysis and Fal.ai's Flux-Krea-Lora for image generation throughout the system to provide comprehensive AI-powered character analysis, mnemonic visual content generation, and personalized learning insights. This guide documents how AI is used, when it's triggered, and how to optimize costs.
 
-## OpenAI Services Used
+## AI Services Used
 
 ### GPT-4 for Character Analysis
 - **Character interpretation**: Taiwan Mandarin pronunciation and meanings
@@ -13,10 +13,11 @@ Danbing integrates OpenAI's GPT-4 and DALL-E throughout the system to provide co
 - **Error analysis**: Common mistakes and confusion patterns
 - **Contextual examples**: Level-appropriate sentences and collocations
 
-### DALL-E for Visual Content
-- **Context-aware images**: Visual representations that match character meanings
-- **Cultural relevance**: Images appropriate for Taiwan Mandarin context
-- **Learning enhancement**: Visual mnemonics that aid memory retention
+### Fal.ai Flux-Krea-Lora for Visual Content
+- **Mnemonic visuals**: Memory-enhancing images that help students associate meanings
+- **Educational design**: Simple, clean illustrations optimized for web display
+- **Learning enhancement**: Visual associations that improve character retention
+- **Web-friendly**: 512x512 resolution for fast loading
 
 ## AI Integration Points
 
@@ -38,7 +39,7 @@ export const cardEnrichmentWorker = new Worker<CardEnrichmentJobData>(
       card.meaning = interpretation.meaning;
     }
     
-    // AI-powered image generation
+    // AI-powered mnemonic image generation with fal.ai
     const imageResult = await generateSharedImage(
       card.hanzi, 
       card.meaning, 
@@ -183,6 +184,47 @@ For the character "愛" (love):
 }
 ```
 
+## Image Generation with Fal.ai
+
+### Mnemonic Visual Generation
+
+Fal.ai's Flux-Krea-Lora model generates mnemonic-focused images that help students memorize characters:
+
+```typescript
+import { fal } from '@fal-ai/client';
+
+// Generate mnemonic image (FAL_KEY is automatically picked up)
+const result = await fal.run("fal-ai/flux-krea-lora", {
+  prompt: mnemonicPrompt,
+  num_images: 1,
+  guidance_scale: 7.5,
+  num_inference_steps: 25,
+  width: 512,
+  height: 512,
+  seed: Math.floor(Math.random() * 1000000)
+});
+```
+
+### Prompt Engineering for Mnemonics
+
+The system generates mnemonic-focused prompts:
+
+```typescript
+// Example mnemonic prompts by category
+const mnemonicPrompts = {
+  emotion: "Mnemonic illustration: A person with exaggerated ${meaning} expression that helps students remember this emotion",
+  action: "Mnemonic illustration: Dynamic figure clearly performing '${meaning}' action in a memorable way",
+  quality: "Mnemonic illustration: Visual contrast clearly showing '${meaning}' quality for easy memorization",
+  general: "Mnemonic illustration for '${meaning}': Create a memorable visual association that helps students instantly recall this concept"
+};
+```
+
+### Image Specifications
+- **Resolution**: 512x512 (web-optimized)
+- **Style**: Simple educational cartoon
+- **Focus**: Visual memory aids
+- **No text**: Prevents answer giveaways
+
 ## Cost Optimization Strategies
 
 ### 1. Shared Analysis Results
@@ -258,7 +300,9 @@ export async function checkAIRateLimit(userId: string) {
 # OpenAI API Configuration
 OPENAI_API_KEY=sk-...                    # OpenAI API key
 OPENAI_MODEL_GPT=gpt-4                   # GPT model for text analysis
-OPENAI_MODEL_DALLE=dall-e-3              # DALL-E model for images
+
+# Fal.ai API Configuration  
+FAL_KEY=...                              # Fal.ai API key for image generation
 
 # Rate limiting
 OPENAI_MAX_REQUESTS_PER_MINUTE=60        # Rate limit

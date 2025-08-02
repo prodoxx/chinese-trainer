@@ -110,7 +110,7 @@ Provide a detailed linguistic analysis in JSON format with the following structu
   },
   "usage": {
     "commonCollocations": ["Common word combinations"],
-    "registerLevel": "formal/informal/neutral/literary",
+    "registerLevel": "formal, informal, neutral, or literary (choose one)",
     "frequency": "high/medium/low",
     "domains": ["Areas where commonly used"]
   },
@@ -148,13 +148,33 @@ Focus on practical learning aids and common confusion points.`;
 
     const aiAnalysis = JSON.parse(response.choices[0]?.message?.content || '{}');
     
+    // Validate and fix registerLevel
+    const validRegisterLevels = ['formal', 'informal', 'neutral', 'literary'];
+    let registerLevel = aiAnalysis.usage?.registerLevel || 'neutral';
+    
+    // Handle cases where AI returns multiple values like "neutral/informal"
+    if (registerLevel.includes('/')) {
+      // Take the first valid option
+      const options = registerLevel.split('/');
+      registerLevel = options.find((opt: string) => validRegisterLevels.includes(opt.trim())) || 'neutral';
+    }
+    
+    // Ensure it's a valid value
+    if (!validRegisterLevels.includes(registerLevel)) {
+      console.warn(`Invalid registerLevel "${registerLevel}" for character ${character}, defaulting to neutral`);
+      registerLevel = 'neutral';
+    }
+    
     // Merge AI insights with base analysis
     return {
       ...baseAnalysis,
       etymology: aiAnalysis.etymology,
       mnemonics: aiAnalysis.mnemonics,
       commonErrors: aiAnalysis.commonErrors,
-      usage: aiAnalysis.usage,
+      usage: {
+        ...aiAnalysis.usage,
+        registerLevel,
+      },
       learningTips: aiAnalysis.learningTips,
     };
   } catch (error) {

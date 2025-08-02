@@ -111,7 +111,7 @@ export async function generateSharedImage(hanzi: string, meaning: string, pinyin
     }
   }
   
-  // Generate new image using DALL-E
+  // Generate new image using fal.ai
   const imageBuffer = await generateDALLEImage(hanzi, meaning, pinyin);
   
   // Upload to R2
@@ -163,7 +163,7 @@ export const cardEnrichmentWorker = new Worker<CardEnrichmentJobData>(
       
       if (imageResult.imageUrl) {
         card.imageUrl = imageResult.imageUrl;
-        card.imageSource = 'dalle';
+        card.imageSource = 'fal';
         card.imageSourceId = imageResult.cached ? 'cached' : 'generated';
         console.log(`✓ Image ${imageResult.cached ? 'cached' : 'generated'}`);
       }

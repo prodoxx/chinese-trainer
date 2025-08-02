@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
+import Link from 'next/link'
 import { 
   Users, 
   FolderOpen,
@@ -17,7 +18,8 @@ import {
   Clock,
   AlertCircle,
   CheckCircle,
-  Loader2
+  Loader2,
+  BookOpen
 } from 'lucide-react'
 import { useAlert } from '@/hooks/useAlert'
 
@@ -68,6 +70,7 @@ export default function AdminPage() {
   const tabs = [
     { id: 'users', label: 'Users', icon: Users, description: 'Manage user accounts' },
     { id: 'decks', label: 'Decks', icon: FolderOpen, description: 'View all user decks' },
+    { id: 'cards', label: 'Cards', icon: BookOpen, description: 'Manage all cards' },
   ]
 
   return (
@@ -114,6 +117,19 @@ export default function AdminPage() {
             <div className="lg:col-span-3">
               {activeTab === 'users' && <UsersView />}
               {activeTab === 'decks' && <DecksView />}
+              {activeTab === 'cards' && (
+                <div className="bg-[#161b22] border border-[#30363d] rounded-lg p-6">
+                  <h2 className="text-xl font-bold text-white mb-4">Cards Management</h2>
+                  <p className="text-gray-400 mb-6">View and manage all cards in the database.</p>
+                  <Link 
+                    href="/admin/cards"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-[#f7cc48] hover:bg-[#f7cc48]/90 text-black font-medium rounded-lg transition-colors"
+                  >
+                    <BookOpen className="w-4 h-4" />
+                    Go to Cards Page
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         </div>

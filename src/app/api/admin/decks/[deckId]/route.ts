@@ -27,7 +27,7 @@ export async function GET(
     
     // Get deck with basic info
     const deck = await Deck.findById(deckId).lean()
-    if (!deck) {
+    if (!deck || !('userId' in deck)) {
       return NextResponse.json({ error: 'Deck not found' }, { status: 404 })
     }
     
@@ -39,7 +39,7 @@ export async function GET(
     
     // Get all cards for this deck through DeckCard junction table
     const deckCards = await DeckCard.find({ deckId }).lean()
-    const cardIds = deckCards.map(dc => dc.cardId)
+    const cardIds = Array.isArray(deckCards) ? deckCards.map(dc => dc.cardId) : []
     
     // Get the actual cards
     const cards = await Card.find({ _id: { $in: cardIds } }).sort({ createdAt: 1 }).lean()

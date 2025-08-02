@@ -20,6 +20,12 @@ export const cardEnrichmentWorker = new Worker<CardEnrichmentJobData>(
     console.log(`   Force: ${force}`);
     console.log(`   User: ${userId}`);
     
+    // Update job progress
+    await job.updateProgress({
+      stage: 'initializing',
+      message: 'Starting enrichment process...'
+    });
+    
     try {
       await connectDB();
       
@@ -31,6 +37,13 @@ export const cardEnrichmentWorker = new Worker<CardEnrichmentJobData>(
       }
       
       console.log(`   Character: ${card.hanzi}`);
+      
+      // Update progress with character info
+      await job.updateProgress({
+        stage: 'card_loaded',
+        message: `Enriching character: ${card.hanzi}`,
+        character: card.hanzi
+      });
       
       // Update meaning/pinyin if disambiguation was provided
       if (disambiguationSelection) {
@@ -61,6 +74,12 @@ export const cardEnrichmentWorker = new Worker<CardEnrichmentJobData>(
       if (!card.pinyin || !card.meaning || card.meaning === 'Unknown character' || force) {
         console.log(`   🤖 Using AI interpretation for Taiwan pronunciation and meaning...`);
         
+        await job.updateProgress({
+          stage: 'ai_interpretation',
+          message: 'Getting AI pronunciation and meaning...',
+          character: card.hanzi
+        });
+        
         const interpretation = await interpretChinese(card.hanzi);
         
         if (interpretation) {
@@ -82,12 +101,15 @@ export const cardEnrichmentWorker = new Worker<CardEnrichmentJobData>(
         }
       }
       
-      // Update progress
-      await job.updateProgress(30);
-      
       // Re-generate image if force=true or no image exists
       if (force || !card.imageUrl || card.imageUrl === '') {
         console.log(`   Generating new image...`);
+        
+        await job.updateProgress({
+          stage: 'generating_image',
+          message: 'Creating mnemonic image...',
+          character: card.hanzi
+        });
         
         // Ensure we have valid values before calling generateSharedImage
         const meaning = card.meaning || '';
@@ -108,7 +130,7 @@ export const cardEnrichmentWorker = new Worker<CardEnrichmentJobData>(
         
         if (imageResult.imageUrl) {
           card.imageUrl = imageResult.imageUrl;
-          card.imageSource = 'dalle';
+          card.imageSource = 'fal';
           card.imageSourceId = imageResult.cached ? 'cached' : 'generated';
           card.imageAttribution = 'AI Generated';
           card.imageAttributionUrl = '';
@@ -117,12 +139,15 @@ export const cardEnrichmentWorker = new Worker<CardEnrichmentJobData>(
         }
       }
       
-      // Update progress
-      await job.updateProgress(60);
-      
       // Re-generate audio if missing
       if (!card.audioUrl || force) {
         console.log(`   Generating audio...`);
+        
+        await job.updateProgress({
+          stage: 'generating_audio',
+          message: 'Creating pronunciation audio...',
+          character: card.hanzi
+        });
         
         try {
           const audioResult = await generateSharedAudio(card.hanzi);
@@ -133,12 +158,15 @@ export const cardEnrichmentWorker = new Worker<CardEnrichmentJobData>(
         }
       }
       
-      // Update progress
-      await job.updateProgress(80);
-      
       // Generate AI insights if they don't exist or if forced
       if (!card.aiInsights || force) {
         console.log(`   Generating AI insights...`);
+        
+        await job.updateProgress({
+          stage: 'generating_insights',
+          message: 'Creating AI-powered learning insights...',
+          character: card.hanzi
+        });
         
         try {
           const aiInsights = await analyzeCharacterWithOpenAI(card.hanzi);
@@ -151,8 +179,11 @@ export const cardEnrichmentWorker = new Worker<CardEnrichmentJobData>(
         }
       }
       
-      // Update progress
-      await job.updateProgress(95);
+      await job.updateProgress({
+        stage: 'saving',
+        message: 'Saving enriched data...',
+        character: card.hanzi
+      });
       
       // Save the updated card
       await card.save();
@@ -175,14 +206,36 @@ export const cardEnrichmentWorker = new Worker<CardEnrichmentJobData>(
         }
       };
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Card enrichment error:', error);
+      
+      // Check if this is a non-recoverable error that shouldn't be retried
+      const nonRecoverableErrors = [
+        'Card not found',
+        'No job ID returned from server',
+        'Card validation failed',
+      ];
+      
+      // Check if error message contains any non-recoverable error patterns
+      const errorMessage = error.message || error.toString();
+      const isNonRecoverable = nonRecoverableErrors.some(pattern => 
+        errorMessage.includes(pattern)
+      );
+      
+      if (isNonRecoverable) {
+        // Mark job as failed without retrying by setting attemptsMade to max attempts
+        console.error('Non-recoverable error detected, skipping retries:', errorMessage);
+        job.attemptsMade = 999; // This will prevent retries
+      }
+      
       throw error;
     }
   },
   {
     connection: getRedis(),
-    concurrency: 3, // Process up to 3 cards at once
+    concurrency: 2, // Reduce concurrency to prevent lock timeouts
+    lockDuration: 300000, // 5 minutes (increased from default 30s)
+    lockRenewTime: 60000, // Renew lock every minute
   }
 );
 

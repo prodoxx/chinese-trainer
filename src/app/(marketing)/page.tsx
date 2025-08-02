@@ -124,7 +124,7 @@ export default async function MarketingHomePage() {
                 <div className="absolute -top-4 -left-4 w-12 h-12 bg-[#f7cc48] rounded-full flex items-center justify-center font-bold text-black text-xl">2</div>
                 <div className="bg-[#21262d] border border-[#30363d] rounded-lg p-8 h-full">
                   <h3 className="text-xl font-bold text-white mb-3">AI Creates Flashcards</h3>
-                  <p className="text-[#7d8590] mb-4">Danbing's AI generates mnemonics, etymology, and visual associations. Custom images are created for each character.</p>
+                  <p className="text-[#7d8590] mb-4">Danbing&apos;s AI generates mnemonics, etymology, and visual associations. Custom images are created for each character.</p>
                   <div className="text-sm text-[#f7cc48]">Proprietary AI technology</div>
                 </div>
               </div>
@@ -221,7 +221,7 @@ export default async function MarketingHomePage() {
                     </div>
                     <div className="border-l-2 border-[#f7cc48]/50 pl-4">
                       <div className="text-[#7d8590] mb-1">Common Confusion</div>
-                      <div className="text-white">受 (shòu) - similar top component but means "receive"</div>
+                      <div className="text-white">受 (shòu) - similar top component but means &quot;receive&quot;</div>
                     </div>
                   </div>
                 </div>
@@ -251,7 +251,7 @@ export default async function MarketingHomePage() {
 
               <div className="bg-[#21262d] border border-[#30363d] rounded-lg p-6 hover:border-[#f7cc48]/50 transition-all">
                 <div className="text-3xl font-bold text-[#f7cc48] mb-2">7±2</div>
-                <h3 className="text-lg font-semibold text-white mb-2">Miller's Magic Number</h3>
+                <h3 className="text-lg font-semibold text-white mb-2">Miller&apos;s Magic Number</h3>
                 <p className="text-sm text-[#7d8590]">Working memory capacity for new information</p>
               </div>
 
@@ -343,7 +343,7 @@ export default async function MarketingHomePage() {
                     </svg>
                   ))}
                 </div>
-                <p className="text-white mb-4">"Finally, a Chinese learning app that respects my time. The 90-second sessions fit perfectly into my commute."</p>
+                <p className="text-white mb-4">&quot;Finally, a Chinese learning app that respects my time. The 90-second sessions fit perfectly into my commute.&quot;</p>
                 <div className="text-sm text-[#7d8590]">- Sarah Chen, Business Professional</div>
               </div>
 
@@ -355,7 +355,7 @@ export default async function MarketingHomePage() {
                     </svg>
                   ))}
                 </div>
-                <p className="text-white mb-4">"The AI-generated mnemonics are genius! I'm remembering characters I've struggled with for years."</p>
+                <p className="text-white mb-4">&quot;The AI-generated mnemonics are genius! I&apos;m remembering characters I&apos;ve struggled with for years.&quot;</p>
                 <div className="text-sm text-[#7d8590]">- Mark Liu, TOCFL Student</div>
               </div>
 
@@ -367,7 +367,7 @@ export default async function MarketingHomePage() {
                     </svg>
                   ))}
                 </div>
-                <p className="text-white mb-4">"Spaced repetition actually works! I'm retaining characters months after learning them."</p>
+                <p className="text-white mb-4">&quot;Spaced repetition actually works! I&apos;m retaining characters months after learning them.&quot;</p>
                 <div className="text-sm text-[#7d8590]">- Jennifer Wang, Heritage Learner</div>
               </div>
             </div>

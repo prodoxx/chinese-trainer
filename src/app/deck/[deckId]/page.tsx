@@ -292,7 +292,7 @@ export default function DeckView() {
                         <div
                           key={i}
                           className={`w-2 h-2 rounded-full ${
-                            i < Math.round(card.overallDifficulty) 
+                            i < Math.round(card.overallDifficulty || 0) 
                               ? 'bg-[#f7cc48]' 
                               : 'bg-gray-600'
                           }`}

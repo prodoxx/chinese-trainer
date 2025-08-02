@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, use, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import Navigation from '@/components/Navigation'
@@ -8,27 +8,22 @@ import Footer from '@/components/Footer'
 import Link from 'next/link'
 import { 
   ChevronLeft,
-  FolderOpen,
+  ChevronRight,
   Calendar,
-  User,
   Hash,
-  Clock,
-  AlertCircle,
-  CheckCircle,
   RefreshCw,
   Image as ImageIcon,
   Volume2,
   Search,
   Filter,
-  ChevronRight,
   Loader2,
   Shield,
   Zap,
   XCircle,
-  Activity,
-  TrendingUp,
-  Award,
-  AlertTriangle
+  CheckCircle,
+  AlertCircle,
+  BookOpen,
+  BarChart3
 } from 'lucide-react'
 import { useAlert } from '@/hooks/useAlert'
 import AdminCharacterInsights from '@/components/AdminCharacterInsights'
@@ -44,37 +39,29 @@ interface Card {
   updatedAt: Date
 }
 
-interface DeckDetail {
-  _id: string
-  name: string
-  description: string
-  userId: string
-  cardsCount: number
-  status: string
-  enrichmentProgress: {
-    totalCards: number
-    processedCards: number
-    currentOperation: string
-  } | null
-  createdAt: Date
-  updatedAt: Date
-  user?: {
-    id: string
-    email: string
-    name: string | null
-  }
-  cards: Card[]
+interface PaginationInfo {
+  page: number
+  limit: number
+  totalCount: number
+  totalPages: number
+  hasMore: boolean
 }
 
-export default function AdminDeckPage({ params }: { params: Promise<{ deckId: string }> }) {
-  const resolvedParams = use(params)
+interface Stats {
+  total: number
+  enriched: number
+  partial: number
+  pending: number
+}
+
+export default function AdminCardsPage() {
   const router = useRouter()
   const { data: session, status } = useSession()
   const { showAlert } = useAlert()
-  const [deck, setDeck] = useState<DeckDetail | null>(null)
+  const [cards, setCards] = useState<Card[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
-  const [filterStatus, setFilterStatus] = useState<'all' | 'enriched' | 'pending' | 'failed'>('all')
+  const [filterStatus, setFilterStatus] = useState<'all' | 'enriched' | 'pending' | 'partial'>('all')
   const [selectedCards, setSelectedCards] = useState<Set<string>>(new Set())
   const [reEnrichingCards, setReEnrichingCards] = useState<Set<string>>(new Set())
   const [enrichmentStatus, setEnrichmentStatus] = useState<Map<string, string>>(new Map())
@@ -82,8 +69,23 @@ export default function AdminDeckPage({ params }: { params: Promise<{ deckId: st
   const [previewImage, setPreviewImage] = useState<string | null>(null)
   const [playingAudio, setPlayingAudio] = useState<string | null>(null)
   const [selectedCharacter, setSelectedCharacter] = useState<{ id: string; hanzi: string } | null>(null)
-  const [userPerformance, setUserPerformance] = useState<any>(null)
+  const [pagination, setPagination] = useState<PaginationInfo>({
+    page: 1,
+    limit: 50,
+    totalCount: 0,
+    totalPages: 0,
+    hasMore: false
+  })
+  const [stats, setStats] = useState<Stats>({
+    total: 0,
+    enriched: 0,
+    partial: 0,
+    pending: 0
+  })
+  const [sortBy, setSortBy] = useState<'updatedAt' | 'createdAt' | 'hanzi'>('updatedAt')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const pollIntervalsRef = useRef<Map<string, NodeJS.Timeout>>(new Map())
+  const searchTimeoutRef = useRef<NodeJS.Timeout>()
 
   // Check if user is admin
   useEffect(() => {
@@ -100,7 +102,7 @@ export default function AdminDeckPage({ params }: { params: Promise<{ deckId: st
       return
     }
 
-    fetchDeck()
+    fetchCards()
   }, [session, status, router, showAlert])
 
   // Cleanup polling intervals on unmount
@@ -114,31 +116,63 @@ export default function AdminDeckPage({ params }: { params: Promise<{ deckId: st
     }
   }, [])
 
-  const fetchDeck = async () => {
+  // Debounced search
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current)
+    }
+
+    searchTimeoutRef.current = setTimeout(() => {
+      if (pagination.page !== 1) {
+        setPagination(prev => ({ ...prev, page: 1 }))
+      } else {
+        fetchCards()
+      }
+    }, 300)
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current)
+      }
+    }
+  }, [searchTerm])
+
+  // Re-fetch when filters change
+  useEffect(() => {
+    if (pagination.page !== 1) {
+      setPagination(prev => ({ ...prev, page: 1 }))
+    } else {
+      fetchCards()
+    }
+  }, [filterStatus, sortBy, sortOrder])
+
+  // Re-fetch when page changes
+  useEffect(() => {
+    fetchCards()
+  }, [pagination.page])
+
+  const fetchCards = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/admin/decks/${resolvedParams.deckId}`)
-      if (!response.ok) throw new Error('Failed to fetch deck')
+      const params = new URLSearchParams({
+        page: pagination.page.toString(),
+        limit: pagination.limit.toString(),
+        search: searchTerm,
+        status: filterStatus,
+        sortBy,
+        sortOrder
+      })
+
+      const response = await fetch(`/api/admin/cards?${params}`)
+      if (!response.ok) throw new Error('Failed to fetch cards')
 
       const data = await response.json()
-      setDeck(data)
-      
-      // Fetch user performance data
-      if (data.userId) {
-        try {
-          const perfResponse = await fetch(`/api/admin/users/${data.userId}/performance`)
-          if (perfResponse.ok) {
-            const perfData = await perfResponse.json()
-            setUserPerformance(perfData.performance)
-          }
-        } catch (error) {
-          console.error('Error fetching user performance:', error)
-        }
-      }
+      setCards(data.cards)
+      setPagination(data.pagination)
+      setStats(data.stats)
     } catch (error) {
-      console.error('Error fetching deck:', error)
-      showAlert('Failed to fetch deck details', { type: 'error' })
-      router.push('/admin')
+      console.error('Error fetching cards:', error)
+      showAlert('Failed to fetch cards', { type: 'error' })
     } finally {
       setLoading(false)
       setRefreshing(false)
@@ -147,7 +181,7 @@ export default function AdminDeckPage({ params }: { params: Promise<{ deckId: st
 
   const handleRefresh = () => {
     setRefreshing(true)
-    fetchDeck()
+    fetchCards()
   }
 
   const handleReEnrichCard = async (cardId: string) => {
@@ -158,7 +192,7 @@ export default function AdminDeckPage({ params }: { params: Promise<{ deckId: st
       const response = await fetch(`/api/admin/cards/${cardId}/re-enrich`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ deckId: resolvedParams.deckId })
+        body: JSON.stringify({})
       })
 
       if (!response.ok) throw new Error('Failed to re-enrich card')
@@ -211,7 +245,7 @@ export default function AdminDeckPage({ params }: { params: Promise<{ deckId: st
                 next.delete(cardId)
                 return next
               })
-              fetchDeck() // Refresh to show updated data
+              fetchCards() // Refresh to show updated data
               
               if (jobStatus.state === 'failed') {
                 const failureReason = jobStatus.failedReason || 'Unknown error'
@@ -289,8 +323,7 @@ export default function AdminDeckPage({ params }: { params: Promise<{ deckId: st
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          cardIds: Array.from(selectedCards),
-          deckId: resolvedParams.deckId 
+          cardIds: Array.from(selectedCards)
         })
       })
 
@@ -301,7 +334,7 @@ export default function AdminDeckPage({ params }: { params: Promise<{ deckId: st
       setSelectedCards(new Set())
       
       // Refresh after a delay
-      setTimeout(() => fetchDeck(), 2000)
+      setTimeout(() => fetchCards(), 2000)
     } catch (error) {
       console.error('Error bulk re-enriching:', error)
       showAlert('Failed to start bulk re-enrichment', { type: 'error' })
@@ -320,36 +353,6 @@ export default function AdminDeckPage({ params }: { params: Promise<{ deckId: st
     }).format(d)
   }
 
-  const getFilteredCards = () => {
-    if (!deck) return []
-    
-    let filtered = deck.cards
-
-    // Apply search filter
-    if (searchTerm) {
-      filtered = filtered.filter(card => 
-        card.hanzi.includes(searchTerm) ||
-        card.pinyin.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        card.meaning.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    }
-
-    // Apply status filter based on media presence
-    if (filterStatus !== 'all') {
-      filtered = filtered.filter(card => {
-        const hasMedia = !!(card.imageUrl && card.audioUrl)
-        const hasPartialMedia = !!(card.imageUrl || card.audioUrl)
-        
-        if (filterStatus === 'enriched') return hasMedia
-        if (filterStatus === 'pending') return !hasPartialMedia
-        if (filterStatus === 'failed') return hasPartialMedia && !hasMedia
-        return true
-      })
-    }
-
-    return filtered
-  }
-
   const toggleCardSelection = (cardId: string) => {
     setSelectedCards(prev => {
       const next = new Set(prev)
@@ -363,11 +366,10 @@ export default function AdminDeckPage({ params }: { params: Promise<{ deckId: st
   }
 
   const selectAll = () => {
-    const filtered = getFilteredCards()
-    if (selectedCards.size === filtered.length) {
+    if (selectedCards.size === cards.length) {
       setSelectedCards(new Set())
     } else {
-      setSelectedCards(new Set(filtered.map(c => c._id)))
+      setSelectedCards(new Set(cards.map(c => c._id)))
     }
   }
 
@@ -388,11 +390,9 @@ export default function AdminDeckPage({ params }: { params: Promise<{ deckId: st
     }
   }
 
-  const formatTime = (ms: number) => {
-    const hours = Math.floor(ms / 3600000)
-    const minutes = Math.floor((ms % 3600000) / 60000)
-    if (hours > 0) return `${hours}h ${minutes}m`
-    return `${minutes}m`
+  const handlePageChange = (newPage: number) => {
+    setPagination(prev => ({ ...prev, page: newPage }))
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   if (loading || status === 'loading') {
@@ -402,17 +402,13 @@ export default function AdminDeckPage({ params }: { params: Promise<{ deckId: st
         <div className="min-h-[calc(100vh-4rem)] bg-[#0d1117] text-white flex items-center justify-center">
           <div className="flex items-center gap-3">
             <Loader2 className="w-6 h-6 animate-spin text-[#f7cc48]" />
-            <span className="text-lg">Loading deck details...</span>
+            <span className="text-lg">Loading cards...</span>
           </div>
         </div>
         <Footer />
       </>
     )
   }
-
-  if (!deck) return null
-
-  const filteredCards = getFilteredCards()
 
   return (
     <>
@@ -432,12 +428,10 @@ export default function AdminDeckPage({ params }: { params: Promise<{ deckId: st
             <div className="flex items-start justify-between">
               <div>
                 <div className="flex items-center gap-3 mb-2">
-                  <FolderOpen className="w-8 h-8 text-[#f7cc48]" />
-                  <h1 className="text-3xl font-bold text-[#f7cc48]">{deck.name}</h1>
+                  <BookOpen className="w-8 h-8 text-[#f7cc48]" />
+                  <h1 className="text-3xl font-bold text-[#f7cc48]">All Cards</h1>
                 </div>
-                {deck.description && (
-                  <p className="text-gray-400 mb-4">{deck.description}</p>
-                )}
+                <p className="text-gray-400">Manage all characters in the database</p>
               </div>
 
               <button
@@ -450,131 +444,77 @@ export default function AdminDeckPage({ params }: { params: Promise<{ deckId: st
               </button>
             </div>
 
-            {/* Deck Info */}
+            {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-              <div className="bg-[#161b22] border border-[#30363d] rounded-lg p-4">
-                <div className="flex items-center gap-2 text-gray-400 mb-1">
-                  <User className="w-4 h-4" />
-                  <span className="text-sm">Owner</span>
-                </div>
-                <p className="text-white font-medium">{deck.user?.email || 'Unknown'}</p>
-                {deck.user?.name && (
-                  <p className="text-sm text-gray-500">{deck.user.name}</p>
-                )}
-              </div>
-
-              <div className="bg-[#161b22] border border-[#30363d] rounded-lg p-4">
+              <button
+                onClick={() => setFilterStatus('all')}
+                className={`bg-[#161b22] border rounded-lg p-4 text-left transition-all ${
+                  filterStatus === 'all' 
+                    ? 'border-[#f7cc48] ring-2 ring-[#f7cc48]/20' 
+                    : 'border-[#30363d] hover:border-gray-500'
+                }`}
+              >
                 <div className="flex items-center gap-2 text-gray-400 mb-1">
                   <Hash className="w-4 h-4" />
                   <span className="text-sm">Total Cards</span>
                 </div>
-                <p className="text-2xl font-bold text-white">{deck.cardsCount}</p>
-              </div>
+                <p className="text-2xl font-bold text-white">{stats.total.toLocaleString()}</p>
+              </button>
 
-              <div className="bg-[#161b22] border border-[#30363d] rounded-lg p-4">
+              <button
+                onClick={() => setFilterStatus('enriched')}
+                className={`bg-[#161b22] border rounded-lg p-4 text-left transition-all ${
+                  filterStatus === 'enriched' 
+                    ? 'border-[#f7cc48] ring-2 ring-[#f7cc48]/20' 
+                    : 'border-[#30363d] hover:border-gray-500'
+                }`}
+              >
                 <div className="flex items-center gap-2 text-gray-400 mb-1">
-                  <Clock className="w-4 h-4" />
-                  <span className="text-sm">Status</span>
+                  <CheckCircle className="w-4 h-4" />
+                  <span className="text-sm">Fully Enriched</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  {deck.status === 'ready' && <CheckCircle className="w-5 h-5 text-green-500" />}
-                  {deck.status === 'enriching' && <RefreshCw className="w-5 h-5 text-blue-500 animate-spin" />}
-                  {deck.status === 'failed' && <XCircle className="w-5 h-5 text-red-500" />}
-                  <span className={`font-medium ${
-                    deck.status === 'ready' ? 'text-green-400' : 
-                    deck.status === 'enriching' ? 'text-blue-400' : 
-                    'text-red-400'
-                  }`}>
-                    {deck.status.charAt(0).toUpperCase() + deck.status.slice(1)}
-                  </span>
-                </div>
-              </div>
-
-              <div className="bg-[#161b22] border border-[#30363d] rounded-lg p-4">
-                <div className="flex items-center gap-2 text-gray-400 mb-1">
-                  <Calendar className="w-4 h-4" />
-                  <span className="text-sm">Created</span>
-                </div>
-                <p className="text-white">{formatDate(deck.createdAt)}</p>
-              </div>
-            </div>
-
-            {/* Deck Owner Performance */}
-            {userPerformance && (
-              <div className="mt-6 bg-[#232937] rounded-lg p-6 border border-[#2d3548]">
-                <h3 className="text-xl font-semibold mb-4 text-[#f7cc48] flex items-center gap-2">
-                  <User className="w-5 h-5" />
-                  Deck Owner Performance
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                  <div className="bg-[#161b22] border border-[#30363d] rounded-lg p-4">
-                    <div className="text-sm text-gray-300 flex items-center gap-1 mb-1">
-                      <Activity className="w-3 h-3" />
-                      Total Reviews
-                    </div>
-                    <div className="text-2xl font-bold text-white">{userPerformance.totalReviews.toLocaleString()}</div>
-                  </div>
-                  <div className="bg-[#161b22] border border-[#30363d] rounded-lg p-4">
-                    <div className="text-sm text-gray-300 flex items-center gap-1 mb-1">
-                      <TrendingUp className="w-3 h-3" />
-                      Avg Accuracy
-                    </div>
-                    <div className={`text-2xl font-bold ${
-                      userPerformance.averageAccuracy >= 80 ? 'text-green-400' :
-                      userPerformance.averageAccuracy >= 60 ? 'text-yellow-400' : 'text-red-400'
-                    }`}>
-                      {userPerformance.averageAccuracy.toFixed(0)}%
-                    </div>
-                  </div>
-                  <div className="bg-[#161b22] border border-[#30363d] rounded-lg p-4">
-                    <div className="text-sm text-gray-300 flex items-center gap-1 mb-1">
-                      <Clock className="w-3 h-3" />
-                      Study Time
-                    </div>
-                    <div className="text-2xl font-bold text-white">{formatTime(userPerformance.totalStudyTime)}</div>
-                  </div>
-                  <div className="bg-[#161b22] border border-[#30363d] rounded-lg p-4">
-                    <div className="text-sm text-gray-300 flex items-center gap-1 mb-1">
-                      <Award className="w-3 h-3" />
-                      Cards Mastered
-                    </div>
-                    <div className="text-2xl font-bold text-green-400">{userPerformance.cardsMastered}</div>
-                  </div>
-                  <div className="bg-[#161b22] border border-[#30363d] rounded-lg p-4">
-                    <div className="text-sm text-gray-300 flex items-center gap-1 mb-1">
-                      <AlertTriangle className="w-3 h-3" />
-                      Cards Learning
-                    </div>
-                    <div className="text-2xl font-bold text-yellow-400">{userPerformance.cardsLearned}</div>
-                  </div>
-                  <div className="bg-[#161b22] border border-[#30363d] rounded-lg p-4">
-                    <div className="text-sm text-gray-300 mb-1">Response Time</div>
-                    <div className="text-2xl font-bold text-white">{(userPerformance.averageResponseTime / 1000).toFixed(1)}s</div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {deck.status === 'enriching' && deck.enrichmentProgress && (
-              <div className="mt-4 p-4 bg-blue-900/20 border border-blue-500/50 rounded-lg">
-                <div className="flex items-center gap-2 mb-2">
-                  <RefreshCw className="w-4 h-4 text-blue-400 animate-spin" />
-                  <span className="text-sm font-medium text-blue-400">Enrichment in Progress</span>
-                </div>
-                <p className="text-sm text-gray-300">{deck.enrichmentProgress.currentOperation}</p>
-                <div className="mt-2 bg-[#0d1117] rounded-full overflow-hidden">
-                  <div 
-                    className="h-2 bg-blue-500 transition-all duration-300"
-                    style={{ 
-                      width: `${(deck.enrichmentProgress.processedCards / deck.enrichmentProgress.totalCards) * 100}%` 
-                    }}
-                  />
-                </div>
-                <p className="text-xs text-gray-400 mt-1">
-                  {deck.enrichmentProgress.processedCards} / {deck.enrichmentProgress.totalCards} cards processed
+                <p className="text-2xl font-bold text-green-400">{stats.enriched.toLocaleString()}</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {stats.total > 0 ? `${((stats.enriched / stats.total) * 100).toFixed(1)}%` : '0%'}
                 </p>
-              </div>
-            )}
+              </button>
+
+              <button
+                onClick={() => setFilterStatus('partial')}
+                className={`bg-[#161b22] border rounded-lg p-4 text-left transition-all ${
+                  filterStatus === 'partial' 
+                    ? 'border-[#f7cc48] ring-2 ring-[#f7cc48]/20' 
+                    : 'border-[#30363d] hover:border-gray-500'
+                }`}
+              >
+                <div className="flex items-center gap-2 text-gray-400 mb-1">
+                  <AlertCircle className="w-4 h-4" />
+                  <span className="text-sm">Partially Enriched</span>
+                </div>
+                <p className="text-2xl font-bold text-yellow-400">{stats.partial.toLocaleString()}</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {stats.total > 0 ? `${((stats.partial / stats.total) * 100).toFixed(1)}%` : '0%'}
+                </p>
+              </button>
+
+              <button
+                onClick={() => setFilterStatus('pending')}
+                className={`bg-[#161b22] border rounded-lg p-4 text-left transition-all ${
+                  filterStatus === 'pending' 
+                    ? 'border-[#f7cc48] ring-2 ring-[#f7cc48]/20' 
+                    : 'border-[#30363d] hover:border-gray-500'
+                }`}
+              >
+                <div className="flex items-center gap-2 text-gray-400 mb-1">
+                  <XCircle className="w-4 h-4" />
+                  <span className="text-sm">Not Enriched</span>
+                </div>
+                <p className="text-2xl font-bold text-gray-400">{stats.pending.toLocaleString()}</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {stats.total > 0 ? `${((stats.pending / stats.total) * 100).toFixed(1)}%` : '0%'}
+                </p>
+              </button>
+            </div>
           </div>
 
           {/* Cards Section */}
@@ -612,7 +552,28 @@ export default function AdminDeckPage({ params }: { params: Promise<{ deckId: st
                     <option value="all">All Cards</option>
                     <option value="enriched">Fully Enriched</option>
                     <option value="pending">Not Enriched</option>
-                    <option value="failed">Partially Enriched</option>
+                    <option value="partial">Partially Enriched</option>
+                  </select>
+                </div>
+
+                {/* Sort */}
+                <div className="flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5 text-gray-400" />
+                  <select
+                    value={`${sortBy}-${sortOrder}`}
+                    onChange={(e) => {
+                      const [field, order] = e.target.value.split('-')
+                      setSortBy(field as any)
+                      setSortOrder(order as any)
+                    }}
+                    className="px-4 py-2 bg-[#0d1117] border border-[#30363d] rounded-lg text-white focus:outline-none focus:border-[#f7cc48] focus:ring-1 focus:ring-[#f7cc48]"
+                  >
+                    <option value="updatedAt-desc">Recently Updated</option>
+                    <option value="updatedAt-asc">Oldest Updated</option>
+                    <option value="createdAt-desc">Recently Created</option>
+                    <option value="createdAt-asc">Oldest Created</option>
+                    <option value="hanzi-asc">Character (A-Z)</option>
+                    <option value="hanzi-desc">Character (Z-A)</option>
                   </select>
                 </div>
 
@@ -622,7 +583,7 @@ export default function AdminDeckPage({ params }: { params: Promise<{ deckId: st
                     onClick={selectAll}
                     className="px-4 py-2 bg-[#21262d] hover:bg-[#30363d] text-white rounded-lg transition-colors"
                   >
-                    {selectedCards.size === filteredCards.length ? 'Deselect All' : 'Select All'}
+                    {selectedCards.size === cards.length ? 'Deselect All' : 'Select All'}
                   </button>
                   
                   {selectedCards.size > 0 && (
@@ -640,7 +601,7 @@ export default function AdminDeckPage({ params }: { params: Promise<{ deckId: st
 
             {/* Cards Table */}
             <div className="bg-[#161b22] border border-[#30363d] rounded-lg overflow-hidden">
-              {filteredCards.length === 0 ? (
+              {cards.length === 0 ? (
                 <div className="flex flex-col items-center justify-center p-8 text-center">
                   <Hash className="w-12 h-12 text-gray-600 mb-3" />
                   <p className="text-gray-400">No cards found</p>
@@ -654,7 +615,7 @@ export default function AdminDeckPage({ params }: { params: Promise<{ deckId: st
                         <th className="px-6 py-3 text-left">
                           <input
                             type="checkbox"
-                            checked={selectedCards.size === filteredCards.length}
+                            checked={selectedCards.size === cards.length && cards.length > 0}
                             onChange={selectAll}
                             className="rounded border-gray-600 text-[#f7cc48] focus:ring-[#f7cc48]"
                           />
@@ -680,7 +641,7 @@ export default function AdminDeckPage({ params }: { params: Promise<{ deckId: st
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#30363d]">
-                      {filteredCards.map((card) => (
+                      {cards.map((card) => (
                         <tr key={card._id} className="hover:bg-[#0d1117] transition-colors">
                           <td className="px-6 py-4">
                             <input
@@ -754,6 +715,62 @@ export default function AdminDeckPage({ params }: { params: Promise<{ deckId: st
                 </div>
               )}
             </div>
+
+            {/* Pagination */}
+            {pagination.totalPages > 1 && (
+              <div className="flex items-center justify-between bg-[#161b22] border border-[#30363d] rounded-lg p-4">
+                <div className="text-sm text-gray-400">
+                  Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, pagination.totalCount)} of {pagination.totalCount} cards
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handlePageChange(pagination.page - 1)}
+                    disabled={pagination.page === 1}
+                    className="px-3 py-1 bg-[#21262d] hover:bg-[#30363d] text-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  
+                  {/* Page numbers */}
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                      let pageNum;
+                      if (pagination.totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (pagination.page <= 3) {
+                        pageNum = i + 1;
+                      } else if (pagination.page >= pagination.totalPages - 2) {
+                        pageNum = pagination.totalPages - 4 + i;
+                      } else {
+                        pageNum = pagination.page - 2 + i;
+                      }
+                      
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => handlePageChange(pageNum)}
+                          className={`px-3 py-1 rounded-md transition-colors ${
+                            pageNum === pagination.page
+                              ? 'bg-[#f7cc48] text-black font-medium'
+                              : 'bg-[#21262d] hover:bg-[#30363d] text-white'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  
+                  <button
+                    onClick={() => handlePageChange(pagination.page + 1)}
+                    disabled={!pagination.hasMore}
+                    className="px-3 py-1 bg-[#21262d] hover:bg-[#30363d] text-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -781,11 +798,11 @@ export default function AdminDeckPage({ params }: { params: Promise<{ deckId: st
       )}
       
       {/* Character Insights Modal */}
-      {selectedCharacter && deck?.userId && (
+      {selectedCharacter && (
         <AdminCharacterInsights
           characterId={selectedCharacter.id}
           character={selectedCharacter.hanzi}
-          userId={deck.userId}
+          userId={session?.user?.id || ''}
           onClose={() => setSelectedCharacter(null)}
         />
       )}

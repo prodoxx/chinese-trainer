@@ -12,7 +12,11 @@ export function getDeckEnrichmentQueue(): Queue {
     _deckEnrichmentQueue = new Queue('deck-enrichment', {
       connection: getRedis(),
       defaultJobOptions: {
-        attempts: 1,
+        attempts: 2,
+        backoff: {
+          type: 'exponential',
+          delay: 3000, // Start with 3 second delay for deck enrichment
+        },
         removeOnComplete: {
           count: 20,
         },
@@ -51,6 +55,10 @@ export function getCardEnrichmentQueue(): Queue {
       connection: getRedis(),
       defaultJobOptions: {
         attempts: 3,
+        backoff: {
+          type: 'exponential',
+          delay: 2000, // Start with 2 second delay
+        },
         removeOnComplete: {
           count: 50,
         },

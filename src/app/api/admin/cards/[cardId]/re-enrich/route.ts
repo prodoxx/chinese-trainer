@@ -41,7 +41,7 @@ export async function POST(
     let finalDeckId = deckId
     if (!finalDeckId) {
       const deckCard = await DeckCard.findOne({ cardId }).lean()
-      if (deckCard) {
+      if (deckCard && 'deckId' in deckCard) {
         finalDeckId = deckCard.deckId.toString()
       }
     }
