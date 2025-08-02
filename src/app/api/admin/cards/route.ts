@@ -41,8 +41,8 @@ export async function GET(request: NextRequest) {
     // Status filter
     if (filterStatus !== 'all') {
       if (filterStatus === 'enriched') {
-        query.imageUrl = { $exists: true, $ne: null, $ne: '' };
-        query.audioUrl = { $exists: true, $ne: null, $ne: '' };
+        query.imageUrl = { $exists: true, $nin: [null, ''] };
+        query.audioUrl = { $exists: true, $nin: [null, ''] };
       } else if (filterStatus === 'pending') {
         query.$or = [
           { imageUrl: { $exists: false } },
@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
       } else if (filterStatus === 'partial') {
         query.$or = [
           {
-            imageUrl: { $exists: true, $ne: null, $ne: '' },
+            imageUrl: { $exists: true, $nin: [null, ''] },
             $or: [
               { audioUrl: { $exists: false } },
               { audioUrl: null },
@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
             ]
           },
           {
-            audioUrl: { $exists: true, $ne: null, $ne: '' },
+            audioUrl: { $exists: true, $nin: [null, ''] },
             $or: [
               { imageUrl: { $exists: false } },
               { imageUrl: null },
@@ -101,8 +101,8 @@ export async function GET(request: NextRequest) {
           enriched: [
             {
               $match: {
-                imageUrl: { $exists: true, $ne: null, $ne: '' },
-                audioUrl: { $exists: true, $ne: null, $ne: '' }
+                imageUrl: { $exists: true, $nin: [null, ''] },
+                audioUrl: { $exists: true, $nin: [null, ''] }
               }
             },
             { $count: 'count' }
@@ -112,7 +112,7 @@ export async function GET(request: NextRequest) {
               $match: {
                 $or: [
                   {
-                    imageUrl: { $exists: true, $ne: null, $ne: '' },
+                    imageUrl: { $exists: true, $nin: [null, ''] },
                     $or: [
                       { audioUrl: { $exists: false } },
                       { audioUrl: null },
@@ -120,7 +120,7 @@ export async function GET(request: NextRequest) {
                     ]
                   },
                   {
-                    audioUrl: { $exists: true, $ne: null, $ne: '' },
+                    audioUrl: { $exists: true, $nin: [null, ''] },
                     $or: [
                       { imageUrl: { $exists: false } },
                       { imageUrl: null },

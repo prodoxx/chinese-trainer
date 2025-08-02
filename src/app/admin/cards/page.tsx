@@ -85,7 +85,7 @@ export default function AdminCardsPage() {
   const [sortBy, setSortBy] = useState<'updatedAt' | 'createdAt' | 'hanzi'>('updatedAt')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const pollIntervalsRef = useRef<Map<string, NodeJS.Timeout>>(new Map())
-  const searchTimeoutRef = useRef<NodeJS.Timeout>()
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Check if user is admin
   useEffect(() => {
