@@ -24,6 +24,8 @@ export default withAuth(
             req.nextUrl.pathname === "/about" ||
             req.nextUrl.pathname === "/how-it-works" ||
             req.nextUrl.pathname === "/science" ||
+            req.nextUrl.pathname === "/methodology" ||
+            req.nextUrl.pathname === "/research" ||
             req.nextUrl.pathname === "/pricing" ||
             req.nextUrl.pathname === "/features" ||
             req.nextUrl.pathname === "/privacy" ||
