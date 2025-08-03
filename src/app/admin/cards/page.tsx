@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import Navigation from '@/components/Navigation'
@@ -9,7 +9,6 @@ import Link from 'next/link'
 import { 
   ChevronLeft,
   ChevronRight,
-  Calendar,
   Hash,
   RefreshCw,
   Image as ImageIcon,
@@ -332,7 +331,7 @@ export default function AdminCardsPage() {
 
       if (!response.ok) throw new Error('Failed to re-enrich cards')
 
-      const result = await response.json()
+      await response.json()
       showAlert(`Re-enrichment started for ${selectedCards.size} cards`, { type: 'success' })
       setSelectedCards(new Set())
       

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Check, X, Zap, Crown, Users, ArrowRight, Sparkles, TrendingUp, Shield, Globe, CheckCircle, Star } from "lucide-react"
+import { CheckCircle } from "lucide-react"
 import Link from "next/link"
 
 export default function PricingClient() {

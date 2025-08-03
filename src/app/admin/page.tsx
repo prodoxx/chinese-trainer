@@ -11,13 +11,6 @@ import {
   FolderOpen,
   ChevronRight,
   Shield,
-  BarChart3,
-  RefreshCw,
-  Calendar,
-  Mail,
-  Clock,
-  AlertCircle,
-  CheckCircle,
   Loader2,
   BookOpen
 } from 'lucide-react'

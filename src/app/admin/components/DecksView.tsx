@@ -6,7 +6,6 @@ import {
   FolderOpen,
   User,
   Calendar,
-  Clock,
   RefreshCw,
   Search,
   Filter,
@@ -15,11 +14,9 @@ import {
   Zap,
   CheckCircle,
   XCircle,
-  AlertCircle,
   Loader2,
   BarChart3,
   Package,
-  Shield,
   Eye
 } from 'lucide-react'
 import { useAlert } from '@/hooks/useAlert'
@@ -434,7 +431,7 @@ export default function DecksView() {
                           </Link>
                           <button
                             onClick={(e) => handleReEnrich(deck._id, e.shiftKey)}
-                            disabled={deck.status !== 'ready' || deck.status === 'enriching' || enrichingDeck === deck._id}
+                            disabled={deck.status !== 'ready' || enrichingDeck === deck._id}
                             className="flex items-center gap-2 px-3 py-1.5 bg-[#f7cc48] hover:bg-[#f7cc48]/90 text-black text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             title={deck.status === 'ready' ? 'Click to re-enrich missing media. Shift+click to force regenerate all media.' : ''}
                           >

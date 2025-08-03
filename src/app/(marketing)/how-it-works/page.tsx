@@ -1,4 +1,4 @@
-import { Target, Zap, Clock, Play, Pause, RotateCcw, Brain, Upload, Sparkles, CheckCircle, BarChart3, Users, Shield } from "lucide-react"
+import { Target, Clock, Brain, Upload, Sparkles, CheckCircle, BarChart3, Users, Shield } from "lucide-react"
 import Link from "next/link"
 import { redirectIfAuthenticated } from "@/lib/auth-helpers"
 

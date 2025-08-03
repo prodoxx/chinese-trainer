@@ -20,7 +20,6 @@ import {
   Volume2,
   Search,
   Filter,
-  ChevronRight,
   Loader2,
   Shield,
   Zap,
@@ -299,7 +298,7 @@ export default function AdminDeckPage({ params }: { params: Promise<{ deckId: st
 
       if (!response.ok) throw new Error('Failed to re-enrich cards')
 
-      const result = await response.json()
+      await response.json()
       showAlert(`Re-enrichment started for ${selectedCards.size} cards`, { type: 'success' })
       setSelectedCards(new Set())
       

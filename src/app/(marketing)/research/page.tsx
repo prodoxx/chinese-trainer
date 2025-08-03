@@ -1,4 +1,4 @@
-import { FileText, Brain, BarChart, Users, Award, BookOpen, Microscope, Target, TrendingUp, CheckCircle, ExternalLink } from "lucide-react"
+import { FileText, Brain, BarChart, Users, Award, BookOpen, Microscope, Target, TrendingUp, CheckCircle } from "lucide-react"
 import Link from "next/link"
 import { redirectIfAuthenticated } from "@/lib/auth-helpers"
 

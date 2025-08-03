@@ -1,4 +1,4 @@
-import { Check, X, Zap, Crown, Users, ArrowRight, Sparkles, TrendingUp, Shield, Globe, CheckCircle, Star } from "lucide-react"
+import { X, Users, Sparkles, TrendingUp, Shield, Globe, CheckCircle, Star } from "lucide-react"
 import Link from "next/link"
 import { redirectIfAuthenticated } from "@/lib/auth-helpers"
 import PricingClient from "./pricing-client"

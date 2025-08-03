@@ -1,4 +1,4 @@
-import { Check, Users, Globe, Shield, Zap, Brain, TrendingUp, Award, Code, Lightbulb, Target, Rocket } from "lucide-react"
+import { Users, Globe, Shield, Zap, Brain, TrendingUp, Award, Code, Lightbulb, Target, Rocket } from "lucide-react"
 import Link from "next/link"
 import { redirectIfAuthenticated } from "@/lib/auth-helpers"
 
@@ -19,12 +19,12 @@ export default async function AboutPage() {
         <div className="container mx-auto px-4 sm:px-6">
           <div className="max-w-5xl mx-auto text-center">
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 sm:mb-8 leading-tight tracking-tight">
-              Learning Chinese shouldn't take
+              Learning Chinese shouldn&apos;t take
               <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#f7cc48] to-[#f7cc48]/80">10 years anymore</span>
             </h1>
             <p className="text-lg sm:text-xl md:text-2xl text-[#7d8590] mb-8 sm:mb-10 max-w-3xl mx-auto leading-relaxed px-4 sm:px-0">
-              We built Danbing AI because we believe language learning is broken. By combining cognitive science with AI, we've created a system that actually works with your brain, not against it.
+              We built Danbing AI because we believe language learning is broken. By combining cognitive science with AI, we&apos;ve created a system that actually works with your brain, not against it.
             </p>
           </div>
         </div>
@@ -180,7 +180,7 @@ export default async function AboutPage() {
             <div className="prose prose-invert max-w-none">
               <div className="bg-[#21262d] border border-[#30363d] rounded-xl p-8 mb-8">
                 <p className="text-lg text-[#7d8590] mb-6">
-                  After spending years struggling with Traditional Chinese using conventional methods, we realized the problem wasn't us - it was the system.
+                  After spending years struggling with Traditional Chinese using conventional methods, we realized the problem wasn&apos;t us - it was the system.
                 </p>
                 
                 <p className="text-lg text-[#7d8590] mb-6">
@@ -188,11 +188,11 @@ export default async function AboutPage() {
                 </p>
                 
                 <p className="text-lg text-[#7d8590] mb-6">
-                  So we built Danbing AI from the ground up, incorporating decades of memory research with the latest AI technology. The result? A learning system that works with your brain's natural processes, not against them.
+                  So we built Danbing AI from the ground up, incorporating decades of memory research with the latest AI technology. The result? A learning system that works with your brain&apos;s natural processes, not against them.
                 </p>
                 
                 <p className="text-lg text-[#7d8590]">
-                  Today, our users learn characters 10x faster than traditional methods. Not because they're special, but because the system is designed correctly.
+                  Today, our users learn characters 10x faster than traditional methods. Not because they&apos;re special, but because the system is designed correctly.
                 </p>
               </div>
             </div>
@@ -207,7 +207,7 @@ export default async function AboutPage() {
             <div className="text-center mb-16">
               <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">Powered by Advanced Technology</h2>
               <p className="text-xl text-[#7d8590] max-w-3xl mx-auto">
-                We combine proprietary algorithms with cutting-edge AI to create a learning experience that's both powerful and effortless.
+                We combine proprietary algorithms with cutting-edge AI to create a learning experience that&apos;s both powerful and effortless.
               </p>
             </div>
 
@@ -261,7 +261,7 @@ export default async function AboutPage() {
                 <div>
                   <h3 className="text-xl font-semibold text-white mb-2">Evidence-Based Design</h3>
                   <p className="text-[#7d8590]">
-                    Every feature must be backed by peer-reviewed research. If the science doesn't support it, we don't build it.
+                    Every feature must be backed by peer-reviewed research. If the science doesn&apos;t support it, we don&apos;t build it.
                   </p>
                 </div>
               </div>
@@ -319,7 +319,7 @@ export default async function AboutPage() {
             <div className="text-center mb-16">
               <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4">Built by Language Learners</h2>
               <p className="text-xl text-[#7d8590] max-w-3xl mx-auto">
-                We're a team of engineers, designers, and linguists united by a passion for making language learning actually work.
+                We&apos;re a team of engineers, designers, and linguists united by a passion for making language learning actually work.
               </p>
             </div>
 
@@ -353,7 +353,7 @@ export default async function AboutPage() {
                     Backed by Y Combinator
                   </div>
                   <p className="text-[#7d8590]">
-                    We're proud to be supported by the world's top startup accelerator, alongside companies like Airbnb, Dropbox, and Stripe.
+                    We&apos;re proud to be supported by the world&apos;s top startup accelerator, alongside companies like Airbnb, Dropbox, and Stripe.
                   </p>
                 </div>
               </div>
