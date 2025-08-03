@@ -14,7 +14,7 @@ export async function requireAuth() {
   return session;
 }
 
-export async function redirectIfAuthenticated(redirectTo: string = "/dashboard") {
+export async function redirectIfAuthenticated(redirectTo: string = "/decks") {
   const session = await getSession();
   if (session) {
     redirect(redirectTo);

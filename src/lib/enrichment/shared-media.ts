@@ -35,17 +35,31 @@ export interface SharedMediaResult {
  * Generate or retrieve audio for a Chinese character
  * Media is shared across all cards with the same hanzi
  */
-export async function generateSharedAudio(hanzi: string): Promise<{ audioUrl: string; cached: boolean }> {
+export async function generateSharedAudio(hanzi: string, force: boolean = false): Promise<{ audioUrl: string; cached: boolean }> {
   try {
     const { audio: audioKey } = generateMediaKeysByHanzi(hanzi);
     
-    // Check if audio already exists
-    const exists = await existsInR2(audioKey);
-    if (exists) {
-      // Return secure API endpoint - strip 'media/' prefix for cleaner URLs
-      const audioPath = audioKey.replace('media/', '');
-      const audioUrl = `/api/media/${audioPath}`;
-      return { audioUrl, cached: true };
+    // Check if audio already exists (skip if force=true)
+    if (!force) {
+      const exists = await existsInR2(audioKey);
+      if (exists) {
+        // Return secure API endpoint - strip 'media/' prefix for cleaner URLs
+        const audioPath = audioKey.replace('media/', '');
+        const audioUrl = `/api/media/${audioPath}`;
+        return { audioUrl, cached: true };
+      }
+    } else {
+      console.log(`Force regeneration requested for ${hanzi}, will delete existing audio if present`);
+      // Delete existing audio if force regenerating
+      try {
+        const exists = await existsInR2(audioKey);
+        if (exists) {
+          console.log(`   Deleting existing audio at ${audioKey}`);
+          await deleteFromR2(audioKey);
+        }
+      } catch (deleteError) {
+        console.warn(`   Could not delete existing audio:`, deleteError);
+      }
     }
     
     // Generate new audio

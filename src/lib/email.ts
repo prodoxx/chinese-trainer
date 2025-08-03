@@ -37,7 +37,7 @@ const emailTemplate = (content: string) => `
       <div style="text-align: center; margin-bottom: 20px;">
         <a href="${process.env.NEXTAUTH_URL}" style="color: #6c757d; text-decoration: none; font-size: 14px; margin: 0 10px;">Home</a>
         <span style="color: #dee2e6;">•</span>
-        <a href="${process.env.NEXTAUTH_URL}/dashboard" style="color: #6c757d; text-decoration: none; font-size: 14px; margin: 0 10px;">Dashboard</a>
+        <a href="${process.env.NEXTAUTH_URL}/decks" style="color: #6c757d; text-decoration: none; font-size: 14px; margin: 0 10px;">Decks</a>
         <span style="color: #dee2e6;">•</span>
         <a href="${process.env.NEXTAUTH_URL}/help" style="color: #6c757d; text-decoration: none; font-size: 14px; margin: 0 10px;">Help</a>
       </div>
@@ -83,7 +83,7 @@ export async function sendWelcomeEmail(email: string, name: string) {
 				</div>
 				
 				<div style="text-align: center; margin: 32px 0;">
-					<a href="${process.env.NEXTAUTH_URL}/dashboard" 
+					<a href="${process.env.NEXTAUTH_URL}/decks" 
 					   style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #f7cc48 0%, #f59e0b 100%); 
 							  color: #0d1117; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;
 							  box-shadow: 0 4px 12px rgba(247, 204, 72, 0.3); transition: all 0.3s;">

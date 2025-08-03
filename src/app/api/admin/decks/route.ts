@@ -58,11 +58,12 @@ export async function GET(request: NextRequest) {
     // Get total count
     const totalDecks = await Deck.countDocuments(query)
 
-    // Get decks with pagination
+    // Get decks with pagination (include enrichmentProgress for enriching decks)
     const decks = await Deck.find(query)
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit)
+      .select('+enrichmentProgress') // Explicitly include enrichmentProgress
       .lean()
 
     // Get user information for each deck

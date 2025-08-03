@@ -57,7 +57,7 @@ export default function SignUpPage() {
 	};
 
 	const handleGoogleSignIn = () => {
-		signIn("google", { callbackUrl: "/dashboard" });
+		signIn("google", { callbackUrl: "/decks" });
 	};
 
 	if (success) {

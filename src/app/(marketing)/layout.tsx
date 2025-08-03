@@ -31,7 +31,7 @@ export default function MarketingLayout({
 						<div className="flex items-center space-x-3">
 							<Link
 								href="/"
-								className="flex items-center space-x-2 sm:space-x-3 cursor-pointer hover:opacity-90 transition-opacity"
+								className="flex items-center space-x-2 sm:space-x-3 hover:opacity-90 transition-opacity"
 								onClick={closeMobileMenu}
 							>
 								<Image
@@ -39,9 +39,9 @@ export default function MarketingLayout({
 									alt="Danbing Mascot"
 									width={32}
 									height={32}
-									className="rounded-lg w-8 h-8 sm:w-[32px] sm:h-[32px]"
+									className="rounded-lg w-8 h-8 sm:w-[32px] sm:h-[32px] cursor-pointer"
 								/>
-								<div className="flex items-baseline space-x-1">
+								<div className="flex items-baseline space-x-1 cursor-pointer">
 									<span className="text-xl sm:text-2xl font-bold text-white">
 										Danbing
 									</span>

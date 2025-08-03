@@ -23,7 +23,9 @@ import {
   CheckCircle,
   AlertCircle,
   BookOpen,
-  BarChart3
+  BarChart3,
+  Grid3X3,
+  List
 } from 'lucide-react'
 import { useAlert } from '@/hooks/useAlert'
 import AdminCharacterInsights from '@/components/AdminCharacterInsights'
@@ -64,6 +66,7 @@ export default function AdminCardsPage() {
   const [filterStatus, setFilterStatus] = useState<'all' | 'enriched' | 'pending' | 'partial'>('all')
   const [selectedCards, setSelectedCards] = useState<Set<string>>(new Set())
   const [reEnrichingCards, setReEnrichingCards] = useState<Set<string>>(new Set())
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
   const [enrichmentStatus, setEnrichmentStatus] = useState<Map<string, string>>(new Map())
   const [refreshing, setRefreshing] = useState(false)
   const [previewImage, setPreviewImage] = useState<string | null>(null)
@@ -98,7 +101,7 @@ export default function AdminCardsPage() {
 
     if (session.user.role !== 'admin') {
       showAlert('Access denied. Admin privileges required.', { type: 'error' })
-      router.push('/dashboard')
+      router.push('/decks')
       return
     }
 
@@ -577,6 +580,32 @@ export default function AdminCardsPage() {
                   </select>
                 </div>
 
+                {/* View Toggle */}
+                <div className="flex items-center gap-1 bg-[#0d1117] border border-[#30363d] rounded-lg p-1">
+                  <button
+                    onClick={() => setViewMode('table')}
+                    className={`p-2 rounded transition-colors ${
+                      viewMode === 'table' 
+                        ? 'bg-[#f7cc48] text-black' 
+                        : 'text-gray-400 hover:text-white'
+                    }`}
+                    title="Table view"
+                  >
+                    <List className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setViewMode('grid')}
+                    className={`p-2 rounded transition-colors ${
+                      viewMode === 'grid' 
+                        ? 'bg-[#f7cc48] text-black' 
+                        : 'text-gray-400 hover:text-white'
+                    }`}
+                    title="Grid view"
+                  >
+                    <Grid3X3 className="w-4 h-4" />
+                  </button>
+                </div>
+
                 {/* Actions */}
                 <div className="flex items-center gap-2">
                   <button
@@ -607,7 +636,7 @@ export default function AdminCardsPage() {
                   <p className="text-gray-400">No cards found</p>
                   <p className="text-sm text-gray-500 mt-1">Try adjusting your search or filters</p>
                 </div>
-              ) : (
+              ) : viewMode === 'table' ? (
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead className="bg-[#0d1117] border-b border-[#30363d]">
@@ -712,6 +741,134 @@ export default function AdminCardsPage() {
                       ))}
                     </tbody>
                   </table>
+                </div>
+              ) : (
+                /* Grid View */
+                <div className="flex flex-wrap gap-4 p-6 justify-center">
+                  {cards.map((card) => {
+                    const enrichStatus = getEnrichmentStatus(card)
+                    const isReEnriching = reEnrichingCards.has(card._id)
+                    
+                    return (
+                      <div
+                        key={card._id}
+                        className="bg-[#0d1117] border border-[#30363d] rounded-lg overflow-hidden hover:border-[#f7cc48]/50 transition-all w-[320px]"
+                      >
+                        {/* Checkbox and Status */}
+                        <div className="p-3 border-b border-[#30363d] flex items-center justify-between">
+                          <input
+                            type="checkbox"
+                            checked={selectedCards.has(card._id)}
+                            onChange={() => toggleCardSelection(card._id)}
+                            className="rounded border-gray-600 text-[#f7cc48] focus:ring-[#f7cc48]"
+                          />
+                          <div className="flex items-center gap-2">
+                            {enrichStatus === 'enriched' && (
+                              <div className="flex items-center gap-1 text-green-500" title="Fully enriched">
+                                <CheckCircle className="w-4 h-4" />
+                              </div>
+                            )}
+                            {enrichStatus === 'partial' && (
+                              <div className="flex items-center gap-1 text-yellow-500" title="Partially enriched">
+                                <AlertCircle className="w-4 h-4" />
+                              </div>
+                            )}
+                            {enrichStatus === 'pending' && (
+                              <div className="flex items-center gap-1 text-red-500" title="Not enriched">
+                                <XCircle className="w-4 h-4" />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {/* Character Display */}
+                        <div 
+                          className="p-6 text-center cursor-pointer hover:bg-[#21262d] transition-colors"
+                          onClick={() => setSelectedCharacter({ id: card._id, hanzi: card.hanzi })}
+                        >
+                          <div className={`font-bold mb-2 ${card.hanzi.length > 2 ? 'text-4xl' : 'text-6xl'}`}>{card.hanzi}</div>
+                          <div className="text-lg text-[#f7cc48] mb-1">{card.pinyin}</div>
+                          <div className="text-sm text-gray-400 line-clamp-2 px-2">{card.meaning}</div>
+                        </div>
+                        
+                        {/* Image */}
+                        {card.imageUrl ? (
+                          <div className="aspect-square bg-gray-900 relative group">
+                            <img
+                              src={card.imageUrl}
+                              alt={card.hanzi}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                const target = e.currentTarget as HTMLImageElement
+                                target.style.display = 'none'
+                                const parent = target.parentElement
+                                if (parent) {
+                                  parent.innerHTML = '<div class="w-full h-full flex items-center justify-center"><svg class="w-12 h-12 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div>'
+                                }
+                              }}
+                            />
+                            <button
+                              onClick={() => setPreviewImage(card.imageUrl!)}
+                              className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                            >
+                              <ImageIcon className="w-8 h-8 text-white" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="aspect-square bg-gray-900 flex items-center justify-center">
+                            <ImageIcon className="w-12 h-12 text-gray-600" />
+                          </div>
+                        )}
+                        
+                        {/* Actions */}
+                        <div className="p-3 border-t border-[#30363d] flex flex-col gap-2">
+                          {card.audioUrl ? (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                playAudio(card.audioUrl!)
+                              }}
+                              className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-[#21262d] hover:bg-[#30363d] rounded-lg transition-colors"
+                              title="Play audio"
+                            >
+                              <Volume2 className={`w-4 h-4 ${playingAudio === card.audioUrl ? 'text-[#f7cc48]' : 'text-gray-400'}`} />
+                              <span className="text-sm text-gray-400">Audio</span>
+                            </button>
+                          ) : (
+                            <div className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-[#161b22] rounded-lg cursor-not-allowed">
+                              <Volume2 className="w-4 h-4 text-gray-600" />
+                              <span className="text-sm text-gray-600">No audio</span>
+                            </div>
+                          )}
+                          
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleReEnrichCard(card._id)
+                            }}
+                            disabled={isReEnriching}
+                            className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                              isReEnriching 
+                                ? 'bg-gray-700 text-gray-400 cursor-not-allowed' 
+                                : 'bg-[#f7cc48] hover:bg-[#f7cc48]/90 text-black'
+                            }`}
+                          >
+                            {isReEnriching ? (
+                              <>
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                                <span className="text-xs">Enriching...</span>
+                              </>
+                            ) : (
+                              <>
+                                <Zap className="w-3 h-3" />
+                                <span>Re-enrich</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
               )}
             </div>

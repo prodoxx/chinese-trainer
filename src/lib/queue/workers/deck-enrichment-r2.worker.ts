@@ -188,7 +188,8 @@ export const deckEnrichmentR2Worker = new Worker<DeckEnrichmentJobData>(
           const image = await generateSharedImage(
             card.hanzi, 
             card.meaning, 
-            card.pinyin
+            card.pinyin,
+            force
           );
           
           if (image.imageUrl) {
@@ -220,7 +221,7 @@ export const deckEnrichmentR2Worker = new Worker<DeckEnrichmentJobData>(
           });
           
           try {
-            const ttsResult = await generateSharedAudio(card.hanzi);
+            const ttsResult = await generateSharedAudio(card.hanzi, false); // Never force regenerate audio
             card.audioUrl = ttsResult.audioUrl;
             console.log(`   ✓ Audio ${ttsResult.cached ? 'retrieved from cache' : 'generated'}`);
           } catch (ttsError) {

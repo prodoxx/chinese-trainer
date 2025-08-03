@@ -45,7 +45,7 @@ export default function AdminPage() {
 
     if (session.user.role !== 'admin') {
       showAlert('Access denied. Admin privileges required.', { type: 'error' })
-      router.push('/dashboard')
+      router.push('/decks')
       return
     }
 

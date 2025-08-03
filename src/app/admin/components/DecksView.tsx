@@ -74,6 +74,18 @@ export default function DecksView() {
     fetchDecks()
   }, [currentPage, searchTerm, filterStatus])
 
+  // Auto-refresh when there are enriching decks
+  useEffect(() => {
+    const hasEnrichingDecks = decks.some(deck => deck.status === 'enriching')
+    if (!hasEnrichingDecks) return
+
+    const interval = setInterval(() => {
+      fetchDecks()
+    }, 5000) // Refresh every 5 seconds
+
+    return () => clearInterval(interval)
+  }, [decks])
+
   const fetchDecks = async () => {
     try {
       setLoading(true)
@@ -105,12 +117,16 @@ export default function DecksView() {
     fetchDecks()
   }
 
-  const handleReEnrich = async (deckId: string) => {
+  const handleReEnrich = async (deckId: string, forceRegenerate: boolean = false) => {
+    const message = forceRegenerate
+      ? 'Force re-enrich will delete and regenerate ALL images (audio will be kept). This will use more API credits.'
+      : 'Re-enrich will only generate missing images and audio files. Existing media will be kept.'
+    
     const confirmed = await showConfirm(
-      'Are you sure you want to re-enrich this deck? This will regenerate all images and audio files.',
+      message,
       {
-        type: 'warning',
-        confirmText: 'Re-enrich',
+        type: forceRegenerate ? 'error' : 'warning',
+        confirmText: forceRegenerate ? 'Force Re-enrich' : 'Re-enrich',
         cancelText: 'Cancel'
       }
     )
@@ -123,13 +139,13 @@ export default function DecksView() {
       const response = await fetch(`/api/admin/decks/${deckId}/re-enrich`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ force: true })
+        body: JSON.stringify({ force: forceRegenerate })
       })
 
       if (!response.ok) throw new Error('Failed to start re-enrichment')
 
       const data = await response.json()
-      showAlert(`Re-enrichment started for deck. Job ID: ${data.jobId}`, { type: 'success' })
+      showAlert(`${forceRegenerate ? 'Force r' : 'R'}e-enrichment started for deck. Job ID: ${data.jobId}`, { type: 'success' })
       
       // Refresh to show updated status
       setTimeout(() => fetchDecks(), 1000)
@@ -298,6 +314,14 @@ export default function DecksView() {
             <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
             Refresh
           </button>
+          
+          {/* Auto-refresh indicator */}
+          {decks.some(d => d.status === 'enriching') && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-[#f7cc48]/10 text-[#f7cc48] text-sm rounded-lg">
+              <RefreshCw className="w-3 h-3 animate-spin" />
+              Auto-refreshing
+            </div>
+          )}
         </div>
       </div>
 
@@ -409,9 +433,10 @@ export default function DecksView() {
                             View
                           </Link>
                           <button
-                            onClick={() => handleReEnrich(deck._id)}
-                            disabled={deck.status !== 'ready' || enrichingDeck === deck._id}
+                            onClick={(e) => handleReEnrich(deck._id, e.shiftKey)}
+                            disabled={deck.status !== 'ready' || deck.status === 'enriching' || enrichingDeck === deck._id}
                             className="flex items-center gap-2 px-3 py-1.5 bg-[#f7cc48] hover:bg-[#f7cc48]/90 text-black text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            title={deck.status === 'ready' ? 'Click to re-enrich missing media. Shift+click to force regenerate all media.' : ''}
                           >
                             {enrichingDeck === deck._id ? (
                               <Loader2 className="w-4 h-4 animate-spin" />

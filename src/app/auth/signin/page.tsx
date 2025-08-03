@@ -10,7 +10,7 @@ import Image from "next/image";
 function SignInContent() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
-	const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+	const callbackUrl = searchParams.get("callbackUrl") || "/decks";
 
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");

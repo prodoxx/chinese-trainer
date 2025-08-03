@@ -138,10 +138,10 @@ export default function DeckView() {
             <h1 className="text-2xl font-bold mb-4">Error Loading Deck</h1>
             <p className="text-gray-400 mb-4">{error || 'Deck not found'}</p>
             <button
-              onClick={() => router.push('/dashboard')}
+              onClick={() => router.push('/decks')}
               className="px-4 py-2 bg-[#f7cc48] text-black rounded-lg hover:bg-[#f7cc48]/90 transition-colors"
             >
-              Back to Dashboard
+              Back to Decks
             </button>
           </div>
         </div>

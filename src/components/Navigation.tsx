@@ -24,7 +24,7 @@ export default function Navigation() {
 	};
 
 	const navLinks = [
-		{ href: "/dashboard", label: "Dashboard", icon: Home },
+		{ href: "/decks", label: "Decks", icon: Home },
 		{ href: "/analytics", label: "Analytics", icon: BarChart3 },
 	];
 
