@@ -151,7 +151,7 @@ export async function generateSharedImage(
       if (interpretation && interpretation.imagePrompt) {
         // Adapt the prompt for fal.ai - focus on mnemonic visual association
         const basePrompt = interpretation.imagePrompt.replace(/CRITICAL.*$/, '').trim();
-        prompt = `Mnemonic visual aid for learning: ${basePrompt} Simple, clean illustration that helps students remember the meaning "${meaning}". No text, letters, numbers, or written characters anywhere. Educational cartoon style, web-friendly resolution.`;
+        prompt = `Mnemonic visual aid for learning: ${basePrompt} Photorealistic image that helps students remember the meaning "${meaning}" through real-life association. No text, letters, numbers, or written characters anywhere. Professional photography style, natural lighting, high quality, web-friendly resolution.`;
         console.log(`Using AI-generated mnemonic prompt for ${hanzi}: "${meaning}"`);
       } else {
         throw new Error('No AI image prompt available');
@@ -164,16 +164,16 @@ export async function generateSharedImage(
       
       // Create mnemonic-focused prompts based on meaning type
       if (meaningLower.match(/\b(feel|emotion|mood|sad|happy|angry|excited|calm|nervous|proud)\b/)) {
-        prompt = `Mnemonic illustration: A person with exaggerated ${meaning} expression that helps students remember this emotion. Simple cartoon style, no text anywhere, educational visual aid.`;
+        prompt = `Photorealistic portrait: A person with natural ${meaning} expression that helps students remember this emotion through real human connection. Professional photography, natural lighting, no text anywhere, educational visual aid.`;
       } else if (meaningLower.match(/\b(action|move|run|walk|jump|sit|stand|dance|work)\b/)) {
-        prompt = `Mnemonic illustration: Dynamic figure clearly performing "${meaning}" action in a memorable way. Educational cartoon, no text, visual memory aid for language learning.`;
+        prompt = `Photorealistic action shot: Real person naturally performing "${meaning}" action in a memorable way. Professional photography, motion capture, no text, visual memory aid for language learning.`;
       } else if (meaningLower.match(/\b(size|big|small|large|tiny|huge|little)\b/)) {
-        prompt = `Mnemonic illustration: Clear size comparison showing "${meaning}" concept memorably. Simple educational drawing, no text, helps students associate visual with meaning.`;
+        prompt = `Photorealistic size comparison: Real objects clearly showing "${meaning}" concept through dramatic scale difference. Professional photography, no text, helps students associate visual with meaning.`;
       } else if (meaningLower.match(/\b(quality|good|bad|beautiful|ugly|clean|dirty|new|old)\b/)) {
-        prompt = `Mnemonic illustration: Visual contrast clearly showing "${meaning}" quality for easy memorization. Educational style, no text, helps students remember through visual association.`;
+        prompt = `Photorealistic contrast: Real-world scene clearly showing "${meaning}" quality for easy memorization. Professional photography, no text, helps students remember through visual association.`;
       } else {
         // Generic mnemonic approach
-        prompt = `Mnemonic illustration for "${meaning}": Create a memorable visual association that helps students instantly recall this concept. Simple educational cartoon, no text anywhere, clear visual memory aid.`;
+        prompt = `Photorealistic visual for "${meaning}": Create a memorable real-world scene that helps students instantly recall this concept. Professional photography, natural lighting, no text anywhere, clear visual memory aid.`;
       }
     }
     
@@ -184,16 +184,16 @@ export async function generateSharedImage(
     // Rate limit fal.ai API calls
     await rateLimit('fal-ai', 1000); // 1 second between calls
     
-    // Generate image with fal.ai flux-krea-lora model
-    // Using simplified parameters based on fal.ai docs
-    const result = await fal.run("fal-ai/flux/krea", {
+    // Generate image with fal.ai flux-pro model for photorealistic quality
+    // Using parameters optimized for realistic images
+    const result = await fal.run("fal-ai/flux-pro", {
       input: {
         prompt,
         image_size: "square_hd",
         num_inference_steps: 28,
         guidance_scale: 3.5,
         num_images: 1,
-        enable_safety_checker: true,
+        safety_tolerance: 2,
         output_format: "jpeg"
       }
     }) as any;
@@ -232,7 +232,7 @@ export async function generateSharedImage(
       contentType: 'image/jpeg',
       metadata: {
         generatedAt: new Date().toISOString(),
-        source: 'fal-flux-krea',
+        source: 'fal-flux-pro',
       }
     });
     

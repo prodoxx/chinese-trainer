@@ -38,7 +38,7 @@ Format your response as JSON:
   "meaning": "SHORT, SIMPLE meaning using BASIC English words (2-5 words MAX)",
   "pinyin": "pīn yīn (with tone MARKS, Taiwan pronunciation)",
   "context": "common usage or situation where this is used",
-  "imagePrompt": "Mnemonic illustration: [describe a memorable scene/character that embodies the emotion or concept]. Focus on facial expressions, body language, or symbolic visuals that help students instantly recall the meaning. Educational cartoon style, absolutely no text, letters, or numbers."
+  "imagePrompt": "Mnemonic illustration: [describe a memorable scene/character that embodies the emotion or concept]. Focus on realistic human facial expressions, body language, or real-world symbolic visuals that help students instantly recall the meaning. Photorealistic style, natural lighting, real-world setting, absolutely no text, letters, or numbers."
 }
 
 Important: 
@@ -47,7 +47,7 @@ Important:
 - Use Taiwan Mandarin pronunciation standards, not mainland China pronunciations
 - Use tone MARKS (ā á ǎ à), not tone numbers
 - Be clear and specific - avoid vague or overly formal meanings
-- For imagePrompt: Create a mnemonic visual aid that helps students remember the meaning through visual association. Avoid literal representations (e.g., don't use flies for 煩/annoyed). Instead, focus on facial expressions, body language, or creative visual metaphors. No text allowed as it would give away the answer`;
+- For imagePrompt: Create a mnemonic visual aid that helps students remember the meaning through visual association. Avoid literal representations (e.g., don't use flies for 煩/annoyed). Instead, focus on realistic human expressions, body language, or real-world visual metaphors. Photorealistic images help students connect the concept to real life. No text allowed as it would give away the answer`;
 
 		const response = await openai.chat.completions.create({
 			model: "gpt-4o-mini",
@@ -55,7 +55,7 @@ Important:
 				{
 					role: "system",
 					content:
-						"You are a Taiwan Mandarin teacher creating flash cards for language learners. Use SIMPLE, COMMON English words that everyone knows (avoid advanced vocabulary). Keep meanings SHORT (2-5 words max). For emotion/feeling characters, focus on the emotional state (e.g., 煩='annoyed' not 'trouble'). For image prompts, create vivid mnemonic scenes with strong emotional expressions, symbolic gestures, or memorable visual metaphors - avoid literal interpretations. The image should help students instantly recall the meaning through visual association.",
+						"You are a Taiwan Mandarin teacher creating flash cards for language learners. Use SIMPLE, COMMON English words that everyone knows (avoid advanced vocabulary). Keep meanings SHORT (2-5 words max). For emotion/feeling characters, focus on the emotional state (e.g., 煩='annoyed' not 'trouble'). For image prompts, create vivid mnemonic scenes with realistic human expressions, natural body language, or real-world visual metaphors - avoid literal interpretations. Request photorealistic images that help students connect the concept to real life through visual association.",
 				},
 				{
 					role: "user",

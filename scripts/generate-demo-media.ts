@@ -7,8 +7,7 @@
 import dotenv from 'dotenv'
 dotenv.config()
 
-import { generateTTSAudioR2 } from '@/lib/enrichment/azure-tts-r2'
-import { generateDALLEImageR2 } from '@/lib/enrichment/openai-dalle-r2'
+import { fal } from '@fal-ai/client';
 
 // Override the bucket name for static demo media
 const STATIC_BUCKET = 'danbing-static-media'
@@ -18,7 +17,6 @@ import {
   S3Client,
   PutObjectCommand,
 } from "@aws-sdk/client-s3";
-import OpenAI from "openai";
 
 const staticR2Client = new S3Client({
   region: "auto",
@@ -32,11 +30,12 @@ const staticR2Client = new S3Client({
   responseChecksumValidation: 'WHEN_REQUIRED',
 });
 
-const openai = process.env.OPENAI_API_KEY
-  ? new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    })
-  : null;
+// Configure fal.ai
+if (process.env.FAL_KEY) {
+  fal.config({
+    credentials: process.env.FAL_KEY
+  });
+}
 
 // Custom functions for demo media generation
 async function uploadToStaticR2(key: string, buffer: Buffer, contentType: string): Promise<string> {
@@ -95,28 +94,47 @@ async function generateDemoTTS(text: string, filename: string): Promise<string> 
 
 async function generateDemoImage(hanzi: string, prompt: string, filename: string): Promise<string> {
   try {
-    if (!openai) {
-      throw new Error('OpenAI not configured');
+    if (!process.env.FAL_KEY) {
+      throw new Error('fal.ai not configured');
     }
 
-    const response = await openai.images.generate({
-      model: "dall-e-3",
-      prompt: prompt,
-      n: 1,
-      size: "1024x1024",
-      quality: "standard",
-      style: "natural",
-    });
+    // Generate image with fal.ai flux-pro model
+    const result = await fal.run("fal-ai/flux-pro", {
+      input: {
+        prompt,
+        image_size: "square_hd",
+        num_inference_steps: 28,
+        guidance_scale: 3.5,
+        num_images: 1,
+        safety_tolerance: 2,
+        output_format: "jpeg"
+      }
+    }) as any;
 
-    const tempImageUrl = response.data?.[0]?.url;
-    if (!tempImageUrl) {
-      throw new Error("No image URL returned from DALL-E");
+    // Extract image URL from response
+    let imageUrl: string | undefined;
+    const responseData = result?.data || result;
+    
+    if (responseData?.images?.[0]?.url) {
+      imageUrl = responseData.images[0].url;
+    } else if (responseData?.image?.url) {
+      imageUrl = responseData.image.url;
+    } else if (responseData?.url) {
+      imageUrl = responseData.url;
+    } else if (responseData?.output?.images?.[0]?.url) {
+      imageUrl = responseData.output.images[0].url;
+    } else if (responseData?.output?.url) {
+      imageUrl = responseData.output.url;
+    }
+    
+    if (!imageUrl) {
+      throw new Error("No image URL returned from fal.ai");
     }
 
     // Download and upload to static R2
-    const imageResponse = await fetch(tempImageUrl);
+    const imageResponse = await fetch(imageUrl);
     const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
-    const url = await uploadToStaticR2(filename, imageBuffer, 'image/png');
+    const url = await uploadToStaticR2(filename, imageBuffer, 'image/jpeg');
     return url;
   } catch (error) {
     console.error('Image generation error:', error);
@@ -136,56 +154,56 @@ const DEMO_CHARACTERS: DemoCharacter[] = [
     hanzi: '大',
     pinyin: 'dà',
     meaning: 'big, large',
-    imagePrompt: 'Simple illustration representing "big, large". CRITICAL: ABSOLUTELY NO TEXT, words, letters, numbers, labels, captions, signs, or written characters anywhere in the image. Show a large elephant next to a tiny mouse for size comparison. Cartoon or minimalist style, educational context.'
+    imagePrompt: 'Photorealistic size comparison showing "big, large". CRITICAL: ABSOLUTELY NO TEXT, words, letters, numbers, labels, captions, signs, or written characters anywhere in the image. A massive adult elephant standing next to a tiny mouse in natural lighting, dramatic scale difference. Professional wildlife photography style, educational context.'
   },
   {
     hanzi: '小',
     pinyin: 'xiǎo', 
     meaning: 'small, little',
-    imagePrompt: 'Simple illustration representing "small, little". CRITICAL: ABSOLUTELY NO TEXT, words, letters, numbers, labels, captions, signs, or written characters anywhere in the image. Show a tiny ladybug on a large leaf. Cartoon or minimalist style, educational context.'
+    imagePrompt: 'Photorealistic macro shot showing "small, little". CRITICAL: ABSOLUTELY NO TEXT, words, letters, numbers, labels, captions, signs, or written characters anywhere in the image. A tiny ladybug resting on a large green leaf with dewdrops, emphasizing the small scale. Professional macro photography, natural lighting.'
   },
   {
     hanzi: '人',
     pinyin: 'rén',
     meaning: 'person, people',
-    imagePrompt: 'Simple illustration representing "person, people". CRITICAL: ABSOLUTELY NO TEXT, words, letters, numbers, labels, captions, signs, or written characters anywhere in the image. If depicting a person, show a representation including East Asian, Hispanic, White, or Black individual only - one person only. No South Asian/Indian people. Cartoon or minimalist style, educational context.'
+    imagePrompt: 'Photorealistic portrait representing "person, people". CRITICAL: ABSOLUTELY NO TEXT, words, letters, numbers, labels, captions, signs, or written characters anywhere in the image. A single person standing confidently, natural expression, professional portrait photography. Medium shot, natural lighting, educational context.'
   },
   // Additional characters for quiz options
   {
     hanzi: '太',
     pinyin: 'tài',
     meaning: 'too, extremely',
-    imagePrompt: 'Simple illustration representing "too, extremely". CRITICAL: ABSOLUTELY NO TEXT, words, letters, numbers, labels, captions, signs, or written characters anywhere in the image. Show an overflowing cup with water spilling out. Cartoon or minimalist style, educational context.'
+    imagePrompt: 'Photorealistic scene showing "too, extremely". CRITICAL: ABSOLUTELY NO TEXT, words, letters, numbers, labels, captions, signs, or written characters anywhere in the image. A coffee cup overflowing with hot coffee spilling onto a white saucer and table. Professional food photography, dramatic lighting highlighting the excess.'
   },
   {
     hanzi: '天',
     pinyin: 'tiān',
     meaning: 'sky, heaven',
-    imagePrompt: 'Simple illustration representing "sky, heaven". CRITICAL: ABSOLUTELY NO TEXT, words, letters, numbers, labels, captions, signs, or written characters anywhere in the image. Show a blue sky with white fluffy clouds and sun. Cartoon or minimalist style, educational context.'
+    imagePrompt: 'Photorealistic landscape showing "sky, heaven". CRITICAL: ABSOLUTELY NO TEXT, words, letters, numbers, labels, captions, signs, or written characters anywhere in the image. A vast blue sky with dramatic white cumulus clouds during golden hour. Professional landscape photography, wide angle view.'
   },
   {
     hanzi: '少',
     pinyin: 'shǎo',
     meaning: 'few, little',
-    imagePrompt: 'Simple illustration representing "few, little". CRITICAL: ABSOLUTELY NO TEXT, words, letters, numbers, labels, captions, signs, or written characters anywhere in the image. Show a jar with only 3 candies inside. Cartoon or minimalist style, educational context.'
+    imagePrompt: 'Photorealistic scene showing "few, little". CRITICAL: ABSOLUTELY NO TEXT, words, letters, numbers, labels, captions, signs, or written characters anywhere in the image. A clear glass jar with only 3 colorful candies at the bottom, emphasizing emptiness. Professional product photography, soft lighting.'
   },
   {
     hanzi: '水',
     pinyin: 'shuǐ',
     meaning: 'water',
-    imagePrompt: 'Simple illustration representing "water". CRITICAL: ABSOLUTELY NO TEXT, words, letters, numbers, labels, captions, signs, or written characters anywhere in the image. Show a glass of water with water droplets. Cartoon or minimalist style, educational context.'
+    imagePrompt: 'Photorealistic shot of "water". CRITICAL: ABSOLUTELY NO TEXT, words, letters, numbers, labels, captions, signs, or written characters anywhere in the image. Crystal clear water being poured into a glass with visible water droplets and ripples. Professional beverage photography, backlighting to show clarity.'
   },
   {
     hanzi: '入',
     pinyin: 'rù',
     meaning: 'enter',
-    imagePrompt: 'Simple illustration representing "enter". CRITICAL: ABSOLUTELY NO TEXT, words, letters, numbers, labels, captions, signs, or written characters anywhere in the image. Show an open door with an arrow pointing inside. Cartoon or minimalist style, educational context.'
+    imagePrompt: 'Photorealistic architectural shot showing "enter". CRITICAL: ABSOLUTELY NO TEXT, words, letters, numbers, labels, captions, signs, or written characters anywhere in the image. An inviting open doorway with warm light streaming through from inside, clear path leading in. Professional architectural photography.'
   },
   {
     hanzi: '八',
     pinyin: 'bā',
     meaning: 'eight',
-    imagePrompt: 'Simple illustration representing "eight". CRITICAL: ABSOLUTELY NO TEXT, words, letters, numbers, labels, captions, signs, or written characters anywhere in the image. Show 8 colorful balloons floating. Cartoon or minimalist style, educational context.'
+    imagePrompt: 'Photorealistic composition showing "eight". CRITICAL: ABSOLUTELY NO TEXT, words, letters, numbers, labels, captions, signs, or written characters anywhere in the image. Eight identical red apples arranged in two rows on a white surface. Professional still life photography, perfect symmetry.'
   }
 ]
 
@@ -195,7 +213,7 @@ async function generateDemoMedia() {
   // Debug: Check if API keys are loaded
   console.log('🔍 Environment check:')
   console.log(`AZURE_TTS_KEY: ${process.env.AZURE_TTS_KEY ? 'SET (' + process.env.AZURE_TTS_KEY.substring(0, 8) + '...)' : 'NOT SET'}`)
-  console.log(`OPENAI_API_KEY: ${process.env.OPENAI_API_KEY ? 'SET (' + process.env.OPENAI_API_KEY.substring(0, 8) + '...)' : 'NOT SET'}`)
+  console.log(`FAL_KEY: ${process.env.FAL_KEY ? 'SET (' + process.env.FAL_KEY.substring(0, 8) + '...)' : 'NOT SET'}`)
   console.log(`R2_ACCOUNT_ID: ${process.env.R2_ACCOUNT_ID ? 'SET (' + process.env.R2_ACCOUNT_ID.substring(0, 8) + '...)' : 'NOT SET'}`)
   console.log('')
   
@@ -242,12 +260,12 @@ async function generateDemoMedia() {
         }
       }
       
-      // Generate DALL-E image directly to static bucket
-      console.log('🖼️  Generating DALL-E image...')
+      // Generate fal.ai image directly to static bucket
+      console.log('🖼️  Generating fal.ai photorealistic image...')
       const imageUrl = await generateDemoImage(
         char.hanzi,
         char.imagePrompt,
-        `demo-deck/demo-${char.hanzi}/image.png`
+        `demo-deck/demo-${char.hanzi}/image.jpg`
       )
       
       if (imageUrl) {
@@ -267,7 +285,7 @@ async function generateDemoMedia() {
   console.log('\n🎉 Demo media generation complete!')
   console.log('\nGenerated URLs will be in format:')
   console.log('Audio: https://static.danbing.ai/demo-deck/demo-[character]/audio.mp3')
-  console.log('Images: https://static.danbing.ai/demo-deck/demo-[character]/image.png')
+  console.log('Images: https://static.danbing.ai/demo-deck/demo-[character]/image.jpg')
 }
 
 // Check if this script is being run directly

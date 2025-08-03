@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { playBuzzSound } from '@/lib/audio/buzz';
 import { useAlert } from '@/hooks/useAlert';
+import { useAudio } from '@/contexts/AudioContext';
 
 interface Card {
   id: string;
@@ -35,6 +36,7 @@ interface QuizResult {
 
 export default function Quiz({ cards, deckId, onComplete, onExit }: QuizProps) {
   const { showConfirm } = useAlert();
+  const { playAudio, stopAudio, unlockAudio } = useAudio();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
@@ -68,11 +70,20 @@ export default function Quiz({ cards, deckId, onComplete, onExit }: QuizProps) {
     setQuestionStartTime(Date.now());
     setTimedOut(false);
     setAudioPlayed(false);
+    // Stop any playing audio when question changes
+    stopAudio();
     // Reset time remaining when question changes
     if (questions.length > 0) {
       setTimeRemaining(getTimeLimit(questions[currentQuestion].type) / 1000);
     }
-  }, [currentQuestion, questions]);
+  }, [currentQuestion, questions, stopAudio]);
+  
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      stopAudio();
+    };
+  }, [stopAudio]);
   
   // Play audio for audio-to-hanzi questions
   useEffect(() => {
@@ -82,12 +93,13 @@ export default function Quiz({ cards, deckId, onComplete, onExit }: QuizProps) {
         !showResult) {
       const correctCard = questions[currentQuestion].correctCard;
       if (correctCard.audioUrl) {
-        const audio = new Audio(correctCard.audioUrl);
-        audio.play().catch(err => console.error('Failed to play question audio:', err));
+        playAudio(correctCard.audioUrl).catch(err => {
+          console.error('Failed to play question audio:', err);
+        });
         setAudioPlayed(true);
       }
     }
-  }, [currentQuestion, questions, audioPlayed, showResult]);
+  }, [currentQuestion, questions, audioPlayed, showResult, playAudio]);
   
   const generateQuestions = async () => {
     const shuffled = [...cards].sort(() => Math.random() - 0.5);
@@ -246,16 +258,14 @@ export default function Quiz({ cards, deckId, onComplete, onExit }: QuizProps) {
       setTimeout(() => {
         const correctCard = questions[currentQuestion].correctCard;
         if (correctCard.audioUrl) {
-          const audio = new Audio(correctCard.audioUrl);
-          audio.play().catch(err => console.error('Failed to play correct audio:', err));
+          playAudio(correctCard.audioUrl).catch(err => console.error('Failed to play correct audio:', err));
         }
       }, 400); // Wait for buzz to finish
     } else if (isCorrect) {
       // Correct answer: play the audio immediately
       const correctCard = questions[currentQuestion].correctCard;
       if (correctCard.audioUrl) {
-        const audio = new Audio(correctCard.audioUrl);
-        audio.play().catch(err => console.error('Failed to play audio:', err));
+        playAudio(correctCard.audioUrl).catch(err => console.error('Failed to play audio:', err));
       }
     }
   };
@@ -324,7 +334,7 @@ export default function Quiz({ cards, deckId, onComplete, onExit }: QuizProps) {
   const question = questions[currentQuestion];
   
   return (
-    <div className="fixed inset-0 bg-black flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black flex items-center justify-center p-4" onClick={unlockAudio}>
       <div className="max-w-4xl w-full px-4 sm:px-8">
         <div className="mb-6 sm:mb-8">
           <div className="flex justify-between items-center mb-3 sm:mb-4">
@@ -342,8 +352,8 @@ export default function Quiz({ cards, deckId, onComplete, onExit }: QuizProps) {
                 <div>Which character did you hear?</div>
                 <button
                   onClick={() => {
-                    const audio = new Audio(question.correctCard.audioUrl);
-                    audio.play().catch(err => console.error('Failed to replay audio:', err));
+                    unlockAudio();
+                    playAudio(question.correctCard.audioUrl!).catch(err => console.error('Failed to replay audio:', err));
                   }}
                   className="mx-auto px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors flex items-center gap-2"
                 >

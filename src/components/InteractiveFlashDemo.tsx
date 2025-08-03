@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Play, Pause } from "lucide-react";
 import AnimatedCursor from "./AnimatedCursor";
 
@@ -24,24 +24,24 @@ const DEMO_CARDS: DemoCard[] = [
 		hanzi: "大",
 		pinyin: "dà",
 		meaning: "big, large",
-		imageUrl: "https://static.danbing.ai/demo-deck/demo-大/image.png?v=4",
-		audioUrl: "https://static.danbing.ai/demo-deck/demo-大/audio.mp3?v=1",
+		imageUrl: "https://static.danbing.ai/demo-deck/demo-大/image.jpg?v=5",
+		audioUrl: "https://static.danbing.ai/demo-deck/demo-%E5%A4%A7/audio.mp3?v=1",
 	},
 	{
 		id: "2",
 		hanzi: "小",
 		pinyin: "xiǎo",
 		meaning: "small, little",
-		imageUrl: "https://static.danbing.ai/demo-deck/demo-小/image.png?v=4",
-		audioUrl: "https://static.danbing.ai/demo-deck/demo-小/audio.mp3?v=1",
+		imageUrl: "https://static.danbing.ai/demo-deck/demo-小/image.jpg?v=5",
+		audioUrl: "https://static.danbing.ai/demo-deck/demo-%E5%B0%8F/audio.mp3?v=1",
 	},
 	{
 		id: "3",
 		hanzi: "人",
 		pinyin: "rén",
 		meaning: "person, people",
-		imageUrl: "https://static.danbing.ai/demo-deck/demo-人/image.png?v=4",
-		audioUrl: "https://static.danbing.ai/demo-deck/demo-人/audio.mp3?v=1",
+		imageUrl: "https://static.danbing.ai/demo-deck/demo-人/image.jpg?v=5",
+		audioUrl: "https://static.danbing.ai/demo-deck/demo-%E4%BA%BA/audio.mp3?v=1",
 	},
 ];
 
@@ -64,16 +64,16 @@ const QUIZ_QUESTIONS: QuizQuestion[] = [
 				hanzi: "太",
 				pinyin: "tài",
 				meaning: "too/extremely",
-				imageUrl: "https://static.danbing.ai/demo-deck/demo-太/image.png?v=3",
-				audioUrl: "https://static.danbing.ai/demo-deck/demo-太/audio.mp3?v=1",
+				imageUrl: "https://static.danbing.ai/demo-deck/demo-太/image.jpg?v=5",
+				audioUrl: "https://static.danbing.ai/demo-deck/demo-%E5%A4%AA/audio.mp3?v=1",
 			},
 			{
 				id: "opt1-2",
 				hanzi: "天",
 				pinyin: "tiān",
 				meaning: "sky/heaven",
-				imageUrl: "https://static.danbing.ai/demo-deck/demo-天/image.png?v=3",
-				audioUrl: "https://static.danbing.ai/demo-deck/demo-天/audio.mp3?v=1",
+				imageUrl: "https://static.danbing.ai/demo-deck/demo-天/image.jpg?v=5",
+				audioUrl: "https://static.danbing.ai/demo-deck/demo-%E5%A4%A9/audio.mp3?v=1",
 			},
 			DEMO_CARDS[1], // 小
 			DEMO_CARDS[0], // 大 (correct answer)
@@ -88,16 +88,16 @@ const QUIZ_QUESTIONS: QuizQuestion[] = [
 				hanzi: "少",
 				pinyin: "shǎo",
 				meaning: "few/little",
-				imageUrl: "https://static.danbing.ai/demo-deck/demo-少/image.png?v=3",
-				audioUrl: "https://static.danbing.ai/demo-deck/demo-少/audio.mp3?v=1",
+				imageUrl: "https://static.danbing.ai/demo-deck/demo-少/image.jpg?v=5",
+				audioUrl: "https://static.danbing.ai/demo-deck/demo-%E5%B0%91/audio.mp3?v=1",
 			},
 			{
 				id: "opt2-2",
 				hanzi: "水",
 				pinyin: "shuǐ",
 				meaning: "water",
-				imageUrl: "https://static.danbing.ai/demo-deck/demo-水/image.png?v=3",
-				audioUrl: "https://static.danbing.ai/demo-deck/demo-水/audio.mp3?v=1",
+				imageUrl: "https://static.danbing.ai/demo-deck/demo-水/image.jpg?v=5",
+				audioUrl: "https://static.danbing.ai/demo-deck/demo-%E6%B0%B4/audio.mp3?v=1",
 			},
 			DEMO_CARDS[1], // 小 (correct answer)
 			DEMO_CARDS[2], // 人
@@ -112,8 +112,8 @@ const QUIZ_QUESTIONS: QuizQuestion[] = [
 				hanzi: "入",
 				pinyin: "rù",
 				meaning: "enter",
-				imageUrl: "https://static.danbing.ai/demo-deck/demo-入/image.png?v=4",
-				audioUrl: "https://static.danbing.ai/demo-deck/demo-入/audio.mp3?v=1",
+				imageUrl: "https://static.danbing.ai/demo-deck/demo-入/image.jpg?v=5",
+				audioUrl: "https://static.danbing.ai/demo-deck/demo-%E5%85%A5/audio.mp3?v=1",
 			},
 			DEMO_CARDS[2], // 人 (correct answer)
 			DEMO_CARDS[0], // 大
@@ -122,8 +122,8 @@ const QUIZ_QUESTIONS: QuizQuestion[] = [
 				hanzi: "八",
 				pinyin: "bā",
 				meaning: "eight",
-				imageUrl: "https://static.danbing.ai/demo-deck/demo-八/image.png?v=4",
-				audioUrl: "https://static.danbing.ai/demo-deck/demo-八/audio.mp3?v=1",
+				imageUrl: "https://static.danbing.ai/demo-deck/demo-八/image.jpg?v=5",
+				audioUrl: "https://static.danbing.ai/demo-deck/demo-%E5%85%AB/audio.mp3?v=1",
 			},
 		],
 	},
@@ -157,13 +157,74 @@ export default function InteractiveFlashDemo({
 	const [cursorTarget, setCursorTarget] = useState({ x: 0, y: 0 });
 	const [cursorClicking, setCursorClicking] = useState(false);
 
+	// Audio element ref to reuse across plays
+	const audioRef = useRef<HTMLAudioElement | null>(null);
+	
+	// Track if audio has been unlocked on iOS
+	const [audioUnlocked, setAudioUnlocked] = useState(false);
+	
+	// Initialize audio on mount
+	useEffect(() => {
+		// Create a single audio element to reuse
+		audioRef.current = new Audio();
+		
+		// Pre-configure audio for iOS
+		audioRef.current.preload = 'auto';
+		// Remove crossOrigin for now as it might conflict with CORS
+		// audioRef.current.crossOrigin = 'anonymous';
+		audioRef.current.volume = 1.0;
+		
+		// Add to DOM for iOS (hidden)
+		audioRef.current.style.display = 'none';
+		document.body.appendChild(audioRef.current);
+		
+		return () => {
+			if (audioRef.current) {
+				audioRef.current.pause();
+				audioRef.current.src = '';
+				// Remove from DOM
+				if (audioRef.current.parentNode) {
+					audioRef.current.parentNode.removeChild(audioRef.current);
+				}
+				audioRef.current = null;
+			}
+		};
+	}, []);
+	
+	// Unlock audio on first user interaction (for iOS)
+	const unlockAudio = useCallback(() => {
+		if (!audioUnlocked && audioRef.current) {
+			// Play silent audio to unlock
+			audioRef.current.src = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmFgU7k9n1unEiBC13yO/eizEIHWq+8+OWT......';
+			audioRef.current.play().then(() => {
+				setAudioUnlocked(true);
+				console.log('Audio unlocked for iOS');
+			}).catch(() => {
+				console.log('Audio unlock failed - will try on next interaction');
+			});
+		}
+	}, [audioUnlocked]);
+
 	// Audio playback function
 	const playAudio = useCallback((audioUrl: string) => {
-		if (audioUrl) {
-			const audio = new Audio(audioUrl);
-			audio.play().catch((error) => {
-				console.log("Audio playback failed (likely missing file):", error);
-			});
+		if (audioUrl && audioRef.current) {
+			// Stop any currently playing audio
+			audioRef.current.pause();
+			audioRef.current.currentTime = 0;
+			
+			// Set new source and play
+			audioRef.current.src = audioUrl;
+			const playPromise = audioRef.current.play();
+			
+			if (playPromise !== undefined) {
+				playPromise.catch((error) => {
+					console.log("Audio playback failed:", error);
+					// On iOS, we might need user interaction first
+					if (error.name === 'NotAllowedError') {
+						console.log("Audio blocked - needs user interaction");
+					}
+				});
+			}
 		}
 	}, []);
 
@@ -206,6 +267,9 @@ export default function InteractiveFlashDemo({
 
 	// Tutorial progression - slower for better reading time
 	const progressTutorial = useCallback(() => {
+		// Unlock audio on any user interaction during tutorial
+		unlockAudio();
+		
 		if (tutorialStep === "intro") {
 			// Move cursor to "Next" button and click
 			const nextButton = document.querySelector(
@@ -511,7 +575,7 @@ export default function InteractiveFlashDemo({
 
 	useEffect(() => {
 		progressTutorial();
-	}, [tutorialStep, progressTutorial]);
+	}, [tutorialStep, unlockAudio]);
 
 	// Quiz timer countdown effect
 	useEffect(() => {
@@ -552,7 +616,10 @@ export default function InteractiveFlashDemo({
 	}, [currentQuizIndex, phase, showAnswerFeedback, currentQuiz, playAudio]);
 
 	return (
-		<div className="fixed inset-0 bg-black text-white">
+		<div 
+			className="fixed inset-0 bg-black text-white"
+			onClick={unlockAudio}
+		>
 			<AnimatedCursor
 				targetX={cursorTarget.x}
 				targetY={cursorTarget.y}
@@ -917,6 +984,8 @@ export default function InteractiveFlashDemo({
 									<div>Which character did you hear?</div>
 									<button
 										onClick={() => {
+											// Unlock audio on iOS if needed
+											unlockAudio();
 											if (currentQuiz.correctCard.audioUrl) {
 												playAudio(currentQuiz.correctCard.audioUrl);
 											}
@@ -1027,6 +1096,8 @@ export default function InteractiveFlashDemo({
 
 						<button
 							onClick={() => {
+								// Unlock audio on iOS if needed
+								unlockAudio();
 								// Reset all state to restart the demo
 								setPhase("tutorial");
 								setTutorialStep("intro");

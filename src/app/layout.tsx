@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Nunito } from "next/font/google";
 import "./globals.css";
 import "./cursor-fix.css";
 import { AlertProvider } from "@/hooks/useAlert";
+import { AudioProvider } from "@/contexts/AudioContext";
 import { Providers } from "./providers";
 
 const geistSans = Geist({
@@ -40,12 +41,21 @@ export const metadata: Metadata = {
     siteName: "Danbing AI",
     locale: "en_US",
     type: "website",
+    images: [
+      {
+        url: "https://static.danbing.ai/danbing_medium.png",
+        width: 1200,
+        height: 630,
+        alt: "Danbing AI - Learn Chinese Characters with Science",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Danbing AI - Master Chinese Characters 10x Faster",
     description: "Revolutionary dual-phase flash sessions based on 50+ years of memory research",
     creator: "@danbingai",
+    images: ["https://static.danbing.ai/danbing_medium.png"],
   },
   icons: {
     icon: [
@@ -81,9 +91,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${nunito.variable} antialiased`}
       >
         <Providers>
-          <AlertProvider>
-            {children}
-          </AlertProvider>
+          <AudioProvider>
+            <AlertProvider>
+              {children}
+            </AlertProvider>
+          </AudioProvider>
         </Providers>
       </body>
     </html>

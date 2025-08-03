@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Quiz from './Quiz';
 import FlashSessionDemo from './FlashSessionDemo';
 import { useAlert } from '@/hooks/useAlert';
+import { useAudio } from '@/contexts/AudioContext';
 // Removed Eye, EyeOff, Zap, ZapOff icons - accessibility controls moved to settings
 
 interface Card {
@@ -25,6 +26,7 @@ interface FlashSessionProps {
 
 export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps) {
   const { showAlert, showConfirm } = useAlert();
+  const { unlockAudio } = useAudio();
   const [cards, setCards] = useState<Card[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [phase, setPhase] = useState<'loading' | 'idle' | 'flash' | 'quiz' | 'countdown' | 'initial-countdown'>('loading');
@@ -481,12 +483,7 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
         img.src = nextCard.imageUrl;
       }
       
-      // Preload audio
-      if (nextCard.audioUrl) {
-        const audio = new Audio();
-        audio.src = nextCard.audioUrl;
-        audio.load();
-      }
+      // Audio preloading handled by the audio manager in FlashCard component
     }
   }, [currentIndex, blockCards]);
   
@@ -747,7 +744,7 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
   };
   
   if (phase === 'loading' || showDemo === null) {
-    return <div className="fixed inset-0 bg-black flex items-center justify-center">Loading...</div>;
+    return <div className="fixed inset-0 bg-black flex items-center justify-center" onClick={unlockAudio}>Loading...</div>;
   }
 
   // Show demo if needed (before any countdown or flash session)
@@ -765,7 +762,7 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
   // Show practice mode selection (but not if demo should show first)
   if (showPracticeModeSelection && mode === 'practice' && !(!demoCompleted && showDemo !== false)) {
     return (
-      <div className="fixed inset-0 bg-black flex items-center justify-center p-4">
+      <div className="fixed inset-0 bg-black flex items-center justify-center p-4" onClick={unlockAudio}>
         <div className="bg-gray-900 p-6 sm:p-8 rounded-lg max-w-2xl w-full text-center">
           <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">Choose Practice Mode</h2>
           
@@ -881,7 +878,7 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
     const isReviewRound = remainingCards === 0 && missedCardIds.size > 0 && practiceRound === 1;
     
     return (
-      <div className="fixed inset-0 bg-black flex items-center justify-center p-4">
+      <div className="fixed inset-0 bg-black flex items-center justify-center p-4" onClick={unlockAudio}>
         <div className="bg-gray-900 p-6 sm:p-8 rounded-lg max-w-lg w-full text-center">
           <h2 className="text-xl sm:text-2xl font-bold text-white mb-3 sm:mb-4">
             {isReviewRound ? '📝 Ready for Focused Review?' : '✨ Great Progress!'}
@@ -949,7 +946,7 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
   // Show continue prompt
   if (showContinuePrompt) {
     return (
-      <div className="fixed inset-0 bg-black flex items-center justify-center p-4">
+      <div className="fixed inset-0 bg-black flex items-center justify-center p-4" onClick={unlockAudio}>
         <div className="bg-gray-900 p-6 sm:p-8 rounded-lg max-w-lg w-full text-center">
           <h2 className="text-xl sm:text-2xl font-bold text-white mb-3 sm:mb-4">
             {mode === 'new' && totalCardsStudied >= OPTIMAL_SESSION_SIZE 
@@ -1032,7 +1029,7 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
   // Show countdown screen
   if (phase === 'countdown') {
     return (
-      <div className="fixed inset-0 bg-black flex items-center justify-center p-4">
+      <div className="fixed inset-0 bg-black flex items-center justify-center p-4" onClick={unlockAudio}>
         <div className="text-center">
           <h2 className="text-xl sm:text-2xl md:text-3xl text-white mb-6 sm:mb-8">Get ready for the next drill</h2>
           <div className="text-6xl sm:text-7xl md:text-8xl font-bold text-gray-400">{countdownSeconds}</div>
@@ -1044,7 +1041,7 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
   // Show initial countdown screen
   if (phase === 'initial-countdown') {
     return (
-      <div className="fixed inset-0 bg-black flex items-center justify-center p-4">
+      <div className="fixed inset-0 bg-black flex items-center justify-center p-4" onClick={unlockAudio}>
         <div className="text-center max-w-2xl px-4 sm:px-8">
           {showSessionSizeWarning && mode === 'new' ? (
             <>
