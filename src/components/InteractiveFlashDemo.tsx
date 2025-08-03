@@ -635,50 +635,50 @@ export default function InteractiveFlashDemo({
 						{tutorialStep === "intro" && (
 							<>
 								<div className="space-y-4">
-									<div className="text-6xl">📚</div>
-									<h1 className="text-4xl font-bold text-[#f7cc48]">
+									<div className="text-4xl sm:text-6xl">📚</div>
+									<h1 className="text-2xl sm:text-4xl font-bold text-[#f7cc48]">
 										Flash Cards Structure
 									</h1>
-									<p className="text-xl text-gray-300">
+									<p className="text-base sm:text-xl text-gray-300">
 										Each character goes through 4 phases:
 									</p>
 								</div>
 
-								<div className="grid grid-cols-1 md:grid-cols-4 gap-6 my-12">
-									<div className="bg-[#161b22] p-6 rounded-xl border border-[#30363d]">
-										<div className="text-6xl mb-4">大</div>
-										<h3 className="font-semibold mb-2">Character</h3>
-										<p className="text-sm text-gray-400">(0.8s)</p>
+								<div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 my-6 sm:my-12">
+									<div className="bg-[#161b22] p-3 sm:p-6 rounded-xl border border-[#30363d]">
+										<div className="text-4xl sm:text-6xl mb-2 sm:mb-4">大</div>
+										<h3 className="font-semibold mb-1 sm:mb-2 text-sm sm:text-base">Character</h3>
+										<p className="text-xs sm:text-sm text-gray-400">(0.8s)</p>
 									</div>
-									<div className="bg-[#161b22] p-6 rounded-xl border border-[#30363d]">
-										<div className="text-4xl mb-4">
+									<div className="bg-[#161b22] p-3 sm:p-6 rounded-xl border border-[#30363d]">
+										<div className="text-2xl sm:text-4xl mb-2 sm:mb-4">
 											大<br />
 											dà
 										</div>
-										<h3 className="font-semibold mb-2">+ Sound</h3>
-										<p className="text-sm text-gray-400">(2s)</p>
+										<h3 className="font-semibold mb-1 sm:mb-2 text-sm sm:text-base">+ Sound</h3>
+										<p className="text-xs sm:text-sm text-gray-400">(2s)</p>
 									</div>
-									<div className="bg-[#161b22] p-6 rounded-xl border border-[#30363d]">
-										<div className="text-2xl mb-4">
+									<div className="bg-[#161b22] p-3 sm:p-6 rounded-xl border border-[#30363d]">
+										<div className="text-lg sm:text-2xl mb-2 sm:mb-4">
 											[IMG]
 											<br />
 											big
 										</div>
-										<h3 className="font-semibold mb-2">+ Meaning</h3>
-										<p className="text-sm text-gray-400">(2s)</p>
+										<h3 className="font-semibold mb-1 sm:mb-2 text-sm sm:text-base">+ Meaning</h3>
+										<p className="text-xs sm:text-sm text-gray-400">(2s)</p>
 									</div>
-									<div className="bg-[#161b22] p-6 rounded-xl border border-[#30363d]">
-										<div className="text-6xl mb-4">
+									<div className="bg-[#161b22] p-3 sm:p-6 rounded-xl border border-[#30363d]">
+										<div className="text-4xl sm:text-6xl mb-2 sm:mb-4">
 											大<br />?
 										</div>
-										<h3 className="font-semibold mb-2">Self-test</h3>
-										<p className="text-sm text-gray-400">(1.5s)</p>
+										<h3 className="font-semibold mb-1 sm:mb-2 text-sm sm:text-base">Self-test</h3>
+										<p className="text-xs sm:text-sm text-gray-400">(1.5s)</p>
 									</div>
 								</div>
 
 								<button
 									data-demo="next-button-intro"
-									className="px-8 py-3 bg-[#f7cc48] text-black font-semibold rounded-lg hover:bg-[#ffd700] transition-colors"
+									className="px-6 sm:px-8 py-2 sm:py-3 bg-[#f7cc48] text-black font-semibold rounded-lg hover:bg-[#ffd700] transition-colors text-sm sm:text-base"
 								>
 									Next →
 								</button>
@@ -688,18 +688,18 @@ export default function InteractiveFlashDemo({
 						{tutorialStep === "phases" && (
 							<>
 								<div className="space-y-4">
-									<div className="text-6xl">🧠</div>
-									<h1 className="text-4xl font-bold text-[#f7cc48]">
+									<div className="text-4xl sm:text-6xl">🧠</div>
+									<h1 className="text-2xl sm:text-4xl font-bold text-[#f7cc48]">
 										3-Block System
 									</h1>
-									<p className="text-xl text-gray-300">
+									<p className="text-base sm:text-xl text-gray-300">
 										Each character appears in 3 different learning blocks
 									</p>
 								</div>
 
 								<div className="space-y-6">
-									<div className="bg-[#161b22] p-6 rounded-xl border border-[#30363d] text-left">
-										<h3 className="text-xl font-semibold mb-4 text-[#f7cc48]">
+									<div className="bg-[#161b22] p-4 sm:p-6 rounded-xl border border-[#30363d] text-left">
+										<h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 text-[#f7cc48]">
 											Block Structure:
 										</h3>
 										<div className="space-y-4">
@@ -762,7 +762,7 @@ export default function InteractiveFlashDemo({
 										{["大", "小", "人", "好"].map((option, index) => (
 											<button
 												key={index}
-												className={`p-4 text-2xl font-bold rounded-lg border-2 transition-all ${
+												className={`p-3 sm:p-4 text-xl sm:text-2xl font-bold rounded-lg border-2 transition-all ${
 													option === "大"
 														? "border-green-500 bg-green-500/20 text-green-400"
 														: "border-[#30363d] hover:border-[#f7cc48]/50"
@@ -866,10 +866,10 @@ export default function InteractiveFlashDemo({
 								{/* Block 1: Character + pinyin + audio */}
 								{currentBlock === 1 && (
 									<>
-										<div className="text-7xl font-bold text-white">
+										<div className="text-5xl sm:text-7xl font-bold text-white">
 											{currentCard.hanzi}
 										</div>
-										<div className="text-5xl text-[#f7cc48]">
+										<div className="text-3xl sm:text-5xl text-[#f7cc48]">
 											{currentCard.pinyin}
 										</div>
 									</>
@@ -878,14 +878,14 @@ export default function InteractiveFlashDemo({
 								{/* Block 2 & 3: Combined view - everything together */}
 								{(currentBlock === 2 || currentBlock === 3) && (
 									<>
-										<div className="text-6xl font-bold text-white">
+										<div className="text-4xl sm:text-6xl font-bold text-white">
 											{currentCard.hanzi}
 										</div>
-										<div className="text-4xl text-[#f7cc48]">
+										<div className="text-2xl sm:text-4xl text-[#f7cc48]">
 											{currentCard.pinyin}
 										</div>
 										{currentCard.imageUrl && (
-											<div className="w-48 h-48 mx-auto my-4">
+											<div className="w-32 h-32 sm:w-48 sm:h-48 mx-auto my-4">
 												<img
 													src={currentCard.imageUrl}
 													alt={`Visual representation of ${currentCard.hanzi} - ${currentCard.meaning}`}
@@ -1111,9 +1111,9 @@ export default function InteractiveFlashDemo({
 								setCursorClicking(false);
 								setTimeRemaining(10);
 							}}
-							className="px-8 py-4 bg-gradient-to-r from-[#f7cc48] to-[#ffd700] text-black font-semibold rounded-xl hover:from-[#ffd700] hover:to-[#f7cc48] transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
+							className="px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-[#f7cc48] to-[#ffd700] text-black font-semibold rounded-xl hover:from-[#ffd700] hover:to-[#f7cc48] transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 text-sm sm:text-base"
 						>
-							<Play className="w-5 h-5 inline mr-2" />
+							<Play className="w-4 h-4 sm:w-5 sm:h-5 inline mr-2" />
 							Replay Demo
 						</button>
 					</div>
