@@ -1,6 +1,6 @@
 # Nixpacks configuration for Bun
 [phases.setup]
-nixPkgs = ["bun", "openssl"]
+nixPkgs = ["bun", "openssl_3"]
 aptPkgs = ["curl", "unzip", "libssl-dev", "ca-certificates"]
 
 [phases.install]
