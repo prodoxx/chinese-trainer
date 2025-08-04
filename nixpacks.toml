@@ -11,13 +11,7 @@ cmds = ["bun install --frozen-lockfile"]
 # Build the Next.js application
 # Generate Prisma client and build Next.js
 cmds = [
-  "echo 'Building with DATABASE_URL:' && echo $DATABASE_URL | head -c 30 && echo '...'",
-  "echo 'Verifying OpenSSL installation:'",
-  "ls -la /usr/lib/x86_64-linux-gnu/libssl.so* || echo 'libssl shared libraries not found in standard location'",
-  "echo 'Generating Prisma Client for production environment...'",
   "bunx prisma generate --schema=./prisma/schema.prisma",
-  "echo 'Listing generated Prisma binaries:'",
-  "ls -la src/generated/prisma/*.node || echo 'No .node files found'",
   "echo 'Building Next.js application...'",
   "bun run build"
 ]
