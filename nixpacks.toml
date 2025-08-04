@@ -1,7 +1,7 @@
 # Nixpacks configuration for Bun
 [phases.setup]
-nixPkgs = ["bun"]
-aptPkgs = ["curl", "unzip"]
+nixPkgs = ["bun", "openssl"]
+aptPkgs = ["curl", "unzip", "libssl-dev", "ca-certificates"]
 
 [phases.install]
 # Use frozen lockfile for consistent installs
@@ -12,7 +12,9 @@ cmds = ["bun install --frozen-lockfile"]
 # Generate Prisma client and build Next.js
 cmds = [
   "echo 'Building with DATABASE_URL:' && echo $DATABASE_URL | head -c 30 && echo '...'",
-  "bunx prisma generate",
+  "echo 'Generating Prisma Client for production environment...'",
+  "bunx prisma generate --schema=./prisma/schema.prisma",
+  "echo 'Building Next.js application...'",
   "bun run build"
 ]
 
@@ -25,3 +27,5 @@ cmd = "bun run start"
 NODE_ENV = "production"
 # Ensure Bun uses production optimizations
 BUN_ENV = "production"
+# Ensure Prisma uses correct binary
+PRISMA_QUERY_ENGINE_LIBRARY = "/app/src/generated/prisma/libquery_engine-debian-openssl-3.0.x.so.node"

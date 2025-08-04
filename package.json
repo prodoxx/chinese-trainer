@@ -8,6 +8,7 @@
 		"build": "next build",
 		"start": "node scripts/validate-database-url.js && next start",
 		"lint": "next lint",
+		"postinstall": "prisma generate",
 		"load-dict": "bun run scripts/load-cedict.ts",
 		"clean-db": "bun run scripts/clean-database.ts",
 		"workers": "bun run src/lib/queue/start-workers.ts",
