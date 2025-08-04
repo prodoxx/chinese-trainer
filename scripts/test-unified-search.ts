@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import { searchForImage } from '../src/lib/enrichment/unified-image-search';
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/chinese_app';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/danbing';
 
 const testCharacters = [
   { hanzi: '愛', meaning: 'to love', pinyin: 'ài' },

@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import Card from '../src/lib/db/models/Card';
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/chinese_app';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/danbing';
 
 async function showSampleCard() {
   await mongoose.connect(MONGODB_URI);

@@ -43,6 +43,7 @@ docs/
 - **[AI Integration Guide](./infrastructure/AI_INTEGRATION_GUIDE.md)** - OpenAI integration throughout the system
 - **[AI Image Validation](./infrastructure/AI_IMAGE_VALIDATION.md)** - Automatic detection and correction of AI-generated image artifacts
 - **[Cloudflare R2 Integration](./infrastructure/CLOUDFLARE_R2_INTEGRATION.md)** - Media storage system with 94% cost reduction
+- **[MongoDB Production Setup](./infrastructure/MONGODB_PRODUCTION_SETUP.md)** - Setting up MongoDB for production deployment
 - **[Email System](./infrastructure/EMAIL_SYSTEM.md)** - Resend integration and email templates
 - **[Shared Media Implementation](./infrastructure/SHARED_MEDIA_IMPLEMENTATION.md)** - Hanzi-based media sharing strategy
 - **[Media Sharing Strategy](./infrastructure/MEDIA_SHARING_STRATEGY.md)** - Cost optimization through intelligent sharing

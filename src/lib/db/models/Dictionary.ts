@@ -11,7 +11,7 @@ export interface IDictionary extends Document {
 
 const DictionarySchema = new Schema<IDictionary>(
   {
-    traditional: { type: String, required: true, index: true },
+    traditional: { type: String, required: true },
     simplified: { type: String, required: true },
     pinyin: { type: String, required: true },
     definitions: { type: [String], required: true },
@@ -19,7 +19,7 @@ const DictionarySchema = new Schema<IDictionary>(
   { timestamps: true }
 );
 
-// Compound index for lookups
+// Create indexes for lookups
 DictionarySchema.index({ traditional: 1 });
 DictionarySchema.index({ simplified: 1 });
 

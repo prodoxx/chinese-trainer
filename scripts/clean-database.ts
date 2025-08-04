@@ -5,7 +5,7 @@ import Card from '../src/lib/db/models/Card';
 import Review from '../src/lib/db/models/Review';
 import DeckCard from '../src/lib/db/models/DeckCard';
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/chinese_app';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/danbing';
 
 async function cleanDatabase() {
   console.log('🗑️  Database Cleanup Script\n');

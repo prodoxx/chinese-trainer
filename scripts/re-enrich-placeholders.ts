@@ -3,7 +3,7 @@ import Card from '../src/lib/db/models/Card';
 import { searchImage, getAttributionText, getAttributionUrl } from '../src/lib/enrichment/unsplash';
 import { getVisualSearchTerm } from '../src/lib/enrichment/image-search-mapper';
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/chinese_app';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/danbing';
 
 async function reEnrichPlaceholders() {
   console.log('Connecting to MongoDB...');
