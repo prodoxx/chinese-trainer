@@ -14,6 +14,8 @@ cmds = [
   "echo 'Building with DATABASE_URL:' && echo $DATABASE_URL | head -c 30 && echo '...'",
   "echo 'Generating Prisma Client for production environment...'",
   "bunx prisma generate --schema=./prisma/schema.prisma",
+  "echo 'Listing generated Prisma binaries:'",
+  "ls -la src/generated/prisma/*.node || echo 'No .node files found'",
   "echo 'Building Next.js application...'",
   "bun run build"
 ]
@@ -27,5 +29,3 @@ cmd = "bun run start"
 NODE_ENV = "production"
 # Ensure Bun uses production optimizations
 BUN_ENV = "production"
-# Ensure Prisma uses correct binary
-PRISMA_QUERY_ENGINE_LIBRARY = "/app/src/generated/prisma/libquery_engine-debian-openssl-3.0.x.so.node"

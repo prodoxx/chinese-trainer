@@ -20,7 +20,7 @@ This happens because:
 The `nixpacks.toml` file includes:
 - OpenSSL in nixPkgs
 - libssl-dev in aptPkgs
-- Proper environment variables
+- No custom PRISMA_QUERY_ENGINE_LIBRARY (let Prisma auto-detect)
 
 ### 2. Prisma Schema Binary Targets
 The `prisma/schema.prisma` includes:
@@ -28,9 +28,11 @@ The `prisma/schema.prisma` includes:
 generator client {
   provider = "prisma-client-js"
   output   = "../src/generated/prisma"
-  binaryTargets = ["native", "debian-openssl-3.0.x", "linux-arm64-openssl-3.0.x"]
+  binaryTargets = ["native", "linux-musl", "linux-musl-openssl-3.0.x", "debian-openssl-3.0.x"]
 }
 ```
+
+**Note**: We include multiple Linux targets to ensure compatibility. Prisma will automatically select the correct one at runtime.
 
 ### 3. Build Process
 The build process:
