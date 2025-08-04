@@ -41,6 +41,7 @@ docs/
 
 ### 🔧 Infrastructure
 - **[AI Integration Guide](./infrastructure/AI_INTEGRATION_GUIDE.md)** - OpenAI integration throughout the system
+- **[AI Image Validation](./infrastructure/AI_IMAGE_VALIDATION.md)** - Automatic detection and correction of AI-generated image artifacts
 - **[Cloudflare R2 Integration](./infrastructure/CLOUDFLARE_R2_INTEGRATION.md)** - Media storage system with 94% cost reduction
 - **[Email System](./infrastructure/EMAIL_SYSTEM.md)** - Resend integration and email templates
 - **[Shared Media Implementation](./infrastructure/SHARED_MEDIA_IMPLEMENTATION.md)** - Hanzi-based media sharing strategy
@@ -73,10 +74,11 @@ docs/
 
 ## 🔄 Recently Updated
 
+- **[AI Image Validation](./infrastructure/AI_IMAGE_VALIDATION.md)** - NEW: Automatic detection and correction of AI artifacts in generated images
 - **[About Danbing](./overview/about.md)** - Updated with 8-character sessions, AI insights, and current tech stack
 - **[Flash Session Flow](./learning-system/FLASH_SESSION_FLOW.md)** - Added mini-quizzes every 3 cards and demo system
 - **[User Accounts Architecture](./architecture/USER_ACCOUNTS_ARCHITECTURE.md)** - Updated with NextAuth.js and email verification
-- **[AI Integration Guide](./infrastructure/AI_INTEGRATION_GUIDE.md)** - New comprehensive AI usage documentation
+- **[AI Integration Guide](./infrastructure/AI_INTEGRATION_GUIDE.md)** - Updated with image validation costs and implementation
 - **[Cloudflare R2 Integration](./infrastructure/CLOUDFLARE_R2_INTEGRATION.md)** - New media storage system documentation
 
 ## 🎯 Key Features Documented
@@ -92,6 +94,7 @@ docs/
 - **NextAuth.js Authentication** with email verification
 - **Cloudflare R2 Media Storage** with 94% cost reduction
 - **OpenAI Integration** for comprehensive AI analysis
+- **AI Image Validation** with automatic artifact detection and retry logic
 - **Resend Email System** with branded templates
 - **React 19 + Next.js 15.4** architecture
 
@@ -166,7 +169,7 @@ docs/
 ---
 
 **Last Updated**: January 2025  
-**Version**: 3.1 (Enhanced AI Integration)  
+**Version**: 3.2 (AI Image Validation)  
 **Platform**: Web (Mobile coming soon)
 
 For questions about this documentation, please contact the development team or create an issue in the repository.

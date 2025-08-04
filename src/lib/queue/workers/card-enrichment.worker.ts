@@ -134,6 +134,10 @@ export const cardEnrichmentWorker = new Worker<CardEnrichmentJobData>(
           card.imageSourceId = imageResult.cached ? 'cached' : 'generated';
           card.imageAttribution = 'AI Generated';
           card.imageAttributionUrl = '';
+          // Save the image prompt if available
+          if (imageResult.prompt) {
+            card.imagePrompt = imageResult.prompt;
+          }
           console.log(`   ✓ Image generated (cached: ${imageResult.cached}, force: ${force})`);
           console.log(`   Image URL saved: ${card.imageUrl}`);
         }

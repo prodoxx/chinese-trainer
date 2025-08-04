@@ -52,6 +52,12 @@ export function useAudioManager(): UseAudioManagerReturn {
         audioRef.current.removeEventListener('ended', handleEnded);
         audioRef.current.removeEventListener('error', handleError);
         audioRef.current.pause();
+        
+        // Clean up blob URL if any
+        if (audioRef.current.src.startsWith('blob:')) {
+          URL.revokeObjectURL(audioRef.current.src);
+        }
+        
         audioRef.current.src = '';
         
         // Remove from DOM
@@ -88,10 +94,37 @@ export function useAudioManager(): UseAudioManagerReturn {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
       
-      // Set new source and play
-      audioRef.current.src = url;
-      setIsPlaying(true);
+      // If the URL is an API endpoint, fetch it with credentials
+      if (url.startsWith('/api/')) {
+        try {
+          const response = await fetch(url, {
+            credentials: 'include' // Include cookies for authentication
+          });
+          
+          if (!response.ok) {
+            throw new Error(`Failed to fetch audio: ${response.status}`);
+          }
+          
+          // Create blob URL from the response
+          const blob = await response.blob();
+          const blobUrl = URL.createObjectURL(blob);
+          
+          // Clean up previous blob URL if any
+          if (audioRef.current.src.startsWith('blob:')) {
+            URL.revokeObjectURL(audioRef.current.src);
+          }
+          
+          audioRef.current.src = blobUrl;
+        } catch (fetchError) {
+          console.error('Failed to fetch audio file:', fetchError);
+          throw fetchError;
+        }
+      } else {
+        // For external URLs, use directly
+        audioRef.current.src = url;
+      }
       
+      setIsPlaying(true);
       await audioRef.current.play();
     } catch (error: any) {
       console.error('Audio playback failed:', error);

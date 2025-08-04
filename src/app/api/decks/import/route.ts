@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/db/mongodb';
 import Deck from '@/lib/db/models/Deck';
 import { deckImportQueue } from '@/lib/queue/queues';
+import { extractTraditionalChinese } from '@/lib/utils/chinese-validation';
 
 export async function POST(request: NextRequest) {
   try {
@@ -55,9 +56,11 @@ export async function POST(request: NextRequest) {
     let startIndex = 0;
     const firstLine = lines[0].trim();
     
-    // If first line contains "hanzi" or doesn't look like Chinese characters, skip it
+    // If first line contains "hanzi" or has no Traditional Chinese characters, skip it
+    const firstLineExtracted = extractTraditionalChinese(firstLine);
     if (firstLine.toLowerCase().includes('hanzi') || 
-        !/^[\u4e00-\u9fff]+$/.test(firstLine)) {
+        firstLine.toLowerCase().includes('character') ||
+        !firstLineExtracted) {
       startIndex = 1;
     }
     
@@ -65,11 +68,14 @@ export async function POST(request: NextRequest) {
     const errors: { row: number; error: string }[] = [];
     
     for (let i = startIndex; i < lines.length; i++) {
-      const hanzi = lines[i].trim();
-      if (!hanzi) continue;
+      const rawText = lines[i].trim();
+      if (!rawText) continue;
       
-      if (!/^[\u4e00-\u9fff]+$/.test(hanzi)) {
-        errors.push({ row: i + 1, error: 'Not a valid Chinese character or word' });
+      // Extract only Traditional Chinese characters
+      const hanzi = extractTraditionalChinese(rawText);
+      
+      if (!hanzi) {
+        errors.push({ row: i + 1, error: 'No valid Traditional Chinese characters found' });
         continue;
       }
       
@@ -83,7 +89,7 @@ export async function POST(request: NextRequest) {
     
     if (hanziList.length === 0) {
       return NextResponse.json(
-        { error: 'No valid characters found in CSV' }, 
+        { error: 'No valid Traditional Chinese characters found in CSV. Please ensure your file contains Traditional Chinese characters only.' }, 
         { status: 400 }
       );
     }

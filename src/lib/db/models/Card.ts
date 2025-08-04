@@ -13,6 +13,7 @@ export interface ICard extends Document {
   imageAttribution?: string;
   imageAttributionUrl?: string;
   unsplashImageId?: string; // Keep for backward compatibility
+  imagePrompt?: string; // The prompt used to generate the image
   cached: boolean;
   disambiguated?: boolean; // True if user manually selected from multiple meanings
   // Linguistic analysis fields
@@ -74,6 +75,7 @@ const CardSchema = new Schema<ICard>(
     imageAttribution: { type: String },
     imageAttributionUrl: { type: String },
     unsplashImageId: { type: String }, // Keep for backward compatibility
+    imagePrompt: { type: String }, // The prompt used to generate the image
     cached: { type: Boolean, default: false },
     disambiguated: { type: Boolean, default: false },
     // Linguistic analysis fields

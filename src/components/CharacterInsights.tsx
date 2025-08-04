@@ -8,6 +8,7 @@ interface CharacterInsightsProps {
   characterId: string;
   character: string;
   onClose: () => void;
+  cardData?: any; // Pre-loaded card data to avoid re-fetching
 }
 
 interface InsightsData {
@@ -42,7 +43,7 @@ interface InsightsData {
   aiInsights: DeepLinguisticAnalysis | null;
 }
 
-export default function CharacterInsights({ characterId, character, onClose }: CharacterInsightsProps) {
+export default function CharacterInsights({ characterId, character, onClose, cardData }: CharacterInsightsProps) {
   const [insights, setInsights] = useState<InsightsData | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -52,13 +53,21 @@ export default function CharacterInsights({ characterId, character, onClose }: C
       const response = await fetch('/api/analytics/character-insights', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ characterId, includeAI: true }),
+        body: JSON.stringify({ 
+          characterId, 
+          includeAI: false // Don't request AI insights by default - they're slow
+        }),
       });
       
       const data = await response.json();
       
       if (data.success) {
         setInsights(data.insights);
+        
+        // If AI insights are not already cached, fetch them in the background
+        if (!data.insights.aiInsights) {
+          fetchAIInsights();
+        }
       } else {
         console.error('API returned error:', data.error);
       }
@@ -69,9 +78,88 @@ export default function CharacterInsights({ characterId, character, onClose }: C
     }
   };
 
+  // Separate function to fetch AI insights in the background
+  const fetchAIInsights = async () => {
+    try {
+      const response = await fetch('/api/analytics/character-insights', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          characterId, 
+          includeAI: true
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (data.success && data.insights.aiInsights) {
+        setInsights(prev => prev ? {
+          ...prev,
+          aiInsights: data.insights.aiInsights
+        } : null);
+      }
+    } catch (error) {
+      console.error('Failed to fetch AI insights:', error);
+    }
+  };
+
   // Fetch on mount
   useEffect(() => {
-    fetchInsights();
+    // If we have card data with enriched information, use it for immediate display
+    if (cardData && cardData.semanticCategory && cardData.tonePattern) {
+      const quickInsights: InsightsData = {
+        character: {
+          hanzi: cardData.hanzi,
+          pinyin: cardData.pinyin,
+          meaning: cardData.meaning || cardData.english?.join(', '),
+          imageUrl: cardData.imageUrl,
+        },
+        complexity: {
+          character: cardData.hanzi,
+          pinyin: cardData.pinyin,
+          definitions: [cardData.meaning || cardData.english?.join(', ')],
+          strokeCount: cardData.strokeCount || 0,
+          radicalCount: 0,
+          componentCount: cardData.componentCount || 0,
+          characterLength: cardData.hanzi.length,
+          isPhonetic: false,
+          isSemantic: true,
+          semanticCategory: cardData.semanticCategory,
+          phoneticComponent: undefined,
+          tonePattern: cardData.tonePattern,
+          toneDifficulty: 0.5,
+          semanticFields: [],
+          concreteAbstract: 'concrete',
+          polysemy: 1,
+          frequency: 3,
+          contextDiversity: 1,
+          visualComplexity: cardData.visualComplexity || 0.5,
+          phoneticTransparency: 0.5,
+          semanticTransparency: 0.7,
+          overallDifficulty: cardData.overallDifficulty || 0.5,
+          // Include mnemonics and etymology if available
+          ...(cardData.mnemonics && { mnemonics: cardData.mnemonics }),
+          ...(cardData.etymology && { etymology: cardData.etymology }),
+        } as any,
+        reviewHistory: cardData.stats ? {
+          seen: cardData.stats.totalReviews || 0,
+          correct: cardData.stats.correctReviews || 0,
+          accuracy: cardData.stats.accuracy || 0,
+          avgResponseTime: 0,
+          lastReviewed: cardData.stats.lastReviewed,
+          nextDue: '',
+          difficulty: cardData.stats.difficulty || 2.5,
+        } : null,
+        confusionAnalysis: [],
+        aiInsights: cardData.aiInsights || null,
+      };
+      
+      setInsights(quickInsights);
+      // Still fetch full insights in background for confusion analysis
+      fetchInsights();
+    } else {
+      fetchInsights();
+    }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getDifficultyColor = (difficulty: number) => {

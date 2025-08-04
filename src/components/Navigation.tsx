@@ -34,8 +34,8 @@ export default function Navigation() {
 				<div className="flex items-center justify-between h-16">
 					<div className="flex items-center">
 						<Link
-							href="/"
-							className="flex items-center space-x-2 sm:space-x-3"
+							href={status === "authenticated" ? "/decks" : "/"}
+							className="flex items-center space-x-2 sm:space-x-3 cursor-pointer hover:opacity-90 transition-opacity"
 							onClick={() => setIsMobileMenuOpen(false)}
 						>
 							<Image
@@ -43,9 +43,9 @@ export default function Navigation() {
 								alt="Danbing Mascot"
 								width={32}
 								height={32}
-								className="rounded-lg w-8 h-8 sm:w-[32px] sm:h-[32px]"
+								className="rounded-lg w-8 h-8 sm:w-[32px] sm:h-[32px] cursor-pointer"
 							/>
-							<div className="flex items-baseline space-x-1">
+							<div className="flex items-baseline space-x-1 cursor-pointer">
 								<span className="text-xl sm:text-2xl font-bold text-white">
 									Danbing
 								</span>

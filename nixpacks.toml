@@ -11,6 +11,7 @@ cmds = ["bun install --frozen-lockfile"]
 # Build the Next.js application
 # Generate Prisma client and build Next.js
 cmds = [
+  "echo 'Building with DATABASE_URL:' && echo $DATABASE_URL | head -c 30 && echo '...'",
   "bunx prisma generate",
   "bun run build"
 ]
@@ -24,5 +25,3 @@ cmd = "bun run start"
 NODE_ENV = "production"
 # Ensure Bun uses production optimizations
 BUN_ENV = "production"
-# Prisma needs to know we're in production
-PRISMA_GENERATE_DATAPROXY = "false"

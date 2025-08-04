@@ -14,6 +14,7 @@ import { convertPinyinToneNumbersToMarks, hasToneMarks } from '@/lib/utils/pinyi
 import { getPreferredEntry } from '@/lib/enrichment/multi-pronunciation-handler';
 import { getCharacterAnalysisWithCache } from '@/lib/analytics/character-analysis-service';
 import { EnhancedCharacterComplexity } from '@/lib/analytics/enhanced-linguistic-complexity';
+import { analyzeCharacterWithOpenAI } from '@/lib/analytics/openai-linguistic-analysis';
 import { registerWorker } from '../worker-monitor';
 
 export const deckEnrichmentR2Worker = new Worker<DeckEnrichmentJobData>(
@@ -21,32 +22,53 @@ export const deckEnrichmentR2Worker = new Worker<DeckEnrichmentJobData>(
   async (job: Job<DeckEnrichmentJobData>) => {
     const { deckId, deckName, sessionId, force = false } = job.data;
     
-    console.log(`\n🚀 Starting deck enrichment (R2) for "${deckName}" (${deckId})`);
-    console.log(`   Force mode: ${force}`);
-    console.log(`   Session: ${sessionId}`);
+    // Check if this is a single card enrichment job
+    const isSingleCard = job.name === 'enrich-single-card';
+    const singleCardId = (job.data as any).cardId;
+    const singleCardHanzi = (job.data as any).hanzi;
+    
+    if (isSingleCard) {
+      console.log(`\n🚀 Starting single card enrichment for "${singleCardHanzi}" in deck "${deckName}"`);
+    } else {
+      console.log(`\n🚀 Starting deck enrichment (R2) for "${deckName}" (${deckId})`);
+      console.log(`   Force mode: ${force}`);
+      console.log(`   Session: ${sessionId}`);
+    }
     
     try {
       await connectDB();
       
-      // Find cards in this deck
-      console.log('📋 Fetching cards from deck...');
-      const deckCards = await DeckCard.find({ deckId }).populate('cardId');
-      let cards = deckCards.map(dc => dc.cardId).filter(card => card);
-      console.log(`   Found ${cards.length} total cards`);
+      let cards;
       
-      // Filter cards that need enrichment
-      if (!force) {
-        const beforeFilter = cards.length;
-        cards = cards.filter(card => 
-          !card.cached ||
-          card.imageSource === 'placeholder' ||
-          !card.imageUrl ||
-          !card.audioUrl ||
-          // Check if URLs are R2 URLs
-          (card.imageUrl && !card.imageUrl.includes(process.env.R2_PUBLIC_URL)) ||
-          (card.audioUrl && !card.audioUrl.includes(process.env.R2_PUBLIC_URL))
-        );
-        console.log(`   Filtered to ${cards.length} cards needing enrichment (${beforeFilter - cards.length} already enriched)`);
+      if (isSingleCard) {
+        // Single card enrichment
+        const card = await Card.findById(singleCardId);
+        if (!card) {
+          throw new Error(`Card not found: ${singleCardId}`);
+        }
+        cards = [card];
+        console.log(`   Found single card: ${card.hanzi}`);
+      } else {
+        // Full deck enrichment
+        console.log('📋 Fetching cards from deck...');
+        const deckCards = await DeckCard.find({ deckId }).populate('cardId');
+        cards = deckCards.map(dc => dc.cardId).filter(card => card);
+        console.log(`   Found ${cards.length} total cards`);
+        
+        // Filter cards that need enrichment
+        if (!force) {
+          const beforeFilter = cards.length;
+          cards = cards.filter(card => 
+            !card.cached ||
+            card.imageSource === 'placeholder' ||
+            !card.imageUrl ||
+            !card.audioUrl ||
+            // Check if URLs are R2 URLs
+            (card.imageUrl && !card.imageUrl.includes(process.env.R2_PUBLIC_URL)) ||
+            (card.audioUrl && !card.audioUrl.includes(process.env.R2_PUBLIC_URL))
+          );
+          console.log(`   Filtered to ${cards.length} cards needing enrichment (${beforeFilter - cards.length} already enriched)`);
+        }
       }
       
       const totalCards = cards.length;
@@ -170,8 +192,16 @@ export const deckEnrichmentR2Worker = new Worker<DeckEnrichmentJobData>(
           
           const analysis = await getCharacterAnalysisWithCache(card.hanzi);
           if (analysis) {
-            card.complexity = analysis; // analysis IS the complexity data
-            // Note: linguisticData might not exist on the analysis object
+            // Map analysis fields to card fields
+            card.semanticCategory = analysis.semanticCategory;
+            card.tonePattern = analysis.tonePattern;
+            card.strokeCount = analysis.strokeCount;
+            card.componentCount = analysis.componentCount;
+            card.visualComplexity = analysis.visualComplexity;
+            card.overallDifficulty = analysis.overallDifficulty;
+            card.mnemonics = analysis.mnemonics;
+            card.etymology = analysis.etymology;
+            console.log(`   ✓ Character analysis saved: ${analysis.semanticCategory}, difficulty: ${analysis.overallDifficulty}`);
           }
           
           // Generate image with R2
@@ -198,6 +228,10 @@ export const deckEnrichmentR2Worker = new Worker<DeckEnrichmentJobData>(
             card.imageSourceId = image.cached ? 'cached' : 'generated';
             card.imageAttribution = 'AI Generated';
             card.imageAttributionUrl = '';
+            // Save the image prompt if available
+            if (image.prompt) {
+              card.imagePrompt = image.prompt;
+            }
             console.log(`   ✓ Image ${image.cached ? 'retrieved from cache' : 'generated'}`);
           } else {
             // Clear image fields if generation failed
@@ -206,6 +240,7 @@ export const deckEnrichmentR2Worker = new Worker<DeckEnrichmentJobData>(
             card.imageSourceId = undefined;
             card.imageAttribution = undefined;
             card.imageAttributionUrl = undefined;
+            card.imagePrompt = undefined;
             console.log(`   ⚠️ Image generation skipped or failed`);
           }
           
@@ -227,6 +262,29 @@ export const deckEnrichmentR2Worker = new Worker<DeckEnrichmentJobData>(
           } catch (ttsError) {
             console.error(`   ✗ TTS generation failed:`, ttsError);
             card.audioUrl = '';
+          }
+          
+          // Generate AI insights if they don't exist or if forced
+          if (!card.aiInsights || force) {
+            console.log(`   🧠 Generating AI insights...`);
+            await Deck.findByIdAndUpdate(deckId, {
+              enrichmentProgress: {
+                totalCards,
+                processedCards,
+                currentCard: card.hanzi,
+                currentOperation: 'Creating AI insights...',
+              }
+            });
+            
+            try {
+              const aiInsights = await analyzeCharacterWithOpenAI(card.hanzi);
+              card.aiInsights = aiInsights;
+              card.aiInsightsGeneratedAt = new Date();
+              console.log(`   ✓ AI insights generated`);
+            } catch (aiError) {
+              console.error(`   ✗ AI insights generation failed:`, aiError);
+              // Continue without AI insights - it's not critical for basic functionality
+            }
           }
           
           // Mark as cached and save

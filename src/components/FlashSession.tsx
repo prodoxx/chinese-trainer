@@ -26,7 +26,7 @@ interface FlashSessionProps {
 
 export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps) {
   const { showAlert, showConfirm } = useAlert();
-  const { unlockAudio } = useAudio();
+  const { unlockAudio, playAudio } = useAudio();
   const [cards, setCards] = useState<Card[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [phase, setPhase] = useState<'loading' | 'idle' | 'flash' | 'quiz' | 'countdown' | 'initial-countdown'>('loading');
@@ -149,11 +149,11 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
   const fetchCards = async () => {
     try {
       // Fetch cards based on mode
-      let endpoint = `/api/cards/${deckId}`;
+      let endpoint = `/api/decks/${deckId}/cards`;
       if (mode === 'review') {
-        endpoint = `/api/cards/${deckId}/review`;
+        endpoint = `/api/decks/${deckId}/review`;
       } else if (mode === 'practice') {
-        endpoint = `/api/cards/${deckId}/practice`;
+        endpoint = `/api/decks/${deckId}/practice`;
       }
       const response = await fetch(endpoint);
       const data = await response.json();
@@ -486,6 +486,19 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
       // Audio preloading handled by the audio manager in FlashCard component
     }
   }, [currentIndex, blockCards]);
+
+  // Handle audio playback during phonological phase
+  useEffect(() => {
+    const currentCard = blockCards[currentIndex];
+    // Play audio during phonological phase - but not in Block 3 (mental pronunciation)
+    if (viewPhase === 'phonological' && currentCard?.audioUrl && !isPaused && currentBlock !== 3) {
+      console.log('Playing audio for card:', currentCard.hanzi, 'URL:', currentCard.audioUrl);
+      // Play audio with the audio manager
+      playAudio(currentCard.audioUrl).catch(error => {
+        console.error('Failed to play audio for', currentCard.hanzi, ':', error);
+      });
+    }
+  }, [viewPhase, currentIndex, blockCards, isPaused, currentBlock, playAudio]);
   
   
   const handleQuizComplete = async (results: boolean[]) => {
@@ -1213,11 +1226,6 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
         <div className="fixed top-4 sm:top-8 left-1/2 transform -translate-x-1/2 text-yellow-500 text-base sm:text-lg">
           ⏸ PAUSED
         </div>
-      )}
-      
-      {/* Play audio during phonological phase - but not in Block 3 (mental pronunciation) */}
-      {viewPhase === 'phonological' && currentCard?.audioUrl && !isPaused && currentBlock !== 3 && (
-        <audio src={currentCard.audioUrl} autoPlay />
       )}
     </div>
   );

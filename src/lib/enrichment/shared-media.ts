@@ -5,6 +5,7 @@
 import { uploadToR2, existsInR2, deleteFromR2, generateMediaKeysByHanzi } from '@/lib/r2-storage';
 import { fal } from '@fal-ai/client';
 import { interpretChinese } from '@/lib/enrichment/openai-interpret';
+import { validateAIGeneratedImage, getRefinedPromptForIssues, getSimplifiedPrompt } from '@/lib/enrichment/image-validation';
 
 // Simple rate limiter for API calls
 const rateLimiters = new Map<string, { lastCall: number; minDelay: number }>();
@@ -124,10 +125,10 @@ export async function generateSharedImage(
   meaning: string = '',
   pinyin: string = '',
   force: boolean = false
-): Promise<{ imageUrl: string; cached: boolean }> {
+): Promise<{ imageUrl: string; cached: boolean; prompt?: string }> {
   if (!process.env.FAL_KEY) {
     console.warn("Fal.ai API key not configured");
-    return { imageUrl: '', cached: false };
+    return { imageUrl: '', cached: false, prompt: undefined };
   }
 
   try {
@@ -140,7 +141,7 @@ export async function generateSharedImage(
         // Return secure API endpoint - strip 'media/' prefix for cleaner URLs
         const imagePath = imageKey.replace('media/', '');
         const imageUrl = `/api/media/${imagePath}`;
-        return { imageUrl, cached: true };
+        return { imageUrl, cached: true, prompt: undefined };
       }
     } else {
       console.log(`Force regeneration requested for ${hanzi}, will delete existing image if present`);
@@ -165,7 +166,13 @@ export async function generateSharedImage(
       if (interpretation && interpretation.imagePrompt) {
         // Adapt the prompt for fal.ai - focus on mnemonic visual association
         const basePrompt = interpretation.imagePrompt.replace(/CRITICAL.*$/, '').trim();
-        prompt = `Mnemonic visual aid for learning: ${basePrompt} Photorealistic image that helps students remember the meaning "${meaning}" through real-life association. No text, letters, numbers, or written characters anywhere. Professional photography style, natural lighting, high quality, web-friendly resolution.`;
+        
+        // Prefer simpler scenes to reduce AI artifacts - maximum 3 people
+        const simplificationHint = meaning.toLowerCase().includes('play') || meaning.toLowerCase().includes('group') 
+          ? ' Show MAXIMUM 3 people only for clarity.' 
+          : ' Prefer single person or object when possible.';
+        
+        prompt = `Mnemonic visual aid for learning: ${basePrompt} Photorealistic image that helps students remember the meaning "${meaning}" through real-life association.${simplificationHint} No text, letters, numbers, or written characters anywhere. Professional photography style, natural lighting, high quality, web-friendly resolution.`;
         console.log(`Using AI-generated mnemonic prompt for ${hanzi}: "${meaning}"`);
       } else {
         throw new Error('No AI image prompt available');
@@ -176,18 +183,20 @@ export async function generateSharedImage(
       
       const meaningLower = meaning.toLowerCase();
       
-      // Create mnemonic-focused prompts based on meaning type
+      // Create mnemonic-focused prompts based on meaning type - KEEP SIMPLE
       if (meaningLower.match(/\b(feel|emotion|mood|sad|happy|angry|excited|calm|nervous|proud)\b/)) {
-        prompt = `Photorealistic portrait: A person with natural ${meaning} expression that helps students remember this emotion through real human connection. Professional photography, natural lighting, no text anywhere, educational visual aid.`;
+        prompt = `Photorealistic portrait: Single person with clear ${meaning} facial expression. Close-up shot, professional photography, natural lighting, no text anywhere.`;
       } else if (meaningLower.match(/\b(action|move|run|walk|jump|sit|stand|dance|work)\b/)) {
-        prompt = `Photorealistic action shot: Real person naturally performing "${meaning}" action in a memorable way. Professional photography, motion capture, no text, visual memory aid for language learning.`;
+        prompt = `Photorealistic action: One person clearly performing "${meaning}" action. Simple composition, professional photography, no text.`;
+      } else if (meaningLower.match(/\b(sport|play|game|basketball|football|tennis)\b/)) {
+        prompt = `Photorealistic scene: Two people engaged in "${meaning}". Clear composition with EXACTLY 2 people, proper anatomy, single ball/equipment that maintains its shape. Professional photography, no text.`;
       } else if (meaningLower.match(/\b(size|big|small|large|tiny|huge|little)\b/)) {
-        prompt = `Photorealistic size comparison: Real objects clearly showing "${meaning}" concept through dramatic scale difference. Professional photography, no text, helps students associate visual with meaning.`;
+        prompt = `Photorealistic comparison: Simple objects showing "${meaning}" through size contrast. No people, clear scale difference, professional photography, no text.`;
       } else if (meaningLower.match(/\b(quality|good|bad|beautiful|ugly|clean|dirty|new|old)\b/)) {
-        prompt = `Photorealistic contrast: Real-world scene clearly showing "${meaning}" quality for easy memorization. Professional photography, no text, helps students remember through visual association.`;
+        prompt = `Photorealistic example: Single object or scene clearly showing "${meaning}" quality. Simple, uncluttered composition, no text.`;
       } else {
-        // Generic mnemonic approach
-        prompt = `Photorealistic visual for "${meaning}": Create a memorable real-world scene that helps students instantly recall this concept. Professional photography, natural lighting, no text anywhere, clear visual memory aid.`;
+        // Generic mnemonic approach - prefer objects over people when possible
+        prompt = `Photorealistic visual for "${meaning}": Simple, clear scene with minimal elements. Prefer single object or person. Professional photography, no text anywhere.`;
       }
     }
     
@@ -195,46 +204,92 @@ export async function generateSharedImage(
     console.log(`Generated mnemonic prompt: ${prompt}`);
     console.log(`Image will be stored at: ${imageKey}`);
     
-    // Rate limit fal.ai API calls
-    await rateLimit('fal-ai', 1000); // 1 second between calls
-    
-    // Generate image with fal.ai flux-pro model for photorealistic quality
-    // Using parameters optimized for realistic images
-    const result = await fal.run("fal-ai/flux-pro", {
-      input: {
-        prompt,
-        image_size: "square_hd",
-        num_inference_steps: 28,
-        guidance_scale: 3.5,
-        num_images: 1,
-        safety_tolerance: 2,
-        output_format: "jpeg"
-      }
-    }) as any;
-
-    console.log('fal.ai API response:', JSON.stringify(result, null, 2));
-
-    // Check for different possible response structures
+    // Try up to 3 times to generate a valid image
+    const maxAttempts = 3;
+    let currentPrompt = prompt;
+    let validImage = false;
     let falImageUrl: string | undefined;
+    let validationResult: any = null;
     
-    // Check if response is wrapped in 'data' property
-    const responseData = result?.data || result;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      console.log(`\n🎨 Image generation attempt ${attempt}/${maxAttempts}`);
+      
+      // Rate limit fal.ai API calls
+      await rateLimit('fal-ai', 1000); // 1 second between calls
+      
+      // Generate image with fal.ai flux-pro model for photorealistic quality
+      // Using parameters optimized for realistic images
+      const result = await fal.run("fal-ai/flux-pro", {
+        input: {
+          prompt: currentPrompt,
+          image_size: "square_hd",
+          num_inference_steps: 28,
+          guidance_scale: 3.5,
+          num_images: 1,
+          safety_tolerance: 2,
+          output_format: "jpeg"
+        }
+      }) as any;
+
+      console.log('fal.ai API response:', JSON.stringify(result, null, 2));
+
+      // Check for different possible response structures
+      falImageUrl = undefined;
+      
+      // Check if response is wrapped in 'data' property
+      const responseData = result?.data || result;
+      
+      if (responseData?.images?.[0]?.url) {
+        falImageUrl = responseData.images[0].url;
+      } else if (responseData?.image?.url) {
+        falImageUrl = responseData.image.url;
+      } else if (responseData?.url) {
+        falImageUrl = responseData.url;
+      } else if (responseData?.output?.images?.[0]?.url) {
+        falImageUrl = responseData.output.images[0].url;
+      } else if (responseData?.output?.url) {
+        falImageUrl = responseData.output.url;
+      }
+      
+      if (!falImageUrl) {
+        console.error('Failed to extract image URL from fal.ai response:', result);
+        throw new Error("No image URL found in fal.ai response");
+      }
+      
+      // Validate the generated image
+      console.log('🔍 Validating generated image for AI artifacts...');
+      validationResult = await validateAIGeneratedImage(falImageUrl);
+      console.log('Validation result:', validationResult);
+      
+      if (validationResult.isValid) {
+        console.log('✅ Image passed validation!');
+        validImage = true;
+        break;
+      } else {
+        console.log(`❌ Image failed validation on attempt ${attempt}:`, validationResult.issues);
+        
+        if (attempt < maxAttempts) {
+          // Check if scene is too complex or has too many people
+          if (validationResult.details?.crowdedScene || validationResult.details?.personCount > 3) {
+            console.log(`Scene has ${validationResult.details?.personCount || 'unknown'} people (max 3 allowed), simplifying prompt...`);
+            currentPrompt = getSimplifiedPrompt(prompt, meaning);
+          } else {
+            // Refine prompt based on specific issues found
+            currentPrompt = getRefinedPromptForIssues(prompt, validationResult.issues, validationResult.details);
+          }
+          console.log('Refined prompt for next attempt:', currentPrompt);
+        }
+      }
+    }
     
-    if (responseData?.images?.[0]?.url) {
-      falImageUrl = responseData.images[0].url;
-    } else if (responseData?.image?.url) {
-      falImageUrl = responseData.image.url;
-    } else if (responseData?.url) {
-      falImageUrl = responseData.url;
-    } else if (responseData?.output?.images?.[0]?.url) {
-      falImageUrl = responseData.output.images[0].url;
-    } else if (responseData?.output?.url) {
-      falImageUrl = responseData.output.url;
+    // Use the last generated image even if it didn't pass validation
+    if (!validImage) {
+      console.warn(`⚠️ Could not generate a perfect image after ${maxAttempts} attempts. Using best effort.`);
+      console.warn('Final validation issues:', validationResult?.issues);
     }
     
     if (!falImageUrl) {
-      console.error('Failed to extract image URL from fal.ai response:', result);
-      throw new Error("No image URL found in fal.ai response");
+      throw new Error("Failed to generate image after all attempts");
     }
 
     // Download and upload to R2
@@ -247,11 +302,18 @@ export async function generateSharedImage(
       metadata: {
         generatedAt: new Date().toISOString(),
         source: 'fal-flux-pro',
+        validated: validImage ? 'true' : 'false',
+        validationAttempts: maxAttempts.toString(),
       }
     });
     
     console.log(`✅ Image uploaded successfully to: ${imageKey}`);
     console.log(`   Generated mnemonic visual for: "${meaning}"`);
+    if (validImage) {
+      console.log(`   ✨ Image passed AI validation with confidence: ${validationResult.confidence}`);
+    } else if (validationResult) {
+      console.log(`   ⚠️ Image has potential issues: ${validationResult.issues.join(', ')}`);
+    }
     
     // Return secure API endpoint - strip 'media/' prefix for cleaner URLs
     const imagePath = imageKey.replace('media/', '');
@@ -261,14 +323,14 @@ export async function generateSharedImage(
       : `/api/media/${imagePath}`;
     console.log(`   Access URL: ${imageUrl}`);
     
-    return { imageUrl, cached: false };
+    return { imageUrl, cached: false, prompt };
   } catch (error: any) {
     console.error('Shared image generation error:', error);
     // Log detailed error information for debugging
     if (error.status === 422 && error.body?.detail) {
       console.error('Validation error details:', JSON.stringify(error.body.detail, null, 2));
     }
-    return { imageUrl: '', cached: false };
+    return { imageUrl: '', cached: false, prompt: undefined };
   }
 }
 
