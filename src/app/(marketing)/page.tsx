@@ -72,7 +72,8 @@ export default async function MarketingHomePage() {
         </div>
       </section>
 
-      {/* Social Proof Section */}
+      {/* Social Proof Section - Commented out until we have real data */}
+      {/*
       <section className="py-12 sm:py-16 border-b border-[#30363d]">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="flex flex-wrap justify-center items-center gap-8 sm:gap-12 text-center">
@@ -98,6 +99,7 @@ export default async function MarketingHomePage() {
           </div>
         </div>
       </section>
+      */}
 
       {/* How It Works - Simple 3 Steps */}
       <section className="py-20">
@@ -381,7 +383,7 @@ export default async function MarketingHomePage() {
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-4xl sm:text-5xl font-bold text-white mb-6">Start Learning Chinese Today</h2>
             <p className="text-xl text-[#7d8590] mb-8 max-w-2xl mx-auto">
-              Join 50,000+ learners mastering Chinese characters with AI-powered flashcards and cognitive science.
+              Master Chinese characters with AI-powered flashcards and cognitive science.
             </p>
 
             <div className="bg-[#21262d] border border-[#30363d] rounded-lg p-8 mb-8 max-w-md mx-auto">
