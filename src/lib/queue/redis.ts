@@ -1,6 +1,46 @@
 import Redis from 'ioredis';
+import IORedis from 'ioredis';
 
 let redis: Redis | null = null;
+
+// Custom DNS resolver for Railway internal networking
+class RailwayRedis extends IORedis {
+  constructor(options: any) {
+    // If connecting to Railway internal hostname, add special handling
+    if (typeof options === 'string' && options.includes('redis.railway.internal')) {
+      console.log('🚂 Detected Railway internal URL, configuring for internal networking...');
+      
+      // Parse the URL to extract components
+      const url = new URL(options);
+      
+      // Create connection with IPv6 support and custom DNS handling
+      super({
+        host: url.hostname,
+        port: parseInt(url.port || '6379'),
+        password: url.password || undefined,
+        username: url.username || 'default',
+        family: 0, // Auto-detect (tries both IPv4 and IPv6)
+        // Increase timeouts for internal networking
+        connectTimeout: 20000,
+        commandTimeout: 10000,
+        // Disable offline queue to fail fast
+        enableOfflineQueue: false,
+        maxRetriesPerRequest: 3,
+        retryStrategy: (times) => {
+          console.log(`🔄 Retry attempt ${times} for Railway Redis connection`);
+          if (times > 3) return null;
+          return Math.min(times * 1000, 3000);
+        },
+        reconnectOnError: (err) => {
+          console.log('🔧 Reconnect on error:', err.message);
+          return true;
+        },
+      });
+    } else {
+      super(options);
+    }
+  }
+}
 
 // Get Redis connection options for BullMQ compatibility
 export function getRedisOptions() {
@@ -49,12 +89,8 @@ export function getRedis(): Redis {
         console.log('   URL parsing failed:', e);
       }
       
-      redis = new Redis(options, {
-        maxRetriesPerRequest: null,
-        enableOfflineQueue: false,
-        connectTimeout: 10000,
-        lazyConnect: false,
-      });
+      // Use RailwayRedis for Railway internal URLs
+      redis = new RailwayRedis(options);
     } else {
       console.log('🔗 Connecting to Redis using host/port configuration');
       console.log(`   Host: ${options.host}`);
@@ -74,9 +110,12 @@ export function getRedis(): Redis {
       if (err.message?.includes('ENOTFOUND') && err.message?.includes('railway.internal')) {
         console.error('🔧 Railway internal DNS resolution failed');
         console.error('   This typically means:');
-        console.error('   1. The service is not running in Railway');
-        console.error('   2. The service is in a different Railway project');
-        console.error('   3. Private networking is not enabled');
+        console.error('   1. The services are not in the same Railway environment');
+        console.error('   2. The Redis service name might have changed');
+        console.error('   3. Try using the public Redis URL instead');
+        console.error('');
+        console.error('   Quick fix: Enable public networking on your Redis service');
+        console.error('   and use the public URL instead of the internal one.');
       }
     });
   }
