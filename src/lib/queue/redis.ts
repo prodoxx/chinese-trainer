@@ -39,8 +39,21 @@ export function getRedis(): Redis {
     
     if (typeof options === 'string') {
       console.log('🔗 Connecting to Redis using REDIS_URL');
+      // Parse and log the URL (without password)
+      try {
+        const url = new URL(options);
+        console.log(`   Host: ${url.hostname}`);
+        console.log(`   Port: ${url.port || '6379'}`);
+        console.log(`   Protocol: ${url.protocol}`);
+      } catch (e) {
+        console.log('   URL parsing failed:', e);
+      }
+      
       redis = new Redis(options, {
         maxRetriesPerRequest: null,
+        enableOfflineQueue: false,
+        connectTimeout: 10000,
+        lazyConnect: false,
       });
     } else {
       console.log('🔗 Connecting to Redis using host/port configuration');
@@ -56,6 +69,15 @@ export function getRedis(): Redis {
 
     redis.on('error', (err) => {
       console.error('❌ Redis connection error:', err);
+      
+      // Additional debugging for Railway
+      if (err.message?.includes('ENOTFOUND') && err.message?.includes('railway.internal')) {
+        console.error('🔧 Railway internal DNS resolution failed');
+        console.error('   This typically means:');
+        console.error('   1. The service is not running in Railway');
+        console.error('   2. The service is in a different Railway project');
+        console.error('   3. Private networking is not enabled');
+      }
     });
   }
   
