@@ -45,14 +45,25 @@ export const deckImportWorker = new Worker<DeckImportJobData>(
         });
         
         const batchPromises = batch.map(async (hanzi) => {
+          // Check if we have disambiguation selection for this character
+          const disambiguationSelection = disambiguationSelections?.[hanzi];
+          
           // Find or create the card
-          let card = await Card.findOne({ hanzi });
+          let card;
+          if (disambiguationSelection?.pinyin) {
+            // If disambiguation is provided, look for card with specific hanzi+pinyin combo
+            card = await Card.findOne({ 
+              hanzi, 
+              pinyin: disambiguationSelection.pinyin 
+            });
+          } else {
+            // No disambiguation, look for any card with this hanzi
+            card = await Card.findOne({ hanzi });
+          }
           
           if (!card) {
-            // Check if we have disambiguation selection for this character
-            const disambiguationSelection = disambiguationSelections?.[hanzi];
-            
-            card = await Card.create({ 
+            // Create new card with disambiguation info if provided
+            const cardData: any = {
               hanzi,
               // If we have a pre-selected meaning, store it
               ...(disambiguationSelection && {
@@ -60,7 +71,9 @@ export const deckImportWorker = new Worker<DeckImportJobData>(
                 meaning: disambiguationSelection.meaning,
                 disambiguated: true
               })
-            });
+            };
+            
+            card = await Card.create(cardData);
             newCardsCount++;
           } else {
             existingCardsCount++;

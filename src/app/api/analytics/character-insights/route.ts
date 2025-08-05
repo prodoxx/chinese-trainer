@@ -37,13 +37,18 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Get linguistic analysis - prefer card data, then use cache service
+    // Get linguistic analysis - always use cache service to get full data including mnemonics
     const analysisStart = Date.now();
     let complexityAnalysis;
     
-    // Check if card already has linguistic data
-    if (card.semanticCategory && card.tonePattern) {
-      // Use card's stored data
+    try {
+      // Always use the character analysis service to get full data including mnemonics/etymology
+      complexityAnalysis = await getCharacterAnalysisWithCache(card.hanzi);
+      timings.linguisticAnalysis = Date.now() - analysisStart;
+      console.log(`Linguistic analysis from service took ${timings.linguisticAnalysis}ms`);
+    } catch (error) {
+      console.error('Failed to get character analysis:', error);
+      // Fallback to basic card data if service fails
       complexityAnalysis = {
         character: card.hanzi,
         pinyin: card.pinyin,
@@ -54,9 +59,9 @@ export async function POST(request: NextRequest) {
         characterLength: card.hanzi.length,
         isPhonetic: false,
         isSemantic: true,
-        semanticCategory: card.semanticCategory,
+        semanticCategory: card.semanticCategory || 'unknown',
         phoneticComponent: undefined,
-        tonePattern: card.tonePattern,
+        tonePattern: card.tonePattern || '',
         toneDifficulty: 0.5,
         semanticFields: [],
         concreteAbstract: 'concrete',
@@ -66,15 +71,12 @@ export async function POST(request: NextRequest) {
         visualComplexity: card.visualComplexity || 0.5,
         phoneticTransparency: 0.5,
         semanticTransparency: 0.7,
-        overallDifficulty: card.overallDifficulty || 0.5
+        overallDifficulty: card.overallDifficulty || 0.5,
+        mnemonics: card.mnemonics || [],
+        etymology: card.etymology || ''
       };
       timings.linguisticAnalysis = Date.now() - analysisStart;
-      console.log(`Linguistic analysis from card took ${timings.linguisticAnalysis}ms`);
-    } else {
-      // Fall back to analysis service
-      complexityAnalysis = await getCharacterAnalysisWithCache(card.hanzi);
-      timings.linguisticAnalysis = Date.now() - analysisStart;
-      console.log(`Linguistic analysis from service took ${timings.linguisticAnalysis}ms`);
+      console.log(`Linguistic analysis fallback from card took ${timings.linguisticAnalysis}ms`);
     }
     
     // Get review history for this character
@@ -89,30 +91,30 @@ export async function POST(request: NextRequest) {
       difficulty: review.ease || 2.5,
     } : null;
     
+    // Always include AI insights if they're already cached, regardless of includeAI flag
     let aiInsights = null;
-    if (includeAI) {
+    
+    // Check if AI insights are already cached in the card
+    if (card.aiInsights && card.aiInsightsGeneratedAt) {
+      // Check if cached insights are recent (less than 30 days old)
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      if (card.aiInsightsGeneratedAt > thirtyDaysAgo) {
+        console.log('Using cached AI insights for character:', card.hanzi);
+        aiInsights = card.aiInsights;
+      }
+    }
+    
+    // Only generate new AI insights if explicitly requested and none exist
+    if (includeAI && !aiInsights) {
       try {
-        // Check if AI insights are already cached in the card
-        if (card.aiInsights && card.aiInsightsGeneratedAt) {
-          // Check if cached insights are recent (less than 30 days old)
-          const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-          if (card.aiInsightsGeneratedAt > thirtyDaysAgo) {
-            console.log('Using cached AI insights for character:', card.hanzi);
-            aiInsights = card.aiInsights;
-          }
-        }
+        console.log('Generating new AI insights for character:', card.hanzi);
+        aiInsights = await analyzeCharacterWithOpenAI(card.hanzi);
         
-        // If no cached insights or they're stale, generate new ones
-        if (!aiInsights) {
-          console.log('Generating new AI insights for character:', card.hanzi);
-          aiInsights = await analyzeCharacterWithOpenAI(card.hanzi);
-          
-          // Cache the AI insights in the card
-          await Card.findByIdAndUpdate(characterId, {
-            aiInsights,
-            aiInsightsGeneratedAt: new Date(),
-          });
-        }
+        // Cache the AI insights in the card
+        await Card.findByIdAndUpdate(characterId, {
+          aiInsights,
+          aiInsightsGeneratedAt: new Date(),
+        });
       } catch (error) {
         console.error('AI analysis failed:', error);
       }

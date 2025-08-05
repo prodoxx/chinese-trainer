@@ -216,7 +216,6 @@ export default function DeckView() {
           })
           
           // Refresh the deck to show enriched card
-          showAlert(`${hanzi} has been enriched successfully!`, { type: 'success' })
           fetchDeck()
         } else if (jobStatus.state === 'failed' || attempts >= maxAttempts) {
           clearInterval(pollInterval)
@@ -323,31 +322,15 @@ export default function DeckView() {
     return () => clearInterval(interval)
   }, [deck, enrichingCards, pollEnrichmentJob])
   
-  // Update enrichingCards map when deck changes (to fix stale IDs)
-  useEffect(() => {
-    if (!deck || enrichingCards.size === 0) return
-    
-    setEnrichingCards(prev => {
-      const updated = new Map()
-      
-      // Update card IDs based on hanzi matching
-      for (const [oldId, info] of prev) {
-        const matchingCard = deck.cards.find(c => c.hanzi === info.hanzi)
-        if (matchingCard) {
-          const newId = matchingCard._id.toString()
-          updated.set(newId, info)
-        } else {
-          // Keep the old entry if card not found (might still be loading)
-          updated.set(oldId, info)
-        }
-      }
-      
-      return updated
-    })
-  }, [deck])
 
   const handleAddCharacter = async (disambiguationSelection?: { pinyin: string; meaning: string }) => {
     const trimmedCharacter = pendingCharacter || newCharacter.trim()
+    
+    console.log('handleAddCharacter called with:', {
+      character: trimmedCharacter,
+      disambiguationSelection,
+      pendingCharacter
+    })
     
     if (!trimmedCharacter) {
       showAlert('Please enter a character or vocabulary', { type: 'error' })
@@ -429,7 +412,6 @@ export default function DeckView() {
       setNewCharacter('')
       setPendingCharacter(null)
       setDisambiguationData(null)
-      showAlert(`${validation.cleanedText} added to deck! Enriching in background...`, { type: 'success' })
       
       // Refresh deck to show the new card
       await fetchDeck()
@@ -656,32 +638,10 @@ export default function DeckView() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
           {deck.cards.map((card) => {
             const cardId = card._id.toString()
-            // Check if enriching by ID or by hanzi (in case ID changed after refresh)
-            let isEnriching = enrichingCards.has(cardId)
-            let enrichmentInfo = isEnriching ? enrichingCards.get(cardId) : null
+            // Check if enriching by ID only
+            const isEnriching = enrichingCards.has(cardId)
+            const enrichmentInfo = isEnriching ? enrichingCards.get(cardId) : null
             
-            // If not found by ID, check by hanzi
-            if (!isEnriching && card.hanzi) {
-              for (const [id, info] of enrichingCards) {
-                if (info.hanzi === card.hanzi) {
-                  isEnriching = true
-                  enrichmentInfo = info
-                  console.log(`Found enriching card by hanzi match: ${card.hanzi}`)
-                  break
-                }
-              }
-            }
-            
-            // Debug log for the card in question
-            if (card.hanzi === '打籃球') {
-              console.log('打籃球 card state:', {
-                cardId,
-                isEnriching,
-                enrichmentInfo,
-                enrichingCardsSize: enrichingCards.size,
-                enrichingCards: Array.from(enrichingCards.entries())
-              })
-            }
             
             
             return (
@@ -719,7 +679,7 @@ export default function DeckView() {
                 <div className="mb-4">
                   <div className="w-full bg-[#161b22] rounded-lg overflow-hidden">
                     <img
-                      src={card.imageUrl}
+                      src={`${card.imageUrl}${card.imageUrl.includes('?') ? '&' : '?'}t=${Date.now()}`}
                       alt={card.hanzi}
                       className="w-full h-auto object-contain"
                     />
@@ -769,7 +729,8 @@ export default function DeckView() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
-                      playAudio(card.audioUrl!)
+                      const audioUrlWithTimestamp = `${card.audioUrl}${card.audioUrl.includes('?') ? '&' : '?'}t=${Date.now()}`
+                      playAudio(audioUrlWithTimestamp)
                     }}
                     className="w-full py-3 bg-gradient-to-r from-[#f7cc48]/10 to-yellow-500/10 hover:from-[#f7cc48]/20 hover:to-yellow-500/20 text-[#f7cc48] rounded-xl transition-all text-sm font-semibold border border-[#f7cc48]/20 hover:border-[#f7cc48]/40"
                   >
@@ -898,6 +859,7 @@ export default function DeckView() {
       {disambiguationData && (
         <DisambiguationModal
           characters={disambiguationData.characters}
+          isImport={false}
           onComplete={(selections) => {
             const character = pendingCharacter || newCharacter
             const selection = selections[character]

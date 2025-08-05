@@ -63,7 +63,7 @@ export interface ICard extends Document {
 
 const CardSchema = new Schema<ICard>(
   {
-    hanzi: { type: String, required: true, unique: true },
+    hanzi: { type: String, required: true },
     meaning: { type: String, default: '' },
     pinyin: { type: String, default: '' },
     imageUrl: { type: String },
@@ -121,6 +121,11 @@ const CardSchema = new Schema<ICard>(
   { timestamps: true }
 );
 
-CardSchema.index({ hanzi: 1 }, { unique: true });
+// Create a compound unique index on hanzi + pinyin
+// This allows the same character with different pronunciations/meanings
+CardSchema.index({ hanzi: 1, pinyin: 1 }, { unique: true });
+
+// Keep a non-unique index on hanzi for efficient lookups
+CardSchema.index({ hanzi: 1 });
 
 export default mongoose.models.Card || mongoose.model<ICard>('Card', CardSchema);

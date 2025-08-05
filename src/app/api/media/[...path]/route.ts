@@ -57,10 +57,10 @@ export async function GET(
       return new NextResponse(data, {
         headers: {
           'Content-Type': contentType,
-          // If timestamp is present, don't cache; otherwise cache for 1 year
-          'Cache-Control': hasTimestamp 
-            ? 'no-cache, no-store, must-revalidate' 
-            : 'public, max-age=31536000',
+          // Always use no-cache to ensure fresh content
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
         },
       });
     } catch (error) {

@@ -40,7 +40,4 @@ export function logMongoConnection(uri: string) {
   const dbMatch = uri.match(/\/([^/?]+)(\?|$)/);
   const dbName = dbMatch ? dbMatch[1] : 'default';
   
-  console.log('[MongoDB] Connection info:');
-  console.log('  URI:', sanitized);
-  console.log('  Database:', dbName);
 }

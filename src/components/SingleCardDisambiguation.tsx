@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { AlertTriangle, CheckCircle, X } from 'lucide-react';
+import { convertPinyinToneNumbersToMarks } from '@/lib/utils/pinyin';
 
 interface CharacterMeaning {
   pinyin: string;
@@ -96,7 +97,7 @@ export default function SingleCardDisambiguation({
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-0.5">
-                      <span className="text-lg font-semibold text-[#f7cc48]">{meaning.pinyin}</span>
+                      <span className="text-lg font-semibold text-[#f7cc48]">{convertPinyinToneNumbersToMarks(meaning.pinyin)}</span>
                       {getFrequencyBadge(meaning.frequency)}
                     </div>
                     <p className="text-sm text-gray-300">{meaning.meaning}</p>

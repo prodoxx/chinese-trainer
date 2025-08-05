@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { EnhancedCharacterComplexity } from '@/lib/analytics/enhanced-linguistic-complexity';
 import { DeepLinguisticAnalysis } from '@/lib/analytics/openai-linguistic-analysis';
+import { convertPinyinToneNumbersToMarks } from '@/lib/utils/pinyin';
 
 interface CharacterInsightsProps {
   characterId: string;
@@ -64,10 +65,10 @@ export default function CharacterInsights({ characterId, character, onClose, car
       if (data.success) {
         setInsights(data.insights);
         
-        // If AI insights are not already cached, fetch them in the background
-        if (!data.insights.aiInsights) {
-          fetchAIInsights();
-        }
+        // Don't fetch AI insights in the background anymore - they should be generated during enrichment
+        // if (!data.insights.aiInsights) {
+        //   fetchAIInsights();
+        // }
       } else {
         console.error('API returned error:', data.error);
       }
@@ -78,30 +79,7 @@ export default function CharacterInsights({ characterId, character, onClose, car
     }
   };
 
-  // Separate function to fetch AI insights in the background
-  const fetchAIInsights = async () => {
-    try {
-      const response = await fetch('/api/analytics/character-insights', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          characterId, 
-          includeAI: true
-        }),
-      });
-      
-      const data = await response.json();
-      
-      if (data.success && data.insights.aiInsights) {
-        setInsights(prev => prev ? {
-          ...prev,
-          aiInsights: data.insights.aiInsights
-        } : null);
-      }
-    } catch (error) {
-      console.error('Failed to fetch AI insights:', error);
-    }
-  };
+  // AI insights are now generated during enrichment, not on-demand
 
   // Fetch on mount
   useEffect(() => {
@@ -223,9 +201,22 @@ export default function CharacterInsights({ characterId, character, onClose, car
     return tones.map(t => toneNames[t as keyof typeof toneNames] || t).join(' + ');
   };
 
-  // Process text to add pinyin for Chinese characters
+  // Process text to add pinyin for Chinese characters and convert tone numbers to marks
   const processTextWithPinyin = (text: string) => {
     if (!text) return text;
+    
+    // First, convert any pinyin with tone numbers to tone marks
+    // Pattern to match Chinese characters followed by pinyin in parentheses with tone numbers
+    // e.g., 晚 (wan3) -> 晚 (wǎn)
+    text = text.replace(/([一-龥]+)\s*\(([a-zA-Z0-9]+)\)/g, (match, chinese, pinyin) => {
+      // Check if pinyin contains tone numbers
+      if (/[0-9]/.test(pinyin)) {
+        // Convert tone numbers to marks
+        const convertedPinyin = convertPinyinToneNumbersToMarks(pinyin);
+        return `${chinese} (${convertedPinyin})`;
+      }
+      return match;
+    });
     
     // Common character-to-pinyin mappings for frequently used characters
     const commonPinyin: Record<string, string> = {
@@ -266,7 +257,11 @@ export default function CharacterInsights({ characterId, character, onClose, car
       '現': 'xiàn',
       '當': 'dāng',
       '今': 'jīn',
-      '在': 'zài'
+      '在': 'zài',
+      // Add characters from the screenshot
+      '晚': 'wǎn',
+      '安': 'ān',
+      '晚安': 'wǎn ān'
     };
     
     // For the current character being studied
@@ -274,6 +269,7 @@ export default function CharacterInsights({ characterId, character, onClose, car
     const currentPinyin = insights?.character.pinyin;
     
     if (currentChar && currentPinyin && text.includes(currentChar)) {
+      // Don't add pinyin if it already has it in parentheses
       text = text.replace(new RegExp(`(?<!\\()${currentChar}(?!\\s*\\()`, 'g'), `${currentChar} (${currentPinyin})`);
     }
     
@@ -350,7 +346,7 @@ export default function CharacterInsights({ characterId, character, onClose, car
                 <div className="flex items-start gap-6">
                   {insights.character.imageUrl && (
                     <img 
-                      src={insights.character.imageUrl} 
+                      src={`${insights.character.imageUrl}${insights.character.imageUrl.includes('?') ? '&' : '?'}t=${Date.now()}`} 
                       alt={insights.character.hanzi}
                       className="w-32 h-32 object-cover rounded-lg"
                     />
@@ -469,44 +465,11 @@ export default function CharacterInsights({ characterId, character, onClose, car
                 </div>
               )}
 
-              {/* Memory Aids (from enrichment) - only show if no AI insights */}
-              {(insights.complexity as any).mnemonics && (insights.complexity as any).mnemonics.length > 0 && !insights.aiInsights && (
+              {/* Memory Aids - Show AI insights if available, otherwise show character analysis */}
+              {(insights.aiInsights?.mnemonics || ((insights.complexity as any).mnemonics && (insights.complexity as any).mnemonics.length > 0)) && (
                 <div className="bg-[#232937] rounded-lg p-4 sm:p-6 border border-[#2d3548]">
                   <h3 className="text-xl font-semibold mb-4 text-[#f7cc48]">Memory Aids</h3>
-                  <div className="space-y-3">
-                    {(insights.complexity as any).mnemonics.map((mnemonic: string, index: number) => (
-                      <div key={index} className="p-3 bg-[#1a1f2e] rounded-lg border border-[#2d3548]">
-                        <p className="text-gray-100">{processTextWithPinyin(mnemonic)}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Etymology (from enrichment) - only show if no AI insights */}
-              {(insights.complexity as any).etymology && !insights.aiInsights && (
-                <div className="bg-[#232937] rounded-lg p-4 sm:p-6 border border-[#2d3548]">
-                  <h3 className="text-xl font-semibold mb-4 text-[#f7cc48]">Etymology</h3>
-                  <p className="text-gray-100">{processTextWithPinyin((insights.complexity as any).etymology)}</p>
-                </div>
-              )}
-
-              {/* AI Insights Note (only if no AI insights available) */}
-              {!insights.aiInsights && (
-                <div className="bg-[#232937] rounded-lg p-4 sm:p-6 text-center border border-[#2d3548]">
-                  <h3 className="text-lg font-semibold mb-2 text-gray-300">💡 AI Insights Coming Soon</h3>
-                  <p className="text-gray-400 text-sm">
-                    AI-powered mnemonics, etymology, and learning tips will be automatically generated when this character is re-enriched.
-                  </p>
-                </div>
-              )}
-
-              {/* AI Insights */}
-              {insights.aiInsights && (
-                <>
-                  {/* Mnemonics */}
-                  <div className="bg-[#232937] rounded-lg p-4 sm:p-6 border border-[#2d3548]">
-                    <h3 className="text-xl font-semibold mb-4 text-[#f7cc48]">Memory Aids</h3>
+                  {insights.aiInsights?.mnemonics ? (
                     <div className="space-y-4">
                       <div>
                         <h4 className="text-sm text-gray-300 mb-1">Visual Mnemonic</h4>
@@ -521,46 +484,80 @@ export default function CharacterInsights({ characterId, character, onClose, car
                         <p className="text-gray-100">{processTextWithPinyin(insights.aiInsights.mnemonics.components)}</p>
                       </div>
                     </div>
-                  </div>
-
-                  {/* Etymology */}
-                  {insights.aiInsights.etymology && (
-                    <div className="bg-[#232937] rounded-lg p-4 sm:p-6 border border-[#2d3548]">
-                      <h3 className="text-xl font-semibold mb-4 text-[#f7cc48]">Etymology</h3>
-                      <div className="space-y-3">
-                        <div>
-                          <h4 className="text-sm text-gray-300 mb-1">Origin</h4>
-                          <p className="text-gray-100">{insights.aiInsights.etymology.origin}</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {(insights.complexity as any).mnemonics.map((mnemonic: string, index: number) => (
+                        <div key={index} className="p-3 bg-[#1a1f2e] rounded-lg border border-[#2d3548]">
+                          <p className="text-gray-100">{processTextWithPinyin(mnemonic)}</p>
                         </div>
-                        <div>
-                          <h4 className="text-sm text-gray-300 mb-1">Evolution</h4>
-                          <ol className="list-decimal list-inside space-y-1">
-                            {insights.aiInsights.etymology.evolution.map((stage, i) => (
-                              <li key={i} className="text-gray-100">{stage}</li>
-                            ))}
-                          </ol>
-                        </div>
-                      </div>
+                      ))}
                     </div>
                   )}
+                </div>
+              )}
 
-                  {/* Learning Tips */}
-                  <div className="bg-[#232937] rounded-lg p-4 sm:p-6 border border-[#2d3548]">
-                    <h3 className="text-xl font-semibold mb-4 text-[#f7cc48]">Learning Tips</h3>
+              {/* Etymology - Show AI insights if available, otherwise show character analysis */}
+              {(insights.aiInsights?.etymology || (insights.complexity as any).etymology) && (
+                <div className="bg-[#232937] rounded-lg p-4 sm:p-6 border border-[#2d3548]">
+                  <h3 className="text-xl font-semibold mb-4 text-[#f7cc48]">Etymology</h3>
+                  {insights.aiInsights?.etymology ? (
                     <div className="space-y-3">
-                      {insights.aiInsights.learningTips.forBeginners.length > 0 && (
-                        <div>
-                          <h4 className="text-sm text-gray-300 mb-1">For Beginners</h4>
-                          <ul className="list-disc list-inside space-y-1">
-                            {insights.aiInsights.learningTips.forBeginners.map((tip, i) => (
-                              <li key={i} className="text-gray-100">{tip}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
+                      <div>
+                        <h4 className="text-sm text-gray-300 mb-1">Origin</h4>
+                        <p className="text-gray-100">{processTextWithPinyin(insights.aiInsights.etymology.origin)}</p>
+                      </div>
+                      <div>
+                        <h4 className="text-sm text-gray-300 mb-1">Evolution</h4>
+                        <ol className="list-decimal list-inside space-y-1">
+                          {insights.aiInsights.etymology.evolution.map((stage, i) => (
+                            <li key={i} className="text-gray-100">{processTextWithPinyin(stage)}</li>
+                          ))}
+                        </ol>
+                      </div>
                     </div>
+                  ) : (
+                    <p className="text-gray-100">{processTextWithPinyin((insights.complexity as any).etymology)}</p>
+                  )}
+                </div>
+              )}
+
+              {/* Learning Tips - Only show if AI insights are available */}
+              {insights.aiInsights?.learningTips && (
+                <div className="bg-[#232937] rounded-lg p-4 sm:p-6 border border-[#2d3548]">
+                  <h3 className="text-xl font-semibold mb-4 text-[#f7cc48]">Learning Tips</h3>
+                  <div className="space-y-3">
+                    {insights.aiInsights.learningTips.forBeginners.length > 0 && (
+                      <div>
+                        <h4 className="text-sm text-gray-300 mb-1">For Beginners</h4>
+                        <ul className="list-disc list-inside space-y-1">
+                          {insights.aiInsights.learningTips.forBeginners.map((tip, i) => (
+                            <li key={i} className="text-gray-100">{processTextWithPinyin(tip)}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {insights.aiInsights.learningTips.forIntermediate?.length > 0 && (
+                      <div>
+                        <h4 className="text-sm text-gray-300 mb-1">For Intermediate</h4>
+                        <ul className="list-disc list-inside space-y-1">
+                          {insights.aiInsights.learningTips.forIntermediate.map((tip, i) => (
+                            <li key={i} className="text-gray-100">{processTextWithPinyin(tip)}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {insights.aiInsights.learningTips.forAdvanced?.length > 0 && (
+                      <div>
+                        <h4 className="text-sm text-gray-300 mb-1">For Advanced</h4>
+                        <ul className="list-disc list-inside space-y-1">
+                          {insights.aiInsights.learningTips.forAdvanced.map((tip, i) => (
+                            <li key={i} className="text-gray-100">{processTextWithPinyin(tip)}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </div>
-                </>
+                </div>
               )}
             </div>
           ) : (

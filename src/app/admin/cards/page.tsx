@@ -385,8 +385,9 @@ export default function AdminCardsPage() {
     if (playingAudio === audioUrl) {
       setPlayingAudio(null)
     } else {
+      const audioUrlWithTimestamp = `${audioUrl}${audioUrl.includes('?') ? '&' : '?'}t=${Date.now()}`
       setPlayingAudio(audioUrl)
-      const audio = new Audio(audioUrl)
+      const audio = new Audio(audioUrlWithTimestamp)
       audio.play()
       audio.onended = () => setPlayingAudio(null)
     }

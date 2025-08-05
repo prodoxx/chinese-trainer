@@ -93,7 +93,8 @@ export default function Quiz({ cards, deckId, onComplete, onExit }: QuizProps) {
         !showResult) {
       const correctCard = questions[currentQuestion].correctCard;
       if (correctCard.audioUrl) {
-        playAudio(correctCard.audioUrl).catch(err => {
+        const audioUrlWithTimestamp = `${correctCard.audioUrl}${correctCard.audioUrl.includes('?') ? '&' : '?'}t=${Date.now()}`;
+        playAudio(audioUrlWithTimestamp).catch(err => {
           console.error('Failed to play question audio:', err);
         });
         setAudioPlayed(true);
@@ -258,14 +259,16 @@ export default function Quiz({ cards, deckId, onComplete, onExit }: QuizProps) {
       setTimeout(() => {
         const correctCard = questions[currentQuestion].correctCard;
         if (correctCard.audioUrl) {
-          playAudio(correctCard.audioUrl).catch(err => console.error('Failed to play correct audio:', err));
+          const audioUrlWithTimestamp = `${correctCard.audioUrl}${correctCard.audioUrl.includes('?') ? '&' : '?'}t=${Date.now()}`;
+          playAudio(audioUrlWithTimestamp).catch(err => console.error('Failed to play correct audio:', err));
         }
       }, 400); // Wait for buzz to finish
     } else if (isCorrect) {
       // Correct answer: play the audio immediately
       const correctCard = questions[currentQuestion].correctCard;
       if (correctCard.audioUrl) {
-        playAudio(correctCard.audioUrl).catch(err => console.error('Failed to play audio:', err));
+        const audioUrlWithTimestamp = `${correctCard.audioUrl}${correctCard.audioUrl.includes('?') ? '&' : '?'}t=${Date.now()}`;
+        playAudio(audioUrlWithTimestamp).catch(err => console.error('Failed to play audio:', err));
       }
     }
   };
@@ -353,7 +356,8 @@ export default function Quiz({ cards, deckId, onComplete, onExit }: QuizProps) {
                 <button
                   onClick={() => {
                     unlockAudio();
-                    playAudio(question.correctCard.audioUrl!).catch(err => console.error('Failed to replay audio:', err));
+                    const audioUrlWithTimestamp = `${question.correctCard.audioUrl!}${question.correctCard.audioUrl!.includes('?') ? '&' : '?'}t=${Date.now()}`;
+                    playAudio(audioUrlWithTimestamp).catch(err => console.error('Failed to replay audio:', err));
                   }}
                   className="mx-auto px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors flex items-center gap-2"
                 >
@@ -401,7 +405,7 @@ export default function Quiz({ cards, deckId, onComplete, onExit }: QuizProps) {
                   <span className="text-3xl sm:text-4xl">{option.hanzi}</span>
                 ) : (
                   option.imageUrl ? (
-                    <img src={option.imageUrl} alt="" className="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded" />
+                    <img src={`${option.imageUrl}${option.imageUrl.includes('?') ? '&' : '?'}t=${Date.now()}`} alt="" className="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded" />
                   ) : (
                     <div className="w-24 h-24 sm:w-32 sm:h-32 bg-gray-800 rounded flex items-center justify-center">
                       {option.hanzi}

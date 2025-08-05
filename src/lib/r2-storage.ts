@@ -239,17 +239,22 @@ export function generateMediaKeys(deckId: string, cardId: string) {
 }
 
 /**
- * Generate storage keys based on the Chinese character
+ * Generate storage keys based on the Chinese character and pinyin
  * Uses SHA256 hash to prevent predictable URLs while maintaining consistency
+ * Always includes both hanzi and pinyin for consistent key generation
  */
-export function generateMediaKeysByHanzi(hanzi: string) {
-  // Create a hash of the hanzi to prevent predictable URLs
-  const hash = crypto.createHash('sha256').update(hanzi).digest('hex');
+export function generateMediaKeysByHanziPinyin(hanzi: string, pinyin: string) {
+  // Always include both hanzi and pinyin in the hash
+  const keyBase = `${hanzi}-${pinyin}`;
+  
+  // Create a hash of the key to prevent predictable URLs
+  const hash = crypto.createHash('sha256').update(keyBase).digest('hex');
   
   // Use first 12 characters of hash for shorter paths
   const shortHash = hash.substring(0, 12);
   
-  console.log(`🔑 Generating media keys for "${hanzi}"`);
+  console.log(`🔑 Generating media keys for "${hanzi}" (${pinyin})`);
+  console.log(`   Key base: ${keyBase}`);
   console.log(`   Full hash: ${hash}`);
   console.log(`   Short hash: ${shortHash}`);
   

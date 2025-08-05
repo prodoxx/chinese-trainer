@@ -110,23 +110,59 @@ export async function POST(
     }
     
     // Check if card already exists
-    let card = await Card.findOne({ hanzi: characters });
+    // If disambiguation is provided, look for card with specific hanzi+pinyin combo
+    let card;
+    if (disambiguation?.pinyin) {
+      console.log(`Looking for card with hanzi="${characters}" and pinyin="${disambiguation.pinyin}"`);
+      card = await Card.findOne({ 
+        hanzi: characters, 
+        pinyin: disambiguation.pinyin 
+      });
+      console.log(`Found card:`, card ? `${card._id} - ${card.hanzi} (${card.pinyin})` : 'none');
+    } else {
+      // No disambiguation, look for any card with this hanzi
+      console.log(`Looking for any card with hanzi="${characters}"`);
+      card = await Card.findOne({ hanzi: characters });
+      console.log(`Found card:`, card ? `${card._id} - ${card.hanzi} (${card.pinyin})` : 'none');
+    }
     
     if (!card) {
-      // Create new card
-      card = await Card.create({
+      // Create new card with disambiguation info if provided
+      const cardData: any = {
         hanzi: characters,
         enrichmentStatus: 'pending'
-      });
+      };
+      
+      if (disambiguation) {
+        cardData.pinyin = disambiguation.pinyin;
+        cardData.meaning = disambiguation.meaning;
+        cardData.disambiguated = true;
+      }
+      
+      card = await Card.create(cardData);
     }
     
     // Check if card is already in deck
+    console.log(`Checking if card ${card._id} is already in deck ${deck._id}`);
     const existingDeckCard = await DeckCard.findOne({ 
       deckId: deck._id, 
       cardId: card._id 
     });
     
     if (existingDeckCard) {
+      console.log(`Card already in deck! DeckCard: ${existingDeckCard._id}`);
+      
+      // Additional check: are there other cards with same hanzi in this deck?
+      const allDeckCards = await DeckCard.find({ deckId: deck._id }).populate('cardId');
+      const sameHanziCards = allDeckCards.filter(dc => 
+        dc.cardId && (dc.cardId as any).hanzi === characters
+      );
+      console.log(`Deck has ${sameHanziCards.length} card(s) with hanzi="${characters}"`);
+      sameHanziCards.forEach(dc => {
+        const c = dc.cardId as any;
+        console.log(`  - ${c._id}: pinyin="${c.pinyin}", meaning="${c.meaning}"`);
+      });
+      
       return NextResponse.json(
         { error: 'Card already exists in deck' }, 
         { status: 400 }

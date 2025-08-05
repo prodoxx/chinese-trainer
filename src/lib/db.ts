@@ -4,13 +4,6 @@ declare global {
   var prisma: PrismaClient | undefined;
 }
 
-// Debug DATABASE_URL in all environments for now
-console.log('[Prisma] DATABASE_URL check:', {
-  NODE_ENV: process.env.NODE_ENV,
-  exists: !!process.env.DATABASE_URL,
-  starts_with: process.env.DATABASE_URL?.substring(0, 30) || 'N/A',
-  length: process.env.DATABASE_URL?.length || 0
-});
 
 // Ensure DATABASE_URL is available
 if (!process.env.DATABASE_URL) {

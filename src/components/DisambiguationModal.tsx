@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { AlertTriangle, CheckCircle, X } from 'lucide-react';
+import { convertPinyinToneNumbersToMarks } from '@/lib/utils/pinyin';
 
 interface CharacterMeaning {
   pinyin: string;
@@ -19,12 +20,14 @@ interface DisambiguationModalProps {
   characters: MultiMeaningCharacter[];
   onComplete: (selections: Record<string, { pinyin: string; meaning: string }>) => void;
   onCancel: () => void;
+  isImport?: boolean;
 }
 
 export default function DisambiguationModal({ 
   characters, 
   onComplete, 
-  onCancel 
+  onCancel,
+  isImport = true 
 }: DisambiguationModalProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selections, setSelections] = useState<Record<string, { pinyin: string; meaning: string }>>({});
@@ -37,16 +40,18 @@ export default function DisambiguationModal({
     if (selectedMeaning === null) return;
 
     const selected = currentCharacter.meanings[selectedMeaning];
-    setSelections(prev => ({
-      ...prev,
+    const updatedSelections = {
+      ...selections,
       [currentCharacter.hanzi]: {
         pinyin: selected.pinyin,
         meaning: selected.meaning
       }
-    }));
+    };
+    
+    setSelections(updatedSelections);
 
     if (isLastCharacter) {
-      onComplete(selections);
+      onComplete(updatedSelections);
     } else {
       setCurrentIndex(prev => prev + 1);
       setSelectedMeaning(null);
@@ -131,7 +136,12 @@ export default function DisambiguationModal({
         <div className="p-6">
           <div className="text-center mb-6">
             <div className="text-8xl font-bold text-white mb-4">{currentCharacter.hanzi}</div>
-            <p className="text-gray-400">Row {currentCharacter.position} in your CSV</p>
+            <p className="text-gray-400">
+              {isImport 
+                ? `Row ${currentCharacter.position} in your CSV`
+                : 'Select the meaning for this character'
+              }
+            </p>
           </div>
 
           <div className="space-y-3">
@@ -148,7 +158,7 @@ export default function DisambiguationModal({
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-1">
-                      <span className="text-2xl font-semibold text-[#f7cc48]">{meaning.pinyin}</span>
+                      <span className="text-2xl font-semibold text-[#f7cc48]">{convertPinyinToneNumbersToMarks(meaning.pinyin)}</span>
                       {getFrequencyBadge(meaning.frequency)}
                     </div>
                     <p className="text-gray-300">{meaning.meaning}</p>
@@ -174,7 +184,7 @@ export default function DisambiguationModal({
             onClick={onCancel}
             className="flex-1 px-4 py-3 bg-[#232937] hover:bg-[#2d3548] text-gray-300 rounded-lg transition-colors"
           >
-            Cancel Import
+            Cancel {isImport ? 'Import' : ''}
           </button>
           <button
             onClick={handleNext}
@@ -185,7 +195,10 @@ export default function DisambiguationModal({
                 : 'bg-[#f7cc48] hover:bg-[#f7cc48]/90 text-[#1a1f2e] shadow-lg hover:shadow-xl'
             }`}
           >
-            {isLastCharacter ? 'Complete & Start Import' : 'Next Character →'}
+            {isLastCharacter 
+              ? (isImport ? 'Complete & Start Import' : 'Add Character')
+              : 'Next Character →'
+            }
           </button>
         </div>
       </div>

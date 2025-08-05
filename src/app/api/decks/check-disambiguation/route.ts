@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/db/mongodb';
 import Dictionary from '@/lib/db/models/Dictionary';
+import { convertPinyinToneNumbersToMarks } from '@/lib/utils/pinyin';
+import { cleanDefinition } from '@/lib/utils/clean-definition';
 
 interface MultiMeaningCharacter {
   hanzi: string;
@@ -53,8 +55,8 @@ export async function POST(request: NextRequest) {
           hanzi,
           position: i + 1,
           meanings: entries.map(entry => ({
-            pinyin: entry.pinyin,
-            meaning: entry.definitions[0] || 'No definition',
+            pinyin: convertPinyinToneNumbersToMarks(entry.pinyin),
+            meaning: cleanDefinition(entry.definitions[0] || 'No definition'),
             // Add frequency hint based on common usage
             frequency: getFrequencyHint(hanzi, entry.pinyin)
           }))
