@@ -16,7 +16,7 @@ export function cleanDefinition(definition: string): string {
     const syllables = pinyin.match(/[a-zA-Z]+[0-9]/g) || [];
     
     // Convert each syllable from tone numbers to tone marks
-    const convertedSyllables = syllables.map(syllable => 
+    const convertedSyllables = syllables.map((syllable: string) => 
       convertPinyinToneNumbersToMarks(syllable)
     );
     

@@ -92,7 +92,7 @@ export async function generateSharedAudio(
 
 		// Check if this character needs context-based audio
 		let needsContext = needsAudioContext(hanzi, pinyin);
-		let audioBuffer: Buffer;
+		let audioBuffer: Buffer | undefined;
 
 		if (needsContext) {
 			console.log(`   🎯 Character ${hanzi} needs context-based audio generation`);
@@ -207,6 +207,11 @@ export async function generateSharedAudio(
 
 			const audioData = await response.arrayBuffer();
 			audioBuffer = Buffer.from(audioData);
+		}
+
+		// Ensure we have audio buffer
+		if (!audioBuffer) {
+			throw new Error('Failed to generate audio buffer');
 		}
 
 		// Upload to R2 (avoid special characters in metadata)
@@ -509,7 +514,7 @@ export async function checkSharedMediaExists(hanzi: string): Promise<{
 	audioExists: boolean;
 	imageExists: boolean;
 }> {
-	const { audio: audioKey, image: imageKey } = generateMediaKeysByHanzi(hanzi);
+	const { audio: audioKey, image: imageKey } = generateMediaKeysByHanziPinyin(hanzi, '');
 
 	const [audioExists, imageExists] = await Promise.all([
 		existsInR2(audioKey),

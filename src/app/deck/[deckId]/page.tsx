@@ -729,8 +729,10 @@ export default function DeckView() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
-                      const audioUrlWithTimestamp = `${card.audioUrl}${card.audioUrl.includes('?') ? '&' : '?'}t=${Date.now()}`
-                      playAudio(audioUrlWithTimestamp)
+                      if (card.audioUrl) {
+                        const audioUrlWithTimestamp = `${card.audioUrl}${card.audioUrl.includes('?') ? '&' : '?'}t=${Date.now()}`
+                        playAudio(audioUrlWithTimestamp)
+                      }
                     }}
                     className="w-full py-3 bg-gradient-to-r from-[#f7cc48]/10 to-yellow-500/10 hover:from-[#f7cc48]/20 hover:to-yellow-500/20 text-[#f7cc48] rounded-xl transition-all text-sm font-semibold border border-[#f7cc48]/20 hover:border-[#f7cc48]/40"
                   >
