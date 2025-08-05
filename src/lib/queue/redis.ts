@@ -25,7 +25,7 @@ class RailwayRedis extends IORedis {
         commandTimeout: 10000,
         // Disable offline queue to fail fast
         enableOfflineQueue: false,
-        maxRetriesPerRequest: 3,
+        maxRetriesPerRequest: null, // Required for BullMQ workers
         retryStrategy: (times) => {
           console.log(`🔄 Retry attempt ${times} for Railway Redis connection`);
           if (times > 3) return null;
