@@ -10,10 +10,15 @@ export interface ICard extends Document {
   imageFileId?: string;
   audioFileId?: string;
   audioUrl?: string;
+  audioPath?: string; // R2 storage path for audio file
+  imagePath?: string; // R2 storage path for image file
   imageAttribution?: string;
   imageAttributionUrl?: string;
   unsplashImageId?: string; // Keep for backward compatibility
   imagePrompt?: string; // The prompt used to generate the image
+  interpretationPrompt?: string; // The prompt used for OpenAI interpretation (meaning, pinyin, context)
+  linguisticAnalysisPrompt?: string; // The prompt used for linguistic analysis (AI insights)
+  imageSearchQueryPrompt?: string; // The prompt used to generate image search queries
   cached: boolean;
   disambiguated?: boolean; // True if user manually selected from multiple meanings
   // Linguistic analysis fields
@@ -72,10 +77,15 @@ const CardSchema = new Schema<ICard>(
     imageFileId: { type: String },
     audioFileId: { type: String },
     audioUrl: { type: String },
+    audioPath: { type: String }, // R2 storage path for audio file
+    imagePath: { type: String }, // R2 storage path for image file
     imageAttribution: { type: String },
     imageAttributionUrl: { type: String },
     unsplashImageId: { type: String }, // Keep for backward compatibility
     imagePrompt: { type: String }, // The prompt used to generate the image
+    interpretationPrompt: { type: String }, // The prompt used for OpenAI interpretation
+    linguisticAnalysisPrompt: { type: String }, // The prompt used for linguistic analysis
+    imageSearchQueryPrompt: { type: String }, // The prompt used to generate image search queries
     cached: { type: Boolean, default: false },
     disambiguated: { type: Boolean, default: false },
     // Linguistic analysis fields

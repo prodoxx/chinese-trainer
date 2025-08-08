@@ -383,9 +383,8 @@ export default function AdminDeckPage({ params }: { params: Promise<{ deckId: st
     if (playingAudio === audioUrl) {
       setPlayingAudio(null)
     } else {
-      const audioUrlWithTimestamp = `${audioUrl}${audioUrl.includes('?') ? '&' : '?'}t=${Date.now()}`
       setPlayingAudio(audioUrl)
-      const audio = new Audio(audioUrlWithTimestamp)
+      const audio = new Audio(audioUrl)
       audio.play()
       audio.onended = () => setPlayingAudio(null)
     }
@@ -834,7 +833,7 @@ export default function AdminDeckPage({ params }: { params: Promise<{ deckId: st
                         {card.imageUrl ? (
                           <div className="aspect-square bg-gray-900 relative group">
                             <img
-                              src={`${card.imageUrl}${card.imageUrl.includes('?') ? '&' : '?'}t=${Date.now()}`}
+                              src={card.imageUrl}
                               alt={card.hanzi}
                               className="w-full h-full object-cover"
                               onError={(e) => {

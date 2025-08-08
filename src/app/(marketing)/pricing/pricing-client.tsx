@@ -30,60 +30,7 @@ export default function PricingClient() {
       </div>
 
       {/* Pricing Cards */}
-      <div className="grid lg:grid-cols-3 gap-8">
-        {/* Free Plan */}
-        <div className="bg-[#21262d] border border-[#30363d] rounded-2xl hover:border-[#30363d]/80 transition-all">
-          <div className="p-8">
-            <div className="text-center mb-8">
-              <h3 className="text-2xl font-bold text-white mb-4">Free</h3>
-              <div className="text-5xl font-bold text-white mb-2">$0</div>
-              <div className="text-[#7d8590]">Forever free</div>
-              <div className="mt-4 text-sm text-[#7d8590]">Perfect for trying Danbing</div>
-            </div>
-
-            <div className="space-y-4 mb-8">
-              <div className="flex items-start gap-3">
-                <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-white">100 characters</p>
-                  <p className="text-xs text-[#7d8590]">Enough for basic conversations</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-white">AI enrichment</p>
-                  <p className="text-xs text-[#7d8590]">Auto-generated images & audio</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-white">Dual-phase flash system</p>
-                  <p className="text-xs text-[#7d8590]">Science-based learning</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-white">Smart repetition</p>
-                  <p className="text-xs text-[#7d8590]">SM-2 algorithm included</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-white">Cross-device sync</p>
-                  <p className="text-xs text-[#7d8590]">Learn anywhere</p>
-                </div>
-              </div>
-            </div>
-
-            <Link href="/auth/signup" className="block w-full bg-[#30363d] hover:bg-[#30363d]/80 text-white font-semibold py-3 px-6 rounded-lg transition-all text-center">
-              Start Free
-            </Link>
-          </div>
-        </div>
+      <div className="grid lg:grid-cols-2 gap-8 max-w-4xl mx-auto">
 
         {/* Pro Plan */}
         <div className="bg-[#21262d] border-2 border-[#f7cc48] rounded-2xl relative transform lg:scale-105 hover:scale-105 transition-transform">
@@ -119,8 +66,22 @@ export default function PricingClient() {
               <div className="flex items-start gap-3">
                 <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-white font-semibold">Everything in Free</p>
-                  <p className="text-xs text-[#7d8590]">Plus premium features</p>
+                  <p className="text-white font-semibold">AI enrichment</p>
+                  <p className="text-xs text-[#7d8590]">Auto-generated images & audio</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-white font-semibold">Dual-phase flash system</p>
+                  <p className="text-xs text-[#7d8590]">Science-based learning</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-white font-semibold">Smart repetition</p>
+                  <p className="text-xs text-[#7d8590]">SM-2 algorithm included</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -157,23 +118,78 @@ export default function PricingClient() {
               href={`/auth/signup?plan=pro-${billingPeriod}`} 
               className="block w-full bg-[#f7cc48] hover:bg-[#f7cc48]/90 text-black font-semibold py-3 px-6 rounded-lg transition-all transform hover:scale-105 shadow-lg hover:shadow-xl text-center mb-3"
             >
-              Start 7-Day Free Trial
+              Start 14-Day Free Trial
             </Link>
             <p className="text-xs text-center text-[#7d8590]">No credit card required</p>
           </div>
         </div>
 
-        {/* Team Plan */}
+        {/* Lifetime Plan */}
         <div className="bg-[#21262d] border border-[#30363d] rounded-2xl hover:border-[#30363d]/80 transition-all">
           <div className="p-8">
             <div className="text-center mb-8">
-              <h3 className="text-2xl font-bold text-white mb-4">Team</h3>
-              <div className="text-5xl font-bold text-white mb-2">Custom</div>
-              <div className="text-[#7d8590]">Volume pricing</div>
-              <div className="mt-4 text-sm text-[#7d8590]">For schools and organizations</div>
+              <h3 className="text-2xl font-bold text-white mb-4">Lifetime</h3>
+              <div className="text-5xl font-bold text-white mb-2">$399</div>
+              <div className="text-[#7d8590]">One-time payment</div>
+              <div className="mt-4 text-sm text-[#7d8590]">Own Danbing forever</div>
             </div>
 
             <div className="space-y-4 mb-8">
+              <div className="flex items-start gap-3">
+                <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-white font-semibold">Everything in Pro</p>
+                  <p className="text-xs text-[#7d8590]">All premium features included</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-white font-semibold">Lifetime access</p>
+                  <p className="text-xs text-[#7d8590]">No recurring fees ever</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-white font-semibold">Future updates</p>
+                  <p className="text-xs text-[#7d8590]">All new features included</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-white font-semibold">Early access</p>
+                  <p className="text-xs text-[#7d8590]">Be first to try new features</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-white font-semibold">VIP support</p>
+                  <p className="text-xs text-[#7d8590]">Priority lifetime support</p>
+                </div>
+              </div>
+            </div>
+
+            <Link href="/auth/signup?plan=lifetime" className="block w-full bg-[#30363d] hover:bg-[#30363d]/80 text-white font-semibold py-3 px-6 rounded-lg transition-all text-center">
+              Get Lifetime Access
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Team Custom Plan - Below pricing table */}
+      <div className="mt-16">
+        <div className="bg-[#21262d] border border-[#30363d] rounded-2xl p-8 max-w-4xl mx-auto">
+          <div className="text-center mb-8">
+            <h3 className="text-3xl font-bold text-white mb-4">Team Custom Plan</h3>
+            <p className="text-lg text-[#7d8590] mb-2">For schools, private tutor groups, and student organizations</p>
+            <p className="text-[#7d8590]">Get volume pricing and advanced features for your team</p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6 mb-8">
+            <div className="space-y-4">
               <div className="flex items-start gap-3">
                 <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
                 <div>
@@ -195,6 +211,8 @@ export default function PricingClient() {
                   <p className="text-xs text-[#7d8590]">Track student progress</p>
                 </div>
               </div>
+            </div>
+            <div className="space-y-4">
               <div className="flex items-start gap-3">
                 <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
                 <div>
@@ -205,15 +223,25 @@ export default function PricingClient() {
               <div className="flex items-start gap-3">
                 <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
                 <div>
+                  <p className="text-white">Custom onboarding</p>
+                  <p className="text-xs text-[#7d8590]">Tailored setup for your needs</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                <div>
                   <p className="text-white">Dedicated support</p>
                   <p className="text-xs text-[#7d8590]">Direct line to our team</p>
                 </div>
               </div>
             </div>
+          </div>
 
-            <Link href="mailto:team@danbing.ai?subject=Team%20Plan%20Inquiry" className="block w-full bg-[#30363d] hover:bg-[#30363d]/80 text-white font-semibold py-3 px-6 rounded-lg transition-all text-center">
-              Contact Sales
+          <div className="text-center">
+            <Link href="mailto:team@danbing.ai?subject=Team%20Plan%20Inquiry" className="inline-block bg-[#f7cc48] hover:bg-[#f7cc48]/90 text-black font-semibold py-3 px-8 rounded-lg transition-all">
+              Contact Us for Pricing
             </Link>
+            <p className="text-xs text-[#7d8590] mt-3">We'll create a custom plan that fits your needs</p>
           </div>
         </div>
       </div>

@@ -200,6 +200,12 @@ export const deckEnrichmentR2Worker = new Worker<DeckEnrichmentJobData>(
 							// Always use AI meaning for clearer, student-friendly explanations
 							card.meaning = interpretation.meaning || card.meaning;
 							card.pinyin = interpretation.pinyin || card.pinyin;
+							
+							// Save the interpretation prompt
+							if (interpretation.interpretationPrompt) {
+								card.interpretationPrompt = interpretation.interpretationPrompt;
+							}
+							
 							console.log(`   ✓ AI provided: ${card.pinyin} - ${card.meaning}`);
 						} else {
 							// Final fallback
@@ -252,10 +258,12 @@ export const deckEnrichmentR2Worker = new Worker<DeckEnrichmentJobData>(
 						card.meaning,
 						card.pinyin,
 						force,
+						card.imagePath, // Pass existing path for deletion if force regenerating
 					);
 
 					if (image.imageUrl) {
 						card.imageUrl = image.imageUrl;
+						card.imagePath = image.imagePath; // Save the R2 storage path
 						card.imageSource = "dalle";
 						card.imageSourceId = image.cached ? "cached" : "generated";
 						card.imageAttribution = "AI Generated";
@@ -302,8 +310,10 @@ export const deckEnrichmentR2Worker = new Worker<DeckEnrichmentJobData>(
 								card.pinyin,
 								false,
 								card.meaning,
+								card.audioPath, // Pass existing path (though not forcing regeneration)
 							); // Never force regenerate audio
 							card.audioUrl = ttsResult.audioUrl;
+							card.audioPath = ttsResult.audioPath; // Save the R2 storage path
 							console.log(
 								`   ✓ Audio ${ttsResult.cached ? "retrieved from cache" : "generated"}`,
 							);
@@ -329,6 +339,12 @@ export const deckEnrichmentR2Worker = new Worker<DeckEnrichmentJobData>(
 							const aiInsights = await analyzeCharacterWithOpenAI(card.hanzi);
 							card.aiInsights = aiInsights;
 							card.aiInsightsGeneratedAt = new Date();
+							
+							// Save the linguistic analysis prompt
+							if (aiInsights.linguisticAnalysisPrompt) {
+								card.linguisticAnalysisPrompt = aiInsights.linguisticAnalysisPrompt;
+							}
+							
 							console.log(`   ✓ AI insights generated`);
 						} catch (aiError) {
 							console.error(`   ✗ AI insights generation failed:`, aiError);

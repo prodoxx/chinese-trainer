@@ -105,6 +105,11 @@ export const cardEnrichmentWorker = new Worker<CardEnrichmentJobData>(
 
 					// Always use AI meaning for clearer, student-friendly explanations
 					card.meaning = interpretation.meaning || card.meaning;
+					
+					// Save the interpretation prompt
+					if (interpretation.interpretationPrompt) {
+						card.interpretationPrompt = interpretation.interpretationPrompt;
+					}
 
 					console.log(`   ✓ AI provided: ${card.pinyin} - ${card.meaning}`);
 				} else {
@@ -170,10 +175,12 @@ export const cardEnrichmentWorker = new Worker<CardEnrichmentJobData>(
 					meaning,
 					pinyin,
 					force,
+					card.imagePath, // Pass existing path for deletion if force regenerating
 				);
 
 				if (imageResult.imageUrl) {
 					card.imageUrl = imageResult.imageUrl;
+					card.imagePath = imageResult.imagePath; // Save the R2 storage path
 					card.imageSource = "fal";
 					card.imageSourceId = imageResult.cached ? "cached" : "generated";
 					card.imageAttribution = "AI Generated";
@@ -186,6 +193,7 @@ export const cardEnrichmentWorker = new Worker<CardEnrichmentJobData>(
 						`   ✓ Image generated (cached: ${imageResult.cached}, force: ${force})`,
 					);
 					console.log(`   Image URL saved: ${card.imageUrl}`);
+					console.log(`   Image path saved: ${card.imagePath}`);
 				}
 			}
 
@@ -211,9 +219,12 @@ export const cardEnrichmentWorker = new Worker<CardEnrichmentJobData>(
 							card.pinyin,
 							force,
 							card.meaning,
+							card.audioPath, // Pass existing path for deletion if force regenerating
 						);
 						card.audioUrl = audioResult.audioUrl;
+						card.audioPath = audioResult.audioPath; // Save the R2 storage path
 						console.log(`   ✓ Audio generated (cached: ${audioResult.cached})`);
+						console.log(`   Audio path saved: ${card.audioPath}`);
 					} catch (audioError) {
 						console.error(`   ✗ Audio generation failed:`, audioError);
 					}
@@ -234,6 +245,12 @@ export const cardEnrichmentWorker = new Worker<CardEnrichmentJobData>(
 					const aiInsights = await analyzeCharacterWithOpenAI(card.hanzi);
 					card.aiInsights = aiInsights;
 					card.aiInsightsGeneratedAt = new Date();
+					
+					// Save the linguistic analysis prompt
+					if (aiInsights.linguisticAnalysisPrompt) {
+						card.linguisticAnalysisPrompt = aiInsights.linguisticAnalysisPrompt;
+					}
+					
 					console.log(`   ✓ AI insights generated`);
 				} catch (aiError) {
 					console.error(`   ✗ AI insights generation failed:`, aiError);

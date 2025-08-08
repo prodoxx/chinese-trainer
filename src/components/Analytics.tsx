@@ -232,127 +232,175 @@ export default function Analytics({ onBack }: AnalyticsProps) {
           {/* Daily Study Activity */}
           <div className="bg-[#232937] border border-[#2d3548] rounded-xl p-4 sm:p-6 hover:border-[#f7cc48]/30 transition-all">
             <h2 className="text-xl font-semibold mb-4 text-[#f7cc48]">Daily Study Activity</h2>
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={analytics.dailyStats}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#2d3548" />
-                <XAxis 
-                  dataKey="date" 
-                  tickFormatter={formatDate}
-                  stroke="#6b7280"
-                  tick={{ fill: '#9ca3af' }}
-                />
-                <YAxis stroke="#6b7280" tick={{ fill: '#9ca3af' }} />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#1a1f2e', border: '1px solid #2d3548', borderRadius: '0.5rem' }}
-                  labelFormatter={(value) => `Date: ${formatDate(value as string)}`}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="cardsStudied" 
-                  stroke="#f7cc48" 
-                  fill="#f7cc48" 
-                  fillOpacity={0.6}
-                  name="Cards Studied"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+            {analytics.dailyStats && analytics.dailyStats.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <AreaChart data={analytics.dailyStats}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#2d3548" />
+                  <XAxis 
+                    dataKey="date" 
+                    tickFormatter={formatDate}
+                    stroke="#6b7280"
+                    tick={{ fill: '#9ca3af' }}
+                  />
+                  <YAxis stroke="#6b7280" tick={{ fill: '#9ca3af' }} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#1a1f2e', border: '1px solid #2d3548', borderRadius: '0.5rem' }}
+                    labelFormatter={(value) => `Date: ${formatDate(value as string)}`}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="cardsStudied" 
+                    stroke="#f7cc48" 
+                    fill="#f7cc48" 
+                    fillOpacity={0.6}
+                    name="Cards Studied"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-[300px] flex items-center justify-center">
+                <div className="text-center">
+                  <svg className="w-16 h-16 mx-auto mb-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+                  </svg>
+                  <p className="text-gray-400">No study activity data yet</p>
+                  <p className="text-sm text-gray-500 mt-1">Start studying to see your daily progress</p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Learning Curve */}
           <div className="bg-[#232937] border border-[#2d3548] rounded-xl p-4 sm:p-6 hover:border-[#f7cc48]/30 transition-all">
             <h2 className="text-xl font-semibold mb-4 text-[#f7cc48]">Accuracy Over Time</h2>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={analytics.learningCurve}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#2d3548" />
-                <XAxis 
-                  dataKey="date" 
-                  tickFormatter={formatDate}
-                  stroke="#9ca3af"
-                />
-                <YAxis stroke="#6b7280" tick={{ fill: '#9ca3af' }} domain={[0, 100]} />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#1a1f2e', border: '1px solid #2d3548', borderRadius: '0.5rem' }}
-                  labelFormatter={(value) => `Date: ${formatDate(value as string)}`}
-                  formatter={(value: any) => `${value.toFixed(1)}%`}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="accuracy" 
-                  stroke="#10b981" 
-                  strokeWidth={2}
-                  dot={{ fill: '#10b981', r: 4 }}
-                  name="Accuracy"
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            {analytics.learningCurve && analytics.learningCurve.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={analytics.learningCurve}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#2d3548" />
+                  <XAxis 
+                    dataKey="date" 
+                    tickFormatter={formatDate}
+                    stroke="#9ca3af"
+                  />
+                  <YAxis stroke="#6b7280" tick={{ fill: '#9ca3af' }} domain={[0, 100]} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#1a1f2e', border: '1px solid #2d3548', borderRadius: '0.5rem' }}
+                    labelFormatter={(value) => `Date: ${formatDate(value as string)}`}
+                    formatter={(value: any) => `${value.toFixed(1)}%`}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="accuracy" 
+                    stroke="#10b981" 
+                    strokeWidth={2}
+                    dot={{ fill: '#10b981', r: 4 }}
+                    name="Accuracy"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-[300px] flex items-center justify-center">
+                <div className="text-center">
+                  <svg className="w-16 h-16 mx-auto mb-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                  <p className="text-gray-400">No accuracy data yet</p>
+                  <p className="text-sm text-gray-500 mt-1">Complete reviews to track your accuracy</p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Deck Performance */}
           <div className="bg-[#232937] border border-[#2d3548] rounded-xl p-4 sm:p-6 hover:border-[#f7cc48]/30 transition-all">
             <h2 className="text-xl font-semibold mb-4 text-[#f7cc48]">Deck Performance</h2>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={analytics.deckStats}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#2d3548" />
-                <XAxis 
-                  dataKey="deckName" 
-                  stroke="#6b7280"
-                  tick={{ fill: '#9ca3af' }}
-                  angle={-45}
-                  textAnchor="end"
-                  height={80}
-                />
-                <YAxis stroke="#6b7280" tick={{ fill: '#9ca3af' }} />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#1a1f2e', border: '1px solid #2d3548', borderRadius: '0.5rem' }}
-                />
-                <Legend />
-                <Bar 
-                  dataKey="studiedCards" 
-                  fill="#f7cc48" 
-                  name="Studied"
-                />
-                <Bar 
-                  dataKey="totalCards" 
-                  fill="#374151" 
-                  name="Total"
-                />
-              </BarChart>
-            </ResponsiveContainer>
+            {analytics.deckStats && analytics.deckStats.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={analytics.deckStats}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#2d3548" />
+                  <XAxis 
+                    dataKey="deckName" 
+                    stroke="#6b7280"
+                    tick={{ fill: '#9ca3af' }}
+                    angle={-45}
+                    textAnchor="end"
+                    height={80}
+                  />
+                  <YAxis stroke="#6b7280" tick={{ fill: '#9ca3af' }} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#1a1f2e', border: '1px solid #2d3548', borderRadius: '0.5rem' }}
+                  />
+                  <Legend />
+                  <Bar 
+                    dataKey="studiedCards" 
+                    fill="#f7cc48" 
+                    name="Studied"
+                  />
+                  <Bar 
+                    dataKey="totalCards" 
+                    fill="#374151" 
+                    name="Total"
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-[300px] flex items-center justify-center">
+                <div className="text-center">
+                  <svg className="w-16 h-16 mx-auto mb-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  </svg>
+                  <p className="text-gray-400">No deck data yet</p>
+                  <p className="text-sm text-gray-500 mt-1">Create decks and start studying</p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Retention by Interval */}
           <div className="bg-[#232937] border border-[#2d3548] rounded-xl p-4 sm:p-6 hover:border-[#f7cc48]/30 transition-all">
             <h2 className="text-xl font-semibold mb-4 text-[#f7cc48]">Retention by Review Interval</h2>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={analytics.retentionData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#2d3548" />
-                <XAxis 
-                  dataKey="interval" 
-                  stroke="#6b7280"
-                  tick={{ fill: '#9ca3af' }}
-                  label={{ value: 'Days', position: 'insideBottom', offset: -5, style: { fill: '#9ca3af' } }}
-                />
-                <YAxis 
-                  stroke="#6b7280"
-                  tick={{ fill: '#9ca3af' }}
-                  domain={[0, 100]}
-                  label={{ value: 'Retention %', angle: -90, position: 'insideLeft', style: { fill: '#9ca3af' } }}
-                />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#1a1f2e', border: '1px solid #2d3548', borderRadius: '0.5rem' }}
-                  formatter={(value: any) => `${value.toFixed(1)}%`}
-                  labelFormatter={(value) => `${value} days`}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="retention" 
-                  stroke="#f7cc48" 
-                  strokeWidth={2}
-                  dot={{ fill: '#f7cc48', r: 4 }}
-                  name="Retention Rate"
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            {analytics.retentionData && analytics.retentionData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={analytics.retentionData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#2d3548" />
+                  <XAxis 
+                    dataKey="interval" 
+                    stroke="#6b7280"
+                    tick={{ fill: '#9ca3af' }}
+                    label={{ value: 'Days', position: 'insideBottom', offset: -5, style: { fill: '#9ca3af' } }}
+                  />
+                  <YAxis 
+                    stroke="#6b7280"
+                    tick={{ fill: '#9ca3af' }}
+                    domain={[0, 100]}
+                    label={{ value: 'Retention %', angle: -90, position: 'insideLeft', style: { fill: '#9ca3af' } }}
+                  />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#1a1f2e', border: '1px solid #2d3548', borderRadius: '0.5rem' }}
+                    formatter={(value: any) => `${value.toFixed(1)}%`}
+                    labelFormatter={(value) => `${value} days`}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="retention" 
+                    stroke="#f7cc48" 
+                    strokeWidth={2}
+                    dot={{ fill: '#f7cc48', r: 4 }}
+                    name="Retention Rate"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-[300px] flex items-center justify-center">
+                <div className="text-center">
+                  <svg className="w-16 h-16 mx-auto mb-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p className="text-gray-400">No retention data yet</p>
+                  <p className="text-sm text-gray-500 mt-1">Review cards over time to see retention rates</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -401,47 +449,57 @@ export default function Analytics({ onBack }: AnalyticsProps) {
         {/* Study Time Distribution */}
         <div className="bg-[#232937] border border-[#2d3548] rounded-lg p-6 mt-8 hover:border-[#f7cc48]/30 transition-all">
           <h2 className="text-xl font-semibold mb-4 text-[#f7cc48]">Recent Study Sessions</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-[#2d3548]">
-                  <th className="text-left py-2 px-4">Date</th>
-                  <th className="text-right py-2 px-4">Cards Studied</th>
-                  <th className="text-right py-2 px-4">Correct</th>
-                  <th className="text-right py-2 px-4">Accuracy</th>
-                  <th className="text-right py-2 px-4">Study Time</th>
-                </tr>
-              </thead>
-              <tbody>
-                {analytics.dailyStats.slice(-10).reverse().map((day, index) => (
-                  <tr key={day.date} className="border-b border-[#2d3548] hover:bg-[#232937] transition-colors">
-                    <td className="py-2 px-4">{formatDate(day.date)}</td>
-                    <td className="text-right py-2 px-4">{day.cardsStudied}</td>
-                    <td className="text-right py-2 px-4">{day.correctAnswers}/{day.totalAnswers}</td>
-                    <td className="text-right py-2 px-4">
-                      <span className={
-                        day.totalAnswers > 0 
-                          ? (day.correctAnswers / day.totalAnswers) >= 0.8 ? 'text-green-400' 
-                          : (day.correctAnswers / day.totalAnswers) >= 0.6 ? 'text-yellow-400' 
-                          : 'text-red-400'
-                          : ''
-                      }>
-                        {day.totalAnswers > 0 ? `${((day.correctAnswers / day.totalAnswers) * 100).toFixed(1)}%` : '-'}
-                      </span>
-                    </td>
-                    <td className="text-right py-2 px-4">{formatTime(day.studyTimeMs)}</td>
+          {analytics.dailyStats && analytics.dailyStats.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-[#2d3548]">
+                    <th className="text-left py-2 px-4">Date</th>
+                    <th className="text-right py-2 px-4">Cards Studied</th>
+                    <th className="text-right py-2 px-4">Correct</th>
+                    <th className="text-right py-2 px-4">Accuracy</th>
+                    <th className="text-right py-2 px-4">Study Time</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {analytics.dailyStats.slice(-10).reverse().map((day, index) => (
+                    <tr key={day.date} className="border-b border-[#2d3548] hover:bg-[#232937] transition-colors">
+                      <td className="py-2 px-4">{formatDate(day.date)}</td>
+                      <td className="text-right py-2 px-4">{day.cardsStudied}</td>
+                      <td className="text-right py-2 px-4">{day.correctAnswers}/{day.totalAnswers}</td>
+                      <td className="text-right py-2 px-4">
+                        <span className={
+                          day.totalAnswers > 0 
+                            ? (day.correctAnswers / day.totalAnswers) >= 0.8 ? 'text-green-400' 
+                            : (day.correctAnswers / day.totalAnswers) >= 0.6 ? 'text-yellow-400' 
+                            : 'text-red-400'
+                            : ''
+                        }>
+                          {day.totalAnswers > 0 ? `${((day.correctAnswers / day.totalAnswers) * 100).toFixed(1)}%` : '-'}
+                        </span>
+                      </td>
+                      <td className="text-right py-2 px-4">{formatTime(day.studyTimeMs)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="py-12 text-center">
+              <svg className="w-16 h-16 mx-auto mb-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+              <p className="text-gray-400">No study sessions yet</p>
+              <p className="text-sm text-gray-500 mt-1">Complete study sessions to see your history</p>
+            </div>
+          )}
         </div>
 
         {/* Character Difficulty Insights */}
-        {difficultyPatterns && (
-          <div className="bg-[#21262d] border border-[#30363d] rounded-xl p-4 sm:p-6 mt-8 hover:border-[#f7cc48]/30 transition-all">
-            <h2 className="text-xl font-semibold mb-4 text-[#f7cc48]">Character Difficulty Insights</h2>
-            
+        <div className="bg-[#21262d] border border-[#30363d] rounded-xl p-4 sm:p-6 mt-8 hover:border-[#f7cc48]/30 transition-all">
+          <h2 className="text-xl font-semibold mb-4 text-[#f7cc48]">Character Difficulty Insights</h2>
+          
+          {difficultyPatterns && (difficultyPatterns.mostDifficult?.length > 0 || difficultyPatterns.difficultyDistribution) ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Most Difficult Characters */}
               {difficultyPatterns.mostDifficult && difficultyPatterns.mostDifficult.length > 0 && (
@@ -481,40 +539,63 @@ export default function Analytics({ onBack }: AnalyticsProps) {
 
               {/* Difficulty Distribution */}
               {difficultyPatterns.difficultyDistribution && (
-                <div>
+                <div className="flex flex-col h-full">
                   <h3 className="text-lg font-medium mb-3 text-gray-300">Difficulty Distribution</h3>
-                  <ResponsiveContainer width="100%" height={200}>
-                    <PieChart>
-                      <Pie
-                        data={[
-                          { name: 'Easy', value: difficultyPatterns.difficultyDistribution.easy },
-                          { name: 'Medium', value: difficultyPatterns.difficultyDistribution.medium },
-                          { name: 'Hard', value: difficultyPatterns.difficultyDistribution.hard },
-                          { name: 'Very Hard', value: difficultyPatterns.difficultyDistribution.veryHard },
-                        ]}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={40}
-                        outerRadius={80}
-                        paddingAngle={5}
-                        dataKey="value"
-                      >
-                        <Cell fill="#10b981" />
-                        <Cell fill="#f59e0b" />
-                        <Cell fill="#ef4444" />
-                        <Cell fill="#991b1b" />
-                      </Pie>
-                      <Tooltip 
-                        contentStyle={{ backgroundColor: '#1a1f2e', border: '1px solid #2d3548', borderRadius: '0.5rem' }}
-                      />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  {(difficultyPatterns.difficultyDistribution.easy > 0 || 
+                    difficultyPatterns.difficultyDistribution.medium > 0 || 
+                    difficultyPatterns.difficultyDistribution.hard > 0 || 
+                    difficultyPatterns.difficultyDistribution.veryHard > 0) ? (
+                    <ResponsiveContainer width="100%" height={200}>
+                      <PieChart>
+                        <Pie
+                          data={[
+                            { name: 'Easy', value: difficultyPatterns.difficultyDistribution.easy },
+                            { name: 'Medium', value: difficultyPatterns.difficultyDistribution.medium },
+                            { name: 'Hard', value: difficultyPatterns.difficultyDistribution.hard },
+                            { name: 'Very Hard', value: difficultyPatterns.difficultyDistribution.veryHard },
+                          ]}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={40}
+                          outerRadius={80}
+                          paddingAngle={5}
+                          dataKey="value"
+                        >
+                          <Cell fill="#10b981" />
+                          <Cell fill="#f59e0b" />
+                          <Cell fill="#ef4444" />
+                          <Cell fill="#991b1b" />
+                        </Pie>
+                        <Tooltip 
+                          contentStyle={{ backgroundColor: '#1a1f2e', border: '1px solid #2d3548', borderRadius: '0.5rem' }}
+                        />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="flex-1 min-h-[200px] flex items-center justify-center">
+                      <div className="text-center">
+                        <svg className="w-12 h-12 mx-auto mb-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+                        </svg>
+                        <p className="text-sm text-gray-400">No distribution data yet</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="py-12 text-center">
+              <svg className="w-16 h-16 mx-auto mb-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              <p className="text-gray-400">No difficulty data yet</p>
+              <p className="text-sm text-gray-500 mt-1">Study more characters to see difficulty patterns</p>
+            </div>
+          )}
+        </div>
 
         {/* Learning Insights & Recommendations */}
         <div className="mt-8">

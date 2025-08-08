@@ -74,7 +74,7 @@ export async function GET(
     // Calculate study streak (consecutive days)
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    let currentDate = new Date(today);
+    const currentDate = new Date(today);
     let hasStudiedToday = false;
     
     // Check if studied today

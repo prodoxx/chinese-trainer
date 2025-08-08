@@ -32,10 +32,10 @@ export default function FlashCard({ card, showAnswer, onAudioComplete, onMediaRe
     // Stop any playing audio when card changes
     stopAudio();
     
-    // Preload image when card changes with cache-busting
+    // Preload image when card changes
     if (card.imageUrl) {
       const img = new Image();
-      img.src = `${card.imageUrl}${card.imageUrl.includes('?') ? '&' : '?'}t=${Date.now()}`;
+      img.src = card.imageUrl;
       img.onload = () => {
         setImageLoaded(true);
       };
@@ -54,8 +54,7 @@ export default function FlashCard({ card, showAnswer, onAudioComplete, onMediaRe
     if (showAnswer && card.audioUrl) {
       console.log('Attempting to play audio:', card.audioUrl);
       
-      const audioUrlWithTimestamp = `${card.audioUrl}${card.audioUrl.includes('?') ? '&' : '?'}t=${Date.now()}`;
-      playAudio(audioUrlWithTimestamp)
+      playAudio(card.audioUrl)
         .then(() => {
           console.log('Audio playing successfully');
         })
@@ -102,7 +101,7 @@ export default function FlashCard({ card, showAnswer, onAudioComplete, onMediaRe
                   </div>
                 )}
                 <img
-                  src={`${card.imageUrl}${card.imageUrl.includes('?') ? '&' : '?'}t=${Date.now()}`}
+                  src={card.imageUrl}
                   alt={card.hanzi}
                   className={`w-full h-full object-cover transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
                 />

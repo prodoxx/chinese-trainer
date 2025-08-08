@@ -7,6 +7,7 @@ import {
 	existsInR2,
 	deleteFromR2,
 	generateMediaKeysByHanziPinyin,
+	generateUniqueMediaKeys,
 } from "@/lib/r2-storage";
 import { fal } from "@fal-ai/client";
 import { interpretChinese } from "@/lib/enrichment/openai-interpret";
@@ -16,7 +17,36 @@ import {
 	getSimplifiedPrompt,
 } from "@/lib/enrichment/image-validation";
 import { generateAudioContext, needsAudioContext } from "@/lib/enrichment/audio-context-generator";
-import { trimAudioBuffer, isTrimmingAvailable } from "@/lib/enrichment/audio-trimmer";
+
+// Lazy-loaded audio trimming functions
+let _trimAudioBuffer: any = null;
+let _isTrimmingAvailable: any = null;
+
+// Helper to get audio trimming functions
+async function getAudioTrimmer() {
+	if (!_trimAudioBuffer || !_isTrimmingAvailable) {
+		if (typeof window === 'undefined') {
+			// Server-side: use the actual implementation
+			try {
+				const trimmerModule = await import('@/lib/enrichment/audio-trimmer-server');
+				_trimAudioBuffer = trimmerModule.trimAudioBuffer;
+				_isTrimmingAvailable = trimmerModule.isTrimmingAvailable;
+			} catch (error) {
+				console.warn('Failed to load server-side audio trimmer:', error);
+				// Fallback to stub
+				const stubModule = await import('@/lib/enrichment/audio-trimmer');
+				_trimAudioBuffer = stubModule.trimAudioBuffer;
+				_isTrimmingAvailable = stubModule.isTrimmingAvailable;
+			}
+		} else {
+			// Client-side: use stub implementation
+			const stubModule = await import('@/lib/enrichment/audio-trimmer');
+			_trimAudioBuffer = stubModule.trimAudioBuffer;
+			_isTrimmingAvailable = stubModule.isTrimmingAvailable;
+		}
+	}
+	return { trimAudioBuffer: _trimAudioBuffer, isTrimmingAvailable: _isTrimmingAvailable };
+}
 
 // Simple rate limiter for API calls
 const rateLimiters = new Map<string, { lastCall: number; minDelay: number }>();
@@ -42,6 +72,8 @@ async function rateLimit(service: string, minDelayMs: number = 1000) {
 export interface SharedMediaResult {
 	audioUrl: string;
 	imageUrl: string;
+	audioPath?: string; // R2 storage path for database
+	imagePath?: string; // R2 storage path for database
 	audioCached: boolean;
 	imageCached: boolean;
 }
@@ -55,29 +87,33 @@ export async function generateSharedAudio(
 	pinyin: string,
 	force: boolean = false,
 	meaning: string = "",
-): Promise<{ audioUrl: string; cached: boolean }> {
+	existingAudioPath?: string, // Existing path from database to delete
+): Promise<{ audioUrl: string; audioPath: string; cached: boolean }> {
 	try {
-		const { audio: audioKey } = generateMediaKeysByHanziPinyin(hanzi, pinyin);
+		// For checking existing media, use the predictable path
+		const { audio: checkKey } = generateMediaKeysByHanziPinyin(hanzi, pinyin);
 
 		// Check if audio already exists (skip if force=true)
 		if (!force) {
-			const exists = await existsInR2(audioKey);
+			const exists = await existsInR2(checkKey);
 			if (exists) {
 				// Return secure API endpoint - strip 'media/' prefix for cleaner URLs
-				const audioPath = audioKey.replace("media/", "");
+				const audioPath = checkKey.replace("media/", "");
 				const audioUrl = `/api/media/${audioPath}`;
-				return { audioUrl, cached: true };
+				return { audioUrl, audioPath: checkKey, cached: true };
 			}
-		} else {
+		}
+		
+		// If force regenerating and we have an existing path, delete it
+		if (force && existingAudioPath) {
 			console.log(
 				`Force regeneration requested for ${hanzi}, will delete existing audio if present`,
 			);
-			// Delete existing audio if force regenerating
 			try {
-				const exists = await existsInR2(audioKey);
+				const exists = await existsInR2(existingAudioPath);
 				if (exists) {
-					console.log(`   Deleting existing audio at ${audioKey}`);
-					await deleteFromR2(audioKey);
+					console.log(`   Deleting existing audio at ${existingAudioPath}`);
+					await deleteFromR2(existingAudioPath);
 				}
 			} catch (deleteError) {
 				console.warn(`   Could not delete existing audio:`, deleteError);
@@ -98,6 +134,7 @@ export async function generateSharedAudio(
 			console.log(`   🎯 Character ${hanzi} needs context-based audio generation`);
 			
 			// Check if trimming is available
+			const { isTrimmingAvailable } = await getAudioTrimmer();
 			const canTrim = await isTrimmingAvailable();
 			if (!canTrim) {
 				console.warn(`   ⚠️ FFmpeg not available, falling back to simple generation`);
@@ -152,6 +189,7 @@ export async function generateSharedAudio(
 					
 					// Trim the audio to extract just the character
 					console.log(`   ✂️ Trimming audio to extract ${hanzi} pronunciation...`);
+					const { trimAudioBuffer } = await getAudioTrimmer();
 					audioBuffer = await trimAudioBuffer(
 						fullAudioBuffer,
 						audioContext.trimStart,
@@ -214,8 +252,11 @@ export async function generateSharedAudio(
 			throw new Error('Failed to generate audio buffer');
 		}
 
-		// Upload to R2 (avoid special characters in metadata)
-		await uploadToR2(audioKey, audioBuffer, {
+		// Generate unique key for new audio to ensure cache invalidation
+		const { audio: newAudioKey } = generateUniqueMediaKeys(hanzi, pinyin);
+
+		// Upload to R2 with unique filename
+		await uploadToR2(newAudioKey, audioBuffer, {
 			contentType: "audio/mpeg",
 			metadata: {
 				voice,
@@ -225,13 +266,13 @@ export async function generateSharedAudio(
 		});
 
 		// Return secure API endpoint - strip 'media/' prefix for cleaner URLs
-		const audioPath = audioKey.replace("media/", "");
-		// Add timestamp to bust browser cache for newly generated audio
-		const audioUrl = `/api/media/${audioPath}?t=${Date.now()}`;
-		return { audioUrl, cached: false };
+		const audioPath = newAudioKey.replace("media/", "");
+		// No need for timestamp parameter since we have a unique filename
+		const audioUrl = `/api/media/${audioPath}`;
+		return { audioUrl, audioPath: newAudioKey, cached: false };
 	} catch (error) {
 		console.error("Shared audio generation error:", error);
-		return { audioUrl: "", cached: false };
+		return { audioUrl: "", audioPath: "", cached: false };
 	}
 }
 
@@ -244,35 +285,38 @@ export async function generateSharedImage(
 	meaning: string = "",
 	pinyin: string = "",
 	force: boolean = false,
-): Promise<{ imageUrl: string; cached: boolean; prompt?: string }> {
+	existingImagePath?: string, // Existing path from database to delete
+): Promise<{ imageUrl: string; imagePath: string; cached: boolean; prompt?: string }> {
 	if (!process.env.FAL_KEY) {
 		console.warn("Fal.ai API key not configured");
-		return { imageUrl: "", cached: false, prompt: undefined };
+		return { imageUrl: "", imagePath: "", cached: false, prompt: undefined };
 	}
 
 	try {
-		// Always use both hanzi and pinyin in the key
-		const { image: imageKey } = generateMediaKeysByHanziPinyin(hanzi, pinyin);
+		// For checking existing media, use the predictable path
+		const { image: checkKey } = generateMediaKeysByHanziPinyin(hanzi, pinyin);
 
 		// Check if image already exists (skip if force=true)
 		if (!force) {
-			const exists = await existsInR2(imageKey);
+			const exists = await existsInR2(checkKey);
 			if (exists) {
 				// Return secure API endpoint - strip 'media/' prefix for cleaner URLs
-				const imagePath = imageKey.replace("media/", "");
+				const imagePath = checkKey.replace("media/", "");
 				const imageUrl = `/api/media/${imagePath}`;
-				return { imageUrl, cached: true, prompt: undefined };
+				return { imageUrl, imagePath: checkKey, cached: true, prompt: undefined };
 			}
-		} else {
+		}
+		
+		// If force regenerating and we have an existing path, delete it
+		if (force && existingImagePath) {
 			console.log(
 				`Force regeneration requested for ${hanzi}, will delete existing image if present`,
 			);
-			// Delete existing image if force regenerating
 			try {
-				const exists = await existsInR2(imageKey);
+				const exists = await existsInR2(existingImagePath);
 				if (exists) {
-					console.log(`   Deleting existing image at ${imageKey}`);
-					await deleteFromR2(imageKey);
+					console.log(`   Deleting existing image at ${existingImagePath}`);
+					await deleteFromR2(existingImagePath);
 				}
 			} catch (deleteError) {
 				console.warn(`   Could not delete existing image:`, deleteError);
@@ -351,7 +395,6 @@ export async function generateSharedImage(
 			`Generating shared fal.ai image for ${hanzi} with meaning: "${meaning}" and pinyin: "${pinyin}"`,
 		);
 		console.log(`Generated mnemonic prompt: ${prompt}`);
-		console.log(`Image will be stored at: ${imageKey}`);
 
 		// Try up to 3 times to generate a valid image
 		const maxAttempts = 3;
@@ -462,8 +505,11 @@ export async function generateSharedImage(
 		const imageResponse = await fetch(falImageUrl);
 		const imageBuffer = await imageResponse.arrayBuffer();
 
-		// Upload to R2 with minimal metadata to avoid signature issues
-		await uploadToR2(imageKey, Buffer.from(imageBuffer), {
+		// Generate unique key for new image to ensure cache invalidation
+		const { image: newImageKey } = generateUniqueMediaKeys(hanzi, pinyin);
+
+		// Upload to R2 with unique filename
+		await uploadToR2(newImageKey, Buffer.from(imageBuffer), {
 			contentType: "image/jpeg",
 			metadata: {
 				generatedAt: new Date().toISOString(),
@@ -473,7 +519,7 @@ export async function generateSharedImage(
 			},
 		});
 
-		console.log(`✅ Image uploaded successfully to: ${imageKey}`);
+		console.log(`✅ Image uploaded successfully to: ${newImageKey}`);
 		console.log(`   Generated mnemonic visual for: "${meaning}"`);
 		if (validImage) {
 			console.log(
@@ -486,14 +532,12 @@ export async function generateSharedImage(
 		}
 
 		// Return secure API endpoint - strip 'media/' prefix for cleaner URLs
-		const imagePath = imageKey.replace("media/", "");
-		// Add timestamp to bust browser cache when force regenerating
-		const imageUrl = force
-			? `/api/media/${imagePath}?t=${Date.now()}`
-			: `/api/media/${imagePath}`;
+		const imagePath = newImageKey.replace("media/", "");
+		// No need for timestamp parameter since we have a unique filename
+		const imageUrl = `/api/media/${imagePath}`;
 		console.log(`   Access URL: ${imageUrl}`);
 
-		return { imageUrl, cached: false, prompt };
+		return { imageUrl, imagePath: newImageKey, cached: false, prompt };
 	} catch (error: any) {
 		console.error("Shared image generation error:", error);
 		// Log detailed error information for debugging
@@ -503,7 +547,7 @@ export async function generateSharedImage(
 				JSON.stringify(error.body.detail, null, 2),
 			);
 		}
-		return { imageUrl: "", cached: false, prompt: undefined };
+		return { imageUrl: "", imagePath: "", cached: false, prompt: undefined };
 	}
 }
 

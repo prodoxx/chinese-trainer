@@ -29,24 +29,9 @@ export default async function PricingPage() {
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#f7cc48] to-[#f7cc48]/80">Chinese fluency</span>
             </h1>
             <p className="text-lg sm:text-xl md:text-2xl text-[#7d8590] mb-8 sm:mb-10 max-w-3xl mx-auto leading-relaxed px-4 sm:px-0">
-              Start free and learn 100 characters. Upgrade to Pro when you're ready for unlimited learning. That's it.
+              Choose the plan that fits your learning journey. Start with Pro or commit to lifetime mastery.
             </p>
 
-            {/* Social Proof */}
-            <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-[#7d8590]">
-              <div className="flex items-center gap-2">
-                <Users className="w-4 h-4" />
-                <span>50,000+ active learners</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Star className="w-4 h-4 text-[#f7cc48]" />
-                <span>4.9/5 average rating</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <TrendingUp className="w-4 h-4" />
-                <span>85% retention rate</span>
-              </div>
-            </div>
           </div>
         </div>
       </section>
@@ -57,12 +42,12 @@ export default async function PricingPage() {
           <div className="max-w-6xl mx-auto">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
               <div>
-                <div className="text-3xl font-bold text-white mb-2">$0</div>
-                <div className="text-sm text-[#7d8590]">to start learning</div>
+                <div className="text-3xl font-bold text-white mb-2">14</div>
+                <div className="text-sm text-[#7d8590]">day free trial</div>
               </div>
               <div>
-                <div className="text-3xl font-bold text-white mb-2">100</div>
-                <div className="text-sm text-[#7d8590]">free characters forever</div>
+                <div className="text-3xl font-bold text-white mb-2">Unlimited</div>
+                <div className="text-sm text-[#7d8590]">characters to learn</div>
               </div>
               <div>
                 <div className="text-3xl font-bold text-white mb-2">20%</div>
@@ -102,8 +87,8 @@ export default async function PricingPage() {
                 <thead>
                   <tr className="border-b border-[#30363d]">
                     <th className="text-left py-4 px-4 text-white font-semibold">Features</th>
-                    <th className="text-center py-4 px-4 text-white font-semibold">Free</th>
                     <th className="text-center py-4 px-4 text-white font-semibold bg-[#f7cc48]/10">Pro</th>
+                    <th className="text-center py-4 px-4 text-white font-semibold">Lifetime</th>
                     <th className="text-center py-4 px-4 text-white font-semibold">Team</th>
                   </tr>
                 </thead>
@@ -111,320 +96,319 @@ export default async function PricingPage() {
                   {/* Pricing */}
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590]">Price</td>
-                    <td className="text-center py-4 px-4 text-white">$0/mo</td>
                     <td className="text-center py-4 px-4 text-white bg-[#f7cc48]/10 font-semibold">$14-17.50/mo</td>
+                    <td className="text-center py-4 px-4 text-white">$399 once</td>
                     <td className="text-center py-4 px-4 text-white">Custom</td>
                   </tr>
                   
                   {/* Core Learning Features */}
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] font-semibold">Core Learning</td>
-                    <td className="text-center py-4 px-4"></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"></td>
+                    <td className="text-center py-4 px-4"></td>
                     <td className="text-center py-4 px-4"></td>
                   </tr>
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] pl-8">Characters Limit</td>
-                    <td className="text-center py-4 px-4 text-white">100</td>
                     <td className="text-center py-4 px-4 text-white bg-[#f7cc48]/10 font-semibold">Unlimited</td>
                     <td className="text-center py-4 px-4 text-white">Unlimited</td>
                   </tr>
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] pl-8">Dual-Phase Flash Sessions</td>
-                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
+                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                   </tr>
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] pl-8">Smart Mini-Quizzes</td>
-                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
+                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                   </tr>
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] pl-8">SM-2 Spaced Repetition</td>
-                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
+                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                   </tr>
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] pl-8">Daily Reminders</td>
-                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
+                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                   </tr>
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] pl-8">Cross-Device Sync</td>
-                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
+                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                   </tr>
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] pl-8">Interactive Demo</td>
-                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
+                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                   </tr>
                   
                   {/* AI Features */}
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] font-semibold">AI Enrichment</td>
-                    <td className="text-center py-4 px-4"></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"></td>
+                    <td className="text-center py-4 px-4"></td>
                     <td className="text-center py-4 px-4"></td>
                   </tr>
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] pl-8">Dictionary Lookup (CC-CEDICT)</td>
-                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
+                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                   </tr>
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] pl-8">AI-Generated Images</td>
-                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
+                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                   </tr>
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] pl-8">Taiwan Mandarin Audio (TTS)</td>
-                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
+                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                   </tr>
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] pl-8">Basic Mnemonics</td>
-                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
+                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                   </tr>
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] pl-8">Daily Enrichment Limit</td>
-                    <td className="text-center py-4 px-4 text-white">20 cards</td>
                     <td className="text-center py-4 px-4 text-white bg-[#f7cc48]/10 font-semibold">Unlimited</td>
+                    <td className="text-center py-4 px-4 text-white">Unlimited</td>
                     <td className="text-center py-4 px-4 text-white">Unlimited</td>
                   </tr>
                   
                   {/* Character Insights */}
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] font-semibold">Character Insights</td>
-                    <td className="text-center py-4 px-4"></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"></td>
+                    <td className="text-center py-4 px-4"></td>
                     <td className="text-center py-4 px-4"></td>
                   </tr>
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] pl-8">Complexity Analysis</td>
-                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
+                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                   </tr>
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] pl-8">AI Etymology & Evolution</td>
-                    <td className="text-center py-4 px-4"><X className="w-5 h-5 text-[#7d8590] mx-auto" /></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
+                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                   </tr>
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] pl-8">AI Memory Aids</td>
-                    <td className="text-center py-4 px-4"><X className="w-5 h-5 text-[#7d8590] mx-auto" /></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
+                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                   </tr>
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] pl-8">Confusion Pattern Analysis</td>
-                    <td className="text-center py-4 px-4"><X className="w-5 h-5 text-[#7d8590] mx-auto" /></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
+                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                   </tr>
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] pl-8">Personalized Learning Tips</td>
-                    <td className="text-center py-4 px-4"><X className="w-5 h-5 text-[#7d8590] mx-auto" /></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
+                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                   </tr>
                   
                   {/* Analytics */}
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] font-semibold">Analytics & Progress</td>
-                    <td className="text-center py-4 px-4"></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"></td>
+                    <td className="text-center py-4 px-4"></td>
                     <td className="text-center py-4 px-4"></td>
                   </tr>
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] pl-8">Basic Statistics</td>
-                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
+                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                   </tr>
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] pl-8">Learning Curve Tracking</td>
-                    <td className="text-center py-4 px-4"><X className="w-5 h-5 text-[#7d8590] mx-auto" /></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
+                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                   </tr>
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] pl-8">Session Performance Metrics</td>
-                    <td className="text-center py-4 px-4"><X className="w-5 h-5 text-[#7d8590] mx-auto" /></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
+                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                   </tr>
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] pl-8">Cognitive Load Analysis</td>
-                    <td className="text-center py-4 px-4"><X className="w-5 h-5 text-[#7d8590] mx-auto" /></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
+                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                   </tr>
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] pl-8">Heat Map Calendar</td>
-                    <td className="text-center py-4 px-4"><X className="w-5 h-5 text-[#7d8590] mx-auto" /></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
+                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                   </tr>
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] pl-8">Progress Export (PDF)</td>
-                    <td className="text-center py-4 px-4"><X className="w-5 h-5 text-[#7d8590] mx-auto" /></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
+                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                   </tr>
                   
                   {/* Deck Management */}
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] font-semibold">Deck Management</td>
-                    <td className="text-center py-4 px-4"></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"></td>
+                    <td className="text-center py-4 px-4"></td>
                     <td className="text-center py-4 px-4"></td>
                   </tr>
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] pl-8">CSV Deck Import</td>
-                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
+                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                   </tr>
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] pl-8">Multiple Decks</td>
-                    <td className="text-center py-4 px-4">3 decks</td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10 font-semibold">Unlimited</td>
+                    <td className="text-center py-4 px-4 text-white">Unlimited</td>
                     <td className="text-center py-4 px-4 text-white">Unlimited</td>
                   </tr>
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] pl-8">Deck Sharing (Coming Soon)</td>
-                    <td className="text-center py-4 px-4"><X className="w-5 h-5 text-[#7d8590] mx-auto" /></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
+                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                   </tr>
                   
                   {/* Study Modes */}
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] font-semibold">Study Modes</td>
-                    <td className="text-center py-4 px-4"></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"></td>
+                    <td className="text-center py-4 px-4"></td>
                     <td className="text-center py-4 px-4"></td>
                   </tr>
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] pl-8">New Card Mode (8-card sessions)</td>
-                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
+                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                   </tr>
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] pl-8">Review Mode (SM-2 scheduled)</td>
-                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
+                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                   </tr>
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] pl-8">Practice Mode (unlimited)</td>
-                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
+                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                   </tr>
                   
                   {/* Accessibility */}
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] font-semibold">Accessibility</td>
-                    <td className="text-center py-4 px-4"></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"></td>
+                    <td className="text-center py-4 px-4"></td>
                     <td className="text-center py-4 px-4"></td>
                   </tr>
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] pl-8">Dark Theme</td>
-                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
+                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                   </tr>
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] pl-8">Reduce Motion Option</td>
-                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
+                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                   </tr>
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] pl-8">Brightness Control</td>
-                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
+                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                   </tr>
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] pl-8">Mobile Responsive</td>
-                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
+                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                   </tr>
                   
                   {/* Support & Team Features */}
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] font-semibold">Support</td>
-                    <td className="text-center py-4 px-4"></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"></td>
+                    <td className="text-center py-4 px-4"></td>
                     <td className="text-center py-4 px-4"></td>
                   </tr>
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] pl-8">Community Support</td>
-                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
+                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                   </tr>
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] pl-8">Priority Email Support</td>
-                    <td className="text-center py-4 px-4"><X className="w-5 h-5 text-[#7d8590] mx-auto" /></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
+                    <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                     <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                   </tr>
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] pl-8">Dedicated Support Manager</td>
-                    <td className="text-center py-4 px-4"><X className="w-5 h-5 text-[#7d8590] mx-auto" /></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"><X className="w-5 h-5 text-[#7d8590] mx-auto" /></td>
+                    <td className="text-center py-4 px-4"><X className="w-5 h-5 text-[#7d8590] mx-auto" /></td>
                     <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                   </tr>
                   
                   {/* Team Features */}
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] font-semibold">Team Features</td>
-                    <td className="text-center py-4 px-4"></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"></td>
+                    <td className="text-center py-4 px-4"></td>
                     <td className="text-center py-4 px-4"></td>
                   </tr>
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] pl-8">Admin Dashboard</td>
-                    <td className="text-center py-4 px-4"><X className="w-5 h-5 text-[#7d8590] mx-auto" /></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"><X className="w-5 h-5 text-[#7d8590] mx-auto" /></td>
+                    <td className="text-center py-4 px-4"><X className="w-5 h-5 text-[#7d8590] mx-auto" /></td>
                     <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                   </tr>
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] pl-8">Student Progress Tracking</td>
-                    <td className="text-center py-4 px-4"><X className="w-5 h-5 text-[#7d8590] mx-auto" /></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"><X className="w-5 h-5 text-[#7d8590] mx-auto" /></td>
+                    <td className="text-center py-4 px-4"><X className="w-5 h-5 text-[#7d8590] mx-auto" /></td>
                     <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                   </tr>
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] pl-8">Shared Team Decks</td>
-                    <td className="text-center py-4 px-4"><X className="w-5 h-5 text-[#7d8590] mx-auto" /></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"><X className="w-5 h-5 text-[#7d8590] mx-auto" /></td>
+                    <td className="text-center py-4 px-4"><X className="w-5 h-5 text-[#7d8590] mx-auto" /></td>
                     <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                   </tr>
                   <tr className="border-b border-[#30363d]/50">
                     <td className="py-4 px-4 text-[#7d8590] pl-8">API Access</td>
-                    <td className="text-center py-4 px-4"><X className="w-5 h-5 text-[#7d8590] mx-auto" /></td>
                     <td className="text-center py-4 px-4 bg-[#f7cc48]/10"><X className="w-5 h-5 text-[#7d8590] mx-auto" /></td>
+                    <td className="text-center py-4 px-4"><X className="w-5 h-5 text-[#7d8590] mx-auto" /></td>
                     <td className="text-center py-4 px-4"><CheckCircle className="w-5 h-5 text-green-500 mx-auto" /></td>
                   </tr>
                 </tbody>
@@ -448,14 +432,14 @@ export default async function PricingPage() {
             <div className="space-y-6">
               <details className="group">
                 <summary className="flex justify-between items-center cursor-pointer list-none bg-[#21262d] border border-[#30363d] rounded-lg p-6 hover:border-[#f7cc48]/50 transition-all">
-                  <h4 className="text-lg font-semibold text-white">What happens after my 7-day free trial?</h4>
+                  <h4 className="text-lg font-semibold text-white">What happens after my 14-day free trial?</h4>
                   <svg className="w-5 h-5 text-[#7d8590] group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </summary>
                 <div className="mt-4 px-6 pb-6">
                   <p className="text-[#7d8590]">
-                    After your 7-day trial, you'll be automatically enrolled in the Pro plan. You can cancel anytime during the trial with no charges. If you continue, you'll be billed monthly or annually based on your selection.
+                    After your 14-day trial, you'll be automatically enrolled in the Pro plan. You can cancel anytime during the trial with no charges. If you continue, you'll be billed monthly or annually based on your selection.
                   </p>
                 </div>
               </details>
@@ -536,7 +520,7 @@ export default async function PricingPage() {
               </p>
               
               <Link href="/auth/signup?plan=pro" className="block w-full bg-[#f7cc48] hover:bg-[#f7cc48]/90 text-black font-semibold text-lg px-8 py-4 rounded-lg transition-all transform hover:scale-105 shadow-lg hover:shadow-xl mb-4">
-                Start 7-Day Free Trial
+                Start 14-Day Free Trial
               </Link>
               
               <p className="text-sm text-[#7d8590]">

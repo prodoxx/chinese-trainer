@@ -36,8 +36,10 @@ export async function GET(
     // Ensure Card model is registered
     await Card.findOne({}).limit(1);
     
-    // Get all deck-card associations
-    const deckCards = await DeckCard.find({ deckId }).populate('cardId');
+    // Get all deck-card associations, sorted by creation date (newest first)
+    const deckCards = await DeckCard.find({ deckId })
+      .populate('cardId')
+      .sort({ createdAt: -1 }); // Sort by createdAt in descending order (newest first)
     
     // Get review stats for each card for current user
     const cardIds = deckCards.map(dc => (dc.cardId as any)._id);

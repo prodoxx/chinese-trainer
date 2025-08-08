@@ -346,7 +346,7 @@ export default function CharacterInsights({ characterId, character, onClose, car
                 <div className="flex items-start gap-6">
                   {insights.character.imageUrl && (
                     <img 
-                      src={`${insights.character.imageUrl}${insights.character.imageUrl.includes('?') ? '&' : '?'}t=${Date.now()}`} 
+                      src={insights.character.imageUrl} 
                       alt={insights.character.hanzi}
                       className="w-32 h-32 object-cover rounded-lg"
                     />

@@ -103,10 +103,12 @@ export default function LearningInsights({ deckId }: LearningInsightsProps) {
             <div className="bg-gray-800/50 rounded-lg p-4">
               <div className="text-sm text-gray-400">Average Accuracy</div>
               <div className={`text-2xl font-bold ${
-                recommendations.summary.avgAccuracy >= 80 ? 'text-green-400' :
-                recommendations.summary.avgAccuracy >= 60 ? 'text-yellow-400' : 'text-red-400'
+                (recommendations.summary.avgAccuracy ?? 0) >= 80 ? 'text-green-400' :
+                (recommendations.summary.avgAccuracy ?? 0) >= 60 ? 'text-yellow-400' : 'text-red-400'
               }`}>
-                {recommendations.summary.avgAccuracy.toFixed(1)}%
+                {recommendations.summary.avgAccuracy != null 
+                  ? `${recommendations.summary.avgAccuracy.toFixed(1)}%`
+                  : 'N/A'}
               </div>
             </div>
             <div className="bg-gray-800/50 rounded-lg p-4">
@@ -178,14 +180,16 @@ export default function LearningInsights({ deckId }: LearningInsightsProps) {
                   <div className="text-right">
                     <div className="text-sm text-gray-400">Difficulty</div>
                     <div className={`text-lg font-bold ${
-                      card.complexity.overall > 0.7 ? 'text-red-400' :
-                      card.complexity.overall > 0.5 ? 'text-orange-400' :
+                      (card.complexity?.overall ?? 0) > 0.7 ? 'text-red-400' :
+                      (card.complexity?.overall ?? 0) > 0.5 ? 'text-orange-400' :
                       'text-yellow-400'
                     }`}>
-                      {(card.complexity.overall * 100).toFixed(0)}%
+                      {card.complexity?.overall != null 
+                        ? `${(card.complexity.overall * 100).toFixed(0)}%`
+                        : 'N/A'}
                     </div>
                     <div className="text-xs text-gray-500">
-                      {card.complexity.strokeCount} strokes
+                      {card.complexity?.strokeCount ? `${card.complexity.strokeCount} strokes` : ''}
                     </div>
                   </div>
                 </div>
@@ -239,7 +243,11 @@ export default function LearningInsights({ deckId }: LearningInsightsProps) {
                   <div key={index} className="flex items-center justify-between p-2 bg-gray-900/50 rounded">
                     <span className="text-xl font-bold">{char.hanzi}</span>
                     <div className="text-right">
-                      <div className="text-sm text-red-400">{(char.accuracy * 100).toFixed(0)}% accuracy</div>
+                      <div className="text-sm text-red-400">
+                        {char.accuracy != null 
+                          ? `${(char.accuracy * 100).toFixed(0)}% accuracy`
+                          : 'No data'}
+                      </div>
                       <div className="text-xs text-gray-500">{char.reason}</div>
                     </div>
                   </div>

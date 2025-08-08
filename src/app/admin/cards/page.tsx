@@ -20,11 +20,15 @@ import {
   Zap,
   XCircle,
   CheckCircle,
+  Check,
   AlertCircle,
   BookOpen,
   BarChart3,
   Grid3X3,
-  List
+  List,
+  Plus,
+  FileText,
+  Upload
 } from 'lucide-react'
 import { useAlert } from '@/hooks/useAlert'
 import AdminCharacterInsights from '@/components/AdminCharacterInsights'
@@ -86,6 +90,11 @@ export default function AdminCardsPage() {
   })
   const [sortBy, setSortBy] = useState<'updatedAt' | 'createdAt' | 'hanzi'>('updatedAt')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+  const [showBulkImport, setShowBulkImport] = useState(false)
+  const [bulkCharacters, setBulkCharacters] = useState('')
+  const [bulkImporting, setBulkImporting] = useState(false)
+  const [bulkImportResults, setBulkImportResults] = useState<any>(null)
+  const [enrichImmediately, setEnrichImmediately] = useState(true)
   const pollIntervalsRef = useRef<Map<string, NodeJS.Timeout>>(new Map())
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -385,9 +394,8 @@ export default function AdminCardsPage() {
     if (playingAudio === audioUrl) {
       setPlayingAudio(null)
     } else {
-      const audioUrlWithTimestamp = `${audioUrl}${audioUrl.includes('?') ? '&' : '?'}t=${Date.now()}`
       setPlayingAudio(audioUrl)
-      const audio = new Audio(audioUrlWithTimestamp)
+      const audio = new Audio(audioUrl)
       audio.play()
       audio.onended = () => setPlayingAudio(null)
     }
@@ -396,6 +404,163 @@ export default function AdminCardsPage() {
   const handlePageChange = (newPage: number) => {
     setPagination(prev => ({ ...prev, page: newPage }))
     window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handleBulkImport = async () => {
+    if (!bulkCharacters.trim()) {
+      showAlert('Please enter some characters to import', { type: 'error' })
+      return
+    }
+
+    // Split by newlines and filter out empty lines
+    const characters = bulkCharacters
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0)
+
+    if (characters.length === 0) {
+      showAlert('No valid characters found', { type: 'error' })
+      return
+    }
+
+    setBulkImporting(true)
+    setBulkImportResults(null)
+
+    try {
+      const response = await fetch('/api/admin/cards/bulk-import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          characters,
+          enrichImmediately 
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to import characters')
+      }
+
+      const data = await response.json()
+      
+      // Update the summary to show 0 initially for enrichment queued items
+      if (data.summary.enrichmentQueued > 0) {
+        data.summary.pendingEnrichment = data.summary.enrichmentQueued
+        data.summary.completedEnrichment = 0
+      }
+      
+      setBulkImportResults(data)
+
+      // Track enrichment jobs
+      if (data.results.enrichmentJobs.length > 0) {
+        data.results.enrichmentJobs.forEach((job: any) => {
+          pollEnrichmentJob(job.jobId, job.cardId, job.hanzi)
+        })
+      }
+
+      // Refresh cards list
+      fetchCards()
+      
+      // Clear form if all successful
+      if (data.summary.errors === 0) {
+        setBulkCharacters('')
+      }
+    } catch (error) {
+      console.error('Bulk import error:', error)
+      showAlert('Failed to import characters', { type: 'error' })
+    } finally {
+      setBulkImporting(false)
+    }
+  }
+
+  const updateEnrichmentCount = (increment: boolean = false) => {
+    setBulkImportResults(prev => {
+      if (!prev) return prev
+      const updated = { ...prev }
+      if (increment) {
+        updated.summary.completedEnrichment = (updated.summary.completedEnrichment || 0) + 1
+        updated.summary.pendingEnrichment = Math.max(0, (updated.summary.pendingEnrichment || 0) - 1)
+      }
+      return updated
+    })
+  }
+
+  const pollEnrichmentJob = (jobId: string, cardId: string, hanzi: string) => {
+    // Clear any existing interval for this card
+    const existingInterval = pollIntervalsRef.current.get(cardId)
+    if (existingInterval) {
+      clearInterval(existingInterval)
+      pollIntervalsRef.current.delete(cardId)
+    }
+
+    setReEnrichingCards(prev => new Set(prev).add(cardId))
+    setEnrichmentStatus(prev => new Map(prev).set(cardId, 'Enriching...'))
+
+    let attempts = 0
+    const maxAttempts = 120 // 2 minutes timeout
+
+    const pollInterval = setInterval(async () => {
+      attempts++
+
+      try {
+        const statusResponse = await fetch(`/api/jobs/${jobId}/status`)
+        const jobStatus = await statusResponse.json()
+
+        if (jobStatus.state === 'completed') {
+          clearInterval(pollInterval)
+          pollIntervalsRef.current.delete(cardId)
+          setReEnrichingCards(prev => {
+            const newSet = new Set(prev)
+            newSet.delete(cardId)
+            return newSet
+          })
+          setEnrichmentStatus(prev => {
+            const newMap = new Map(prev)
+            newMap.delete(cardId)
+            return newMap
+          })
+          updateEnrichmentCount(true) // Increment completed count
+          fetchCards()
+        } else if (jobStatus.state === 'failed' || attempts >= maxAttempts) {
+          clearInterval(pollInterval)
+          pollIntervalsRef.current.delete(cardId)
+          setReEnrichingCards(prev => {
+            const newSet = new Set(prev)
+            newSet.delete(cardId)
+            return newSet
+          })
+          setEnrichmentStatus(prev => {
+            const newMap = new Map(prev)
+            newMap.delete(cardId)
+            return newMap
+          })
+          
+          updateEnrichmentCount(true) // Still count as completed even if failed
+          fetchCards()
+        } else if (jobStatus.progress?.message) {
+          setEnrichmentStatus(prev => new Map(prev).set(cardId, jobStatus.progress.message))
+        }
+      } catch (error) {
+        console.error('Error polling job status:', error)
+        if (attempts >= maxAttempts) {
+          clearInterval(pollInterval)
+          pollIntervalsRef.current.delete(cardId)
+          setReEnrichingCards(prev => {
+            const newSet = new Set(prev)
+            newSet.delete(cardId)
+            return newSet
+          })
+          setEnrichmentStatus(prev => {
+            const newMap = new Map(prev)
+            newMap.delete(cardId)
+            return newMap
+          })
+          updateEnrichmentCount(true) // Count as completed even on error
+          fetchCards()
+        }
+      }
+    }, 1000)
+
+    pollIntervalsRef.current.set(cardId, pollInterval)
   }
 
   if (loading || status === 'loading') {
@@ -437,14 +602,23 @@ export default function AdminCardsPage() {
                 <p className="text-gray-400">Manage all characters in the database</p>
               </div>
 
-              <button
-                onClick={handleRefresh}
-                disabled={refreshing}
-                className="flex items-center gap-2 px-4 py-2 bg-[#21262d] hover:bg-[#30363d] text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-                Refresh
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowBulkImport(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-[#f7cc48] hover:bg-[#f7cc48]/90 text-black font-medium rounded-lg transition-colors"
+                >
+                  <Upload className="w-4 h-4" />
+                  Bulk Import
+                </button>
+                <button
+                  onClick={handleRefresh}
+                  disabled={refreshing}
+                  className="flex items-center gap-2 px-4 py-2 bg-[#21262d] hover:bg-[#30363d] text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                  Refresh
+                </button>
+              </div>
             </div>
 
             {/* Stats */}
@@ -962,6 +1136,234 @@ export default function AdminCardsPage() {
           userId={session?.user?.id || ''}
           onClose={() => setSelectedCharacter(null)}
         />
+      )}
+      
+      {/* Bulk Import Modal */}
+      {showBulkImport && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !bulkImporting) {
+              setShowBulkImport(false)
+              setBulkCharacters('')
+              setBulkImportResults(null)
+            }
+          }}
+        >
+          <div className="bg-[#161b22] rounded-2xl p-6 max-w-2xl w-full border border-[#30363d] shadow-2xl max-h-[90vh] overflow-y-auto">
+            <h2 className="text-2xl font-bold text-[#f7cc48] mb-4">Bulk Import Characters</h2>
+            
+            {!bulkImportResults ? (
+              // Input form
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Enter Traditional Chinese characters (one per line)
+                  </label>
+                  <textarea
+                    value={bulkCharacters}
+                    onChange={(e) => setBulkCharacters(e.target.value)}
+                    placeholder="Example:
+學習
+朋友
+你好
+謝謝"
+                    className="w-full h-64 px-4 py-3 bg-[#0d1117] border border-[#30363d] rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#f7cc48] focus:ring-1 focus:ring-[#f7cc48] font-mono"
+                    disabled={bulkImporting}
+                  />
+                  <p className="text-xs text-gray-500 mt-2">
+                    • Traditional Chinese only
+                    • One character or word per line
+                    • Maximum 4 characters per word
+                    • Duplicate characters will be skipped
+                  </p>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="enrichImmediately"
+                    checked={enrichImmediately}
+                    onChange={(e) => setEnrichImmediately(e.target.checked)}
+                    disabled={bulkImporting}
+                    className="rounded border-gray-600 text-[#f7cc48] focus:ring-[#f7cc48]"
+                  />
+                  <label htmlFor="enrichImmediately" className="text-sm text-gray-300">
+                    Enrich cards immediately after import
+                  </label>
+                </div>
+                
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={handleBulkImport}
+                    disabled={bulkImporting || !bulkCharacters.trim()}
+                    className="flex-1 py-3 bg-[#f7cc48] hover:bg-[#f7cc48]/90 disabled:bg-gray-600 disabled:cursor-not-allowed text-black font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+                  >
+                    {bulkImporting ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        Importing...
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-5 h-5" />
+                        Import Characters
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (!bulkImporting) {
+                        setShowBulkImport(false)
+                        setBulkCharacters('')
+                        setBulkImportResults(null)
+                      }
+                    }}
+                    disabled={bulkImporting}
+                    className="px-6 py-3 bg-[#21262d] hover:bg-[#30363d] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              // Results display
+              <div className="space-y-4">
+                <div className="bg-[#21262d] rounded-lg p-4 border border-[#30363d]">
+                  <h3 className="text-lg font-semibold mb-3">Import Summary</h3>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <span className="text-gray-400">Total Processed:</span>
+                      <span className="ml-2 font-semibold">
+                        {bulkImportResults.summary.pendingEnrichment > 0 
+                          ? bulkImportResults.summary.total - bulkImportResults.summary.pendingEnrichment
+                          : bulkImportResults.summary.total}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Created:</span>
+                      <span className="ml-2 font-semibold text-green-400">{bulkImportResults.summary.created}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Skipped:</span>
+                      <span className="ml-2 font-semibold text-yellow-400">{bulkImportResults.summary.skipped}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Errors:</span>
+                      <span className="ml-2 font-semibold text-red-400">{bulkImportResults.summary.errors}</span>
+                    </div>
+                    {bulkImportResults.summary.enrichmentQueued > 0 && (
+                      <div className="col-span-2">
+                        {bulkImportResults.summary.pendingEnrichment > 0 ? (
+                          <>
+                            <span className="text-gray-400">Enrichment Queued:</span>
+                            <span className="ml-2 font-semibold text-blue-400">
+                              {bulkImportResults.summary.pendingEnrichment}
+                            </span>
+                            {bulkImportResults.summary.completedEnrichment > 0 && (
+                              <span className="text-gray-400 ml-2">
+                                ({bulkImportResults.summary.completedEnrichment} completed)
+                              </span>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-gray-400">Enrichment Completed:</span>
+                            <span className="ml-2 font-semibold text-green-400">
+                              {bulkImportResults.summary.enrichmentQueued}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Created cards */}
+                {bulkImportResults.results.created.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-medium mb-2">
+                      {bulkImportResults.summary.pendingEnrichment > 0 ? (
+                        <span className="text-blue-400">
+                          Currently Enriching ({bulkImportResults.summary.pendingEnrichment})
+                        </span>
+                      ) : (
+                        <span className="text-green-400">
+                          Done Importing ({bulkImportResults.results.created.length})
+                        </span>
+                      )}
+                    </h4>
+                    <div className="space-y-1 max-h-32 overflow-y-auto">
+                      {bulkImportResults.results.created.map((item: any, idx: number) => (
+                        <div key={idx} className="text-sm text-gray-300 flex items-center gap-2">
+                          {reEnrichingCards.has(item.cardId) ? (
+                            <Loader2 className="w-4 h-4 animate-spin text-blue-400" />
+                          ) : (
+                            <CheckCircle className="w-4 h-4 text-green-400" />
+                          )}
+                          <span className="font-semibold">{item.hanzi}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Skipped cards */}
+                {bulkImportResults.results.skipped.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-medium text-yellow-400 mb-2">Skipped ({bulkImportResults.results.skipped.length})</h4>
+                    <div className="space-y-1 max-h-32 overflow-y-auto">
+                      {bulkImportResults.results.skipped.map((item: any, idx: number) => (
+                        <div key={idx} className="text-sm text-gray-300">
+                          <span className="font-semibold">{item.hanzi}</span>
+                          <span className="text-gray-500 ml-2">- {item.reason}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Errors */}
+                {bulkImportResults.results.errors.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-medium text-red-400 mb-2">Errors ({bulkImportResults.results.errors.length})</h4>
+                    <div className="space-y-1 max-h-32 overflow-y-auto">
+                      {bulkImportResults.results.errors.map((item: any, idx: number) => (
+                        <div key={idx} className="text-sm text-gray-300">
+                          <span className="font-semibold">{item.hanzi}</span>
+                          <span className="text-red-400 ml-2">- {item.error}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                <div className="flex gap-3 pt-4 border-t border-[#30363d]">
+                  <button
+                    onClick={() => {
+                      setBulkCharacters('')
+                      setBulkImportResults(null)
+                    }}
+                    className="flex-1 py-3 bg-[#f7cc48] hover:bg-[#f7cc48]/90 text-black font-medium rounded-lg transition-colors"
+                  >
+                    Import More
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowBulkImport(false)
+                      setBulkCharacters('')
+                      setBulkImportResults(null)
+                      fetchCards() // Refresh the cards list
+                    }}
+                    className="flex-1 py-3 bg-[#21262d] hover:bg-[#30363d] text-white rounded-lg transition-colors"
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       )}
       
       <Footer />

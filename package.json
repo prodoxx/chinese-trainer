@@ -42,6 +42,8 @@
 		"mongoose": "^8.16.5",
 		"next": "15.4.4",
 		"next-auth": "^4.24.11",
+		"nextjs-toploader": "^3.8.16",
+		"ollama": "^0.5.17",
 		"openai": "^5.10.2",
 		"prisma": "^6.13.0",
 		"react": "19.1.0",

@@ -266,6 +266,36 @@ export function generateMediaKeysByHanziPinyin(hanzi: string, pinyin: string) {
 }
 
 /**
+ * Generate unique storage keys with random filenames for cache busting
+ * This ensures that when we regenerate media, the browser will fetch the new version
+ */
+export function generateUniqueMediaKeys(hanzi: string, pinyin: string) {
+  // Always include both hanzi and pinyin in the hash
+  const keyBase = `${hanzi}-${pinyin}`;
+  
+  // Create a hash of the key to prevent predictable URLs
+  const hash = crypto.createHash('sha256').update(keyBase).digest('hex');
+  
+  // Use first 12 characters of hash for shorter paths
+  const shortHash = hash.substring(0, 12);
+  
+  // Generate random filenames using crypto.randomBytes
+  const imageFilename = crypto.randomBytes(8).toString('hex');
+  const audioFilename = crypto.randomBytes(8).toString('hex');
+  
+  console.log(`🔑 Generating unique media keys for "${hanzi}" (${pinyin})`);
+  console.log(`   Base hash: ${shortHash}`);
+  console.log(`   Image filename: ${imageFilename}.jpg`);
+  console.log(`   Audio filename: ${audioFilename}.mp3`);
+  
+  return {
+    image: `media/shared/${shortHash}/${imageFilename}.jpg`,
+    audio: `media/shared/${shortHash}/${audioFilename}.mp3`,
+    thumbnail: `media/shared/${shortHash}/thumb_${imageFilename}.jpg`,
+  };
+}
+
+/**
  * Upload an image from a URL to R2
  */
 export async function uploadImageFromUrl(

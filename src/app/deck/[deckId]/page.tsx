@@ -679,7 +679,7 @@ export default function DeckView() {
                 <div className="mb-4">
                   <div className="w-full bg-[#161b22] rounded-lg overflow-hidden">
                     <img
-                      src={`${card.imageUrl}${card.imageUrl.includes('?') ? '&' : '?'}t=${Date.now()}`}
+                      src={card.imageUrl}
                       alt={card.hanzi}
                       className="w-full h-auto object-contain"
                     />
@@ -730,8 +730,7 @@ export default function DeckView() {
                     onClick={(e) => {
                       e.stopPropagation()
                       if (card.audioUrl) {
-                        const audioUrlWithTimestamp = `${card.audioUrl}${card.audioUrl.includes('?') ? '&' : '?'}t=${Date.now()}`
-                        playAudio(audioUrlWithTimestamp)
+                        playAudio(card.audioUrl)
                       }
                     }}
                     className="w-full py-3 bg-gradient-to-r from-[#f7cc48]/10 to-yellow-500/10 hover:from-[#f7cc48]/20 hover:to-yellow-500/20 text-[#f7cc48] rounded-xl transition-all text-sm font-semibold border border-[#f7cc48]/20 hover:border-[#f7cc48]/40"

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Nunito } from "next/font/google";
+import NextTopLoader from 'nextjs-toploader';
 import "./globals.css";
 import "./cursor-fix.css";
 import { AlertProvider } from "@/hooks/useAlert";
@@ -90,6 +91,17 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${nunito.variable} antialiased`}
       >
+        <NextTopLoader
+          color="#f7cc48"
+          initialPosition={0.08}
+          crawlSpeed={200}
+          height={3}
+          crawl={true}
+          showSpinner={false}
+          easing="ease"
+          speed={200}
+          shadow="0 0 10px #f7cc48,0 0 5px #f7cc48"
+        />
         <Providers>
           <AudioProvider>
             <AlertProvider>

@@ -4,14 +4,22 @@ const openai = process.env.OPENAI_API_KEY ? new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 }) : null;
 
+export interface ImageSearchQueryResult {
+  query: string;
+  prompt?: string;
+}
+
 export async function generateImageSearchQuery(
   hanzi: string, 
   meaning: string, 
   pinyin: string
-): Promise<string> {
+): Promise<ImageSearchQueryResult> {
   if (!openai) {
     console.warn('OpenAI API key not configured, using fallback');
-    return meaning.split(/[;,]/)[0].trim();
+    return {
+      query: meaning.split(/[;,]/)[0].trim(),
+      prompt: undefined
+    };
   }
 
   try {
@@ -56,10 +64,16 @@ Otherwise, return ONLY the 2-5 word search query.`;
     
     // Check if AI suggests skipping image
     if (query === 'SKIP_IMAGE') {
-      return 'SKIP_IMAGE';
+      return {
+        query: 'SKIP_IMAGE',
+        prompt: prompt
+      };
     }
     
-    return query;
+    return {
+      query: query,
+      prompt: prompt
+    };
   } catch (error: any) {
     if (error?.status === 429 || error?.code === 'insufficient_quota') {
       console.log(`OpenAI quota exceeded, using fallback for ${hanzi}`);
@@ -68,6 +82,9 @@ Otherwise, return ONLY the 2-5 word search query.`;
     }
     
     // Default fallback: just use the meaning as the search query
-    return meaning.split(/[;,]/)[0].trim();
+    return {
+      query: meaning.split(/[;,]/)[0].trim(),
+      prompt: undefined // No prompt since we fell back
+    };
   }
 }

@@ -477,10 +477,10 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
     if (currentIndex + 1 < blockCards.length) {
       const nextCard = blockCards[currentIndex + 1];
       
-      // Preload image with cache-busting
+      // Preload image
       if (nextCard.imageUrl) {
         const img = new Image();
-        img.src = `${nextCard.imageUrl}${nextCard.imageUrl.includes('?') ? '&' : '?'}t=${Date.now()}`;
+        img.src = nextCard.imageUrl;
       }
       
       // Audio preloading handled by the audio manager in FlashCard component
@@ -494,8 +494,7 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
     if (viewPhase === 'phonological' && currentCard?.audioUrl && !isPaused && currentBlock !== 3) {
       console.log('Playing audio for card:', currentCard.hanzi, 'URL:', currentCard.audioUrl);
       // Play audio with the audio manager
-      const audioUrlWithTimestamp = `${currentCard.audioUrl}${currentCard.audioUrl.includes('?') ? '&' : '?'}t=${Date.now()}`;
-      playAudio(audioUrlWithTimestamp).catch(error => {
+      playAudio(currentCard.audioUrl).catch(error => {
         console.error('Failed to play audio for', currentCard.hanzi, ':', error);
       });
     }
@@ -1154,7 +1153,7 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
                 {currentCard.imageUrl && (
                   <div className="w-40 h-40 sm:w-48 sm:h-48 md:w-56 md:h-56 lg:w-64 lg:h-64 mx-auto my-4">
                     <img
-                      src={`${currentCard.imageUrl}${currentCard.imageUrl.includes('?') ? '&' : '?'}t=${Date.now()}`}
+                      src={currentCard.imageUrl}
                       alt={currentCard.hanzi}
                       className="w-full h-full object-cover rounded-lg"
                     />
@@ -1171,7 +1170,7 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
           <div className="space-y-4">
             <div className="w-64 h-64 sm:w-72 sm:h-72 md:w-80 md:h-80 lg:w-96 lg:h-96 mx-auto mb-4">
               <img
-                src={`${currentCard.imageUrl}${currentCard.imageUrl.includes('?') ? '&' : '?'}t=${Date.now()}`}
+                src={currentCard.imageUrl}
                 alt={currentCard.hanzi}
                 className="w-full h-full object-cover rounded-lg"
               />

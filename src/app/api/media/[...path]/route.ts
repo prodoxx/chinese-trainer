@@ -57,10 +57,13 @@ export async function GET(
       return new NextResponse(data, {
         headers: {
           'Content-Type': contentType,
-          // Always use no-cache to ensure fresh content
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0',
+          // If URL has timestamp parameter, the content is fresh (just generated)
+          // Use short cache to prevent excessive R2 requests while allowing updates
+          // If no timestamp, use longer cache since media is immutable once generated
+          'Cache-Control': hasTimestamp 
+            ? 'public, max-age=3600, stale-while-revalidate=86400' // 1 hour cache, 1 day stale
+            : 'public, max-age=31536000, immutable', // 1 year cache for immutable content
+          'ETag': `"${Buffer.from(data).length}-${fullPath}"`,
         },
       });
     } catch (error) {

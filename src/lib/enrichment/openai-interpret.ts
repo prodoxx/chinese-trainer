@@ -9,6 +9,7 @@ interface InterpretationResult {
 	pinyin?: string;
 	context?: string;
 	imagePrompt?: string;
+	interpretationPrompt?: string; // The prompt used for this interpretation
 }
 
 export async function interpretChinese(
@@ -38,7 +39,7 @@ Format your response as JSON:
   "meaning": "SHORT, SIMPLE meaning using BASIC English words (2-5 words MAX)",
   "pinyin": "pīn yīn (with tone MARKS, Taiwan pronunciation)",
   "context": "common usage or situation where this is used",
-  "imagePrompt": "Mnemonic illustration: [describe a memorable scene/character that embodies the emotion or concept]. Focus on realistic human facial expressions, body language, or real-world symbolic visuals that help students instantly recall the meaning. Photorealistic style, natural lighting, real-world setting, absolutely no text, letters, or numbers."
+  "imagePrompt": "Mnemonic illustration: [describe the subject based on semantic category]. CRITICAL RULES: For OBJECTS (food, drinks, items, things): Focus ONLY on the object itself - close-up shot, no people, show the object's details and characteristics. For EMOTIONS/FEELINGS: Show human facial expressions and body language. For ACTIONS: Show people performing the action. For PLACES: Show the location/environment. For ABSTRACT CONCEPTS: Use symbolic visuals or metaphors. Photorealistic style, natural lighting, real-world setting, absolutely no text, letters, or numbers."
 }
 
 Important: 
@@ -47,7 +48,17 @@ Important:
 - Use Taiwan Mandarin pronunciation standards, not mainland China pronunciations
 - Use tone MARKS (ā á ǎ à), not tone numbers
 - Be clear and specific - avoid vague or overly formal meanings
-- For imagePrompt: Create a mnemonic visual aid that helps students remember the meaning through visual association. Avoid literal representations (e.g., don't use flies for 煩/annoyed). Instead, focus on realistic human expressions, body language, or real-world visual metaphors. Photorealistic images help students connect the concept to real life. No text allowed as it would give away the answer`;
+- For imagePrompt: CRITICAL - Determine the semantic category first:
+  * OBJECTS (coffee, food, items): Show ONLY the object in detail, NO people holding or using it
+  * EMOTIONS/FEELINGS: Focus on human expressions and body language
+  * ACTIONS/VERBS: Show people performing the action
+  * PLACES: Show the environment or location
+  * ABSTRACT CONCEPTS: Use symbolic representations
+  Examples: 
+  - 咖啡 (coffee): "Close-up of steaming hot coffee in a ceramic cup, rich brown crema on top, coffee beans scattered around"
+  - 快樂 (happy): "Person with genuine bright smile, eyes crinkled with joy, radiating happiness"
+  - 跑步 (run): "Athletic person mid-stride running in park, dynamic motion"
+  No text allowed as it would give away the answer`;
 
 		const response = await openai.chat.completions.create({
 			model: "gpt-4o-mini",
@@ -55,7 +66,7 @@ Important:
 				{
 					role: "system",
 					content:
-						"You are a Taiwan Mandarin teacher creating flash cards for language learners. Use SIMPLE, COMMON English words that everyone knows (avoid advanced vocabulary). Keep meanings SHORT (2-5 words max). For emotion/feeling characters, focus on the emotional state (e.g., 煩='annoyed' not 'trouble'). For image prompts, create vivid mnemonic scenes with realistic human expressions, natural body language, or real-world visual metaphors - avoid literal interpretations. Request photorealistic images that help students connect the concept to real life through visual association.",
+						"You are a Taiwan Mandarin teacher creating flash cards for language learners. Use SIMPLE, COMMON English words that everyone knows (avoid advanced vocabulary). Keep meanings SHORT (2-5 words max). For emotion/feeling characters, focus on the emotional state (e.g., 煩='annoyed' not 'trouble'). For image prompts: CRITICAL - First identify if the word is an OBJECT (物品/東西), EMOTION (情緒/感覺), ACTION (動作), PLACE (地方), or ABSTRACT concept. For OBJECTS like 咖啡, 書, 電腦, 水果 etc., describe ONLY the object itself in detail - no people, just the item. For EMOTIONS, show human expressions. For ACTIONS, show people doing the action. Focus on creating memorable visual associations that help students recall meanings.",
 				},
 				{
 					role: "user",
@@ -98,6 +109,7 @@ Important:
 				imagePrompt:
 					result.imagePrompt ||
 					`A clear illustration representing the concept of "${hanzi}"`,
+				interpretationPrompt: prompt, // Include the prompt used
 			};
 		} catch (parseError) {
 			console.error("Failed to parse OpenAI response:", content);
@@ -126,6 +138,7 @@ Important:
 				pinyin: "",
 				context: "",
 				imagePrompt: `A clear illustration representing the concept of "${hanzi}"`,
+				interpretationPrompt: prompt, // Include the prompt used
 			};
 		}
 	} catch (error) {

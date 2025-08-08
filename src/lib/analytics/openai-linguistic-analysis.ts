@@ -72,6 +72,9 @@ export interface DeepLinguisticAnalysis extends EnhancedCharacterComplexity {
     forIntermediate: string[];
     forAdvanced: string[];
   };
+  
+  // The prompt used for linguistic analysis
+  linguisticAnalysisPrompt?: string;
 }
 
 /**
@@ -176,6 +179,7 @@ Focus on practical learning aids and common confusion points.`;
         registerLevel,
       },
       learningTips: aiAnalysis.learningTips,
+      linguisticAnalysisPrompt: prompt, // Include the prompt used
     };
   } catch (error) {
     console.error('OpenAI analysis error:', error);
@@ -441,7 +445,22 @@ Character: ${character} (Traditional Chinese)
 Pinyin: ${pinyin} (Taiwan Mandarin pronunciation)
 Meaning: ${meaning}
 
-IMPORTANT: This is for Taiwan Mandarin (臺灣國語), NOT Mainland Mandarin. Use Traditional Chinese characters and Taiwan-specific pronunciations, vocabulary, and usage.
+CRITICAL RULES:
+1. This is for Taiwan Mandarin (臺灣國語), NOT Mainland Mandarin. Use Traditional Chinese characters and Taiwan-specific pronunciations.
+2. ACCURACY IS PARAMOUNT: Never confuse similar characters. For example:
+   - 友 (yǒu) means "friend" - NOT to be confused with 有 (yǒu) meaning "to have"
+   - 朋友 (péng yǒu) means "friend" - composed of 朋(péng) + 友(yǒu), NOT 朋 + 有
+   - IMPORTANT: 朋友 does NOT contain the character 有 (to have). It contains 友 (friend).
+3. ALWAYS include pinyin with tone marks when mentioning Chinese characters in explanations.
+   Format: character(pinyin) - Example: 朋(péng), 友(yǒu), 有(yǒu)
+4. When analyzing etymology or components, verify each character is correct:
+   - Look at the actual visual components of the character
+   - Do not assume characters based on pronunciation
+   - 友 and 有 are DIFFERENT characters despite same pronunciation
+5. Double-check every character you reference to ensure accuracy.
+
+IMPORTANT: If analyzing a multi-character word (e.g., 朋友), analyze the WHOLE WORD, not imaginary components.
+For 朋友: It consists of 朋(péng) + 友(yǒu), NOT 朋 + 有. Both characters mean "friend".
 
 Provide a detailed JSON analysis with these exact fields:
 {
@@ -452,18 +471,18 @@ Provide a detailed JSON analysis with these exact fields:
   "conceptType": "concrete/abstract/mixed",
   "radicals": [
     {
-      "radical": "the radical character",
+      "radical": "the radical character (for single characters) or 'N/A' for multi-character words",
       "category": "what this radical represents",
       "position": "left/right/top/bottom/enclosure"
     }
   ],
-  "tonePattern": "e.g., 4-4 for two fourth tones",
-  "toneDescription": "e.g., falling + falling",
+  "tonePattern": "e.g., 2-5 for second tone + neutral tone",
+  "toneDescription": "e.g., rising + neutral",
   "strokeCount": number,
   "componentCount": number of distinct components,
   "visualComplexity": 0-1 scale,
-  "etymology": "brief explanation of character origin and development",
-  "mnemonics": ["memory aids for remembering this character"],
+  "etymology": "explanation of character/word origin - MUST include pinyin WITH TONE MARKS in parentheses for EVERY Chinese character mentioned. Example format: 朋(péng) means friend. NOT: 朋 means friend or 朋(peng2)",
+  "mnemonics": ["memory aids - MUST include pinyin WITH TONE MARKS in parentheses for EVERY Chinese character. Example: The character 月(yuè) looks like a moon"],
   "commonConfusions": [
     {
       "character": "similar character (MUST be different from ${character})",
@@ -475,7 +494,7 @@ Provide a detailed JSON analysis with these exact fields:
   "collocations": ["common word combinations"]
 }
 
-Be accurate and educational. Focus on practical learning insights specific to Taiwan Mandarin usage.`;
+Be accurate and educational. Every Chinese character mentioned MUST include its pinyin in parentheses.`;
 
   try {
     const completion = await openai.chat.completions.create({
@@ -483,7 +502,7 @@ Be accurate and educational. Focus on practical learning insights specific to Ta
       messages: [
         {
           role: "system",
-          content: "You are an expert in Taiwan Mandarin (臺灣國語) and Traditional Chinese linguistics. Provide accurate, detailed character analysis for learners studying Taiwan Mandarin specifically. Always use Traditional Chinese characters and Taiwan-specific pronunciations, vocabulary, and cultural contexts."
+          content: "You are an expert in Taiwan Mandarin (臺灣國語) and Traditional Chinese linguistics. Provide accurate, detailed character analysis for learners. CRITICAL: Never confuse similar characters (e.g., 友(yǒu) friend vs 有(yǒu) have). The word 朋友 is composed of 朋(péng) + 友(yǒu) NOT 朋 + 有. Always include pinyin with tone marks when mentioning ANY Chinese character in your explanations, using the format: character(pinyin). Verify visual components - do not assume based on pronunciation. Double-check character accuracy before responding."
         },
         { role: "user", content: prompt }
       ],
