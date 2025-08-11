@@ -442,7 +442,8 @@ export const cardEnrichmentWorker = new Worker<CardEnrichmentJobData>(
 			];
 
 			// Check if error message contains any non-recoverable error patterns
-			const errorMessage = error.message || error.toString();
+			const err = error as { message?: string };
+			const errorMessage = err.message || String(error);
 			const isNonRecoverable = nonRecoverableErrors.some((pattern) =>
 				errorMessage.includes(pattern),
 			);

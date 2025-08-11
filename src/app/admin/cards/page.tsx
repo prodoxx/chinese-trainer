@@ -1515,8 +1515,8 @@ export default function AdminCardsPage() {
                     <div>
                       <span className="text-gray-400">Total Processed:</span>
                       <span className="ml-2 font-semibold">
-                        {bulkImportResults.summary.pendingEnrichment > 0 
-                          ? bulkImportResults.summary.total - bulkImportResults.summary.pendingEnrichment
+                        {(bulkImportResults.summary.pendingEnrichment ?? 0) > 0 
+                          ? bulkImportResults.summary.total - (bulkImportResults.summary.pendingEnrichment ?? 0)
                           : bulkImportResults.summary.total}
                       </span>
                     </div>
@@ -1534,13 +1534,13 @@ export default function AdminCardsPage() {
                     </div>
                     {bulkImportResults.summary.enrichmentQueued > 0 && (
                       <div className="col-span-2">
-                        {bulkImportResults.summary.pendingEnrichment > 0 ? (
+                        {(bulkImportResults.summary.pendingEnrichment ?? 0) > 0 ? (
                           <>
                             <span className="text-gray-400">Enrichment Queued:</span>
                             <span className="ml-2 font-semibold text-blue-400">
                               {bulkImportResults.summary.pendingEnrichment}
                             </span>
-                            {bulkImportResults.summary.completedEnrichment > 0 && (
+                            {(bulkImportResults.summary.completedEnrichment ?? 0) > 0 && (
                               <span className="text-gray-400 ml-2">
                                 ({bulkImportResults.summary.completedEnrichment} completed)
                               </span>
@@ -1563,7 +1563,7 @@ export default function AdminCardsPage() {
                 {bulkImportResults.results.created.length > 0 && (
                   <div>
                     <h4 className="text-sm font-medium mb-2">
-                      {bulkImportResults.summary.pendingEnrichment > 0 ? (
+                      {(bulkImportResults.summary.pendingEnrichment ?? 0) > 0 ? (
                         <span className="text-blue-400">
                           Currently Enriching ({bulkImportResults.summary.pendingEnrichment})
                         </span>

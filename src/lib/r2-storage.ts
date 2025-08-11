@@ -59,7 +59,7 @@ export async function uploadToR2(
     }
     
     // Build command parameters, only including defined values
-    const commandParams: Record<string, unknown> = {
+    const commandParams: any = {
       Bucket: BUCKET_NAME,
       Key: key,
       Body: body,
@@ -113,7 +113,7 @@ export async function uploadLargeFileToR2(
     }
     
     // Build command parameters, only including defined values
-    const uploadParams: Record<string, unknown> = {
+    const uploadParams: any = {
       Bucket: BUCKET_NAME,
       Key: key,
       Body: body,

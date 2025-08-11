@@ -139,9 +139,11 @@ function generateInsights(
   }
   
   // Check for semantic category patterns
-  const categories = complexityAnalysis.map(c => c.category).filter(Boolean);
+  const categories = complexityAnalysis.map(c => c.category).filter(Boolean) as string[];
   const categoryCount = categories.reduce((acc, cat) => {
-    acc[cat] = (acc[cat] || 0) + 1;
+    if (cat) {
+      acc[cat] = (acc[cat] || 0) + 1;
+    }
     return acc;
   }, {} as Record<string, number>);
   
@@ -174,7 +176,7 @@ function generateStrategies(
   const strategies = [];
   
   // Component-based learning
-  if (complexityAnalysis.some(c => c.components > 3)) {
+  if (complexityAnalysis.some(c => (c.components ?? 0) > 3)) {
     strategies.push("Break down complex characters: Study components separately before combining.");
   }
   

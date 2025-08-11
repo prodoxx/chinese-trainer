@@ -536,19 +536,20 @@ export async function generateSharedImage(
 
 				if (attempt < maxAttempts) {
 					// Check if scene is too complex or has too many people
+					const personCount = validationResult.details?.personCount as number | undefined;
 					if (
 						validationResult.details?.crowdedScene ||
-						validationResult.details?.personCount > 3
+						(personCount !== undefined && personCount > 3)
 					) {
 						console.log(
-							`Scene has ${validationResult.details?.personCount || "unknown"} people (max 3 allowed), simplifying prompt...`,
+							`Scene has ${personCount || "unknown"} people (max 3 allowed), simplifying prompt...`,
 						);
 						currentPrompt = getSimplifiedPrompt(prompt, meaning);
 					} else {
 						// Refine prompt based on specific issues found
 						currentPrompt = getRefinedPromptForIssues(
 							prompt,
-							validationResult.issues,
+							validationResult.issues || [],
 							validationResult.details,
 						);
 					}
@@ -591,11 +592,11 @@ export async function generateSharedImage(
 		console.log(`   Generated mnemonic visual for: "${meaning}"`);
 		if (validImage) {
 			console.log(
-				`   ✨ Image passed AI validation with confidence: ${validationResult.confidence}`,
+				`   ✨ Image passed AI validation with confidence: ${validationResult?.confidence}`,
 			);
 		} else if (validationResult) {
 			console.log(
-				`   ⚠️ Image has potential issues: ${validationResult.issues.join(", ")}`,
+				`   ⚠️ Image has potential issues: ${validationResult.issues?.join(", ") || "unknown"}`,
 			);
 		}
 
@@ -609,10 +610,11 @@ export async function generateSharedImage(
 	} catch (error) {
 		console.error("Shared image generation error:", error);
 		// Log detailed error information for debugging
-		if (error.status === 422 && error.body?.detail) {
+		const err = error as { status?: number; body?: { detail?: unknown } };
+		if (err.status === 422 && err.body?.detail) {
 			console.error(
 				"Validation error details:",
-				JSON.stringify(error.body.detail, null, 2),
+				JSON.stringify(err.body.detail, null, 2),
 			);
 		}
 		return { imageUrl: "", imagePath: "", cached: false, prompt: undefined, queryPrompt: undefined, queryResult: undefined, queryProvider: undefined };

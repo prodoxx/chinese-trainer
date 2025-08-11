@@ -75,7 +75,8 @@ Otherwise, return ONLY the 2-5 word search query.`;
       prompt: prompt
     };
   } catch (error: unknown) {
-    if (error?.status === 429 || error?.code === 'insufficient_quota') {
+    const err = error as { status?: number; code?: string };
+    if (err?.status === 429 || err?.code === 'insufficient_quota') {
       console.log(`OpenAI quota exceeded, using fallback for ${hanzi}`);
     } else {
       console.error('OpenAI query generation error:', error);
