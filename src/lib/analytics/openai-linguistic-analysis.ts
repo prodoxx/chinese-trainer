@@ -3,7 +3,8 @@
  */
 
 import OpenAI from 'openai';
-import { EnhancedCharacterComplexity, analyzeCharacterWithDictionary } from './enhanced-linguistic-complexity';
+import { analyzeCharacterWithDictionary } from './enhanced-linguistic-complexity';
+import type { EnhancedCharacterComplexity } from './enhanced-linguistic-complexity';
 
 // Initialize OpenAI client with error checking
 const openai = process.env.OPENAI_API_KEY ? new OpenAI({

@@ -26,7 +26,8 @@
 		"db:studio": "prisma studio",
 		"db:reset": "prisma migrate reset",
 		"set-admin": "bun run scripts/set-admin-role.ts",
-		"fix-indexes": "bun run scripts/fix-card-indexes.ts"
+		"fix-indexes": "bun run scripts/fix-card-indexes.ts",
+		"add-reminder-prefs": "bun run scripts/add-reminder-prefs-to-existing-users.ts"
 	},
 	"dependencies": {
 		"@auth/prisma-adapter": "^2.10.0",

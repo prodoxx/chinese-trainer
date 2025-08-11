@@ -1,16 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db/mongodb';
 import Review from '@/lib/db/models/Review';
-import Card from '@/lib/db/models/Card';
-import DeckCard from '@/lib/db/models/DeckCard';
 import { analyzeCharacterWithDictionary } from '@/lib/analytics/enhanced-linguistic-complexity';
 
 export async function GET(request: NextRequest) {
   try {
     await connectDB();
     
-    const searchParams = request.nextUrl.searchParams;
-    const userId = searchParams.get('userId') || 'default'; // In production, get from auth
+    // searchParams and userId are not used in current implementation
+    // const searchParams = request.nextUrl.searchParams;
+    // const userId = searchParams.get('userId') || 'default'; // In production, get from auth
     
     // Get all reviews to understand learning patterns
     const reviews = await Review.find({}).populate('cardId');
@@ -128,8 +127,8 @@ export async function GET(request: NextRequest) {
 }
 
 function generateInsights(
-  performanceData: any[],
-  complexityAnalysis: any[]
+  performanceData: Array<{ accuracy: number; hanzi: string; seen: number }>,
+  complexityAnalysis: Array<{ difficulty: number; category?: string; hanzi: string }>
 ): string[] {
   const insights = [];
   
@@ -168,9 +167,9 @@ function generateInsights(
 }
 
 function generateStrategies(
-  strugglingChars: any[],
-  complexityAnalysis: any[],
-  performanceData: any[]
+  strugglingChars: Array<{ accuracy: number }>,
+  complexityAnalysis: Array<{ components?: number; phoneticComponent?: string; difficulty: number }>,
+  performanceData: Array<{ accuracy: number }>
 ): string[] {
   const strategies = [];
   
@@ -208,8 +207,8 @@ function generateStrategies(
 }
 
 function generateNextSteps(
-  performanceData: any[],
-  complexityAnalysis: any[]
+  performanceData: Array<{ accuracy: number; seen: number }>,
+  complexityAnalysis: unknown[]
 ): string[] {
   const suggestions = [];
   

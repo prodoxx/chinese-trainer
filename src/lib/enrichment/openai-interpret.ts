@@ -129,7 +129,7 @@ Important:
 				) {
 					fallbackMeaning = meaningMatch[1].trim().replace(/[",]/g, "");
 				}
-			} catch (e) {
+			} catch {
 				console.warn("Could not extract meaning from fallback parsing");
 			}
 

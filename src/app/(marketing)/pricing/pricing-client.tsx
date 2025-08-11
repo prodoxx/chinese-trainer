@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { CheckCircle } from "lucide-react"
+import { CheckCircle, GraduationCap, Trophy, Zap, Users, Crown, Info } from "lucide-react"
 import Link from "next/link"
 
 export default function PricingClient() {
@@ -30,7 +30,68 @@ export default function PricingClient() {
       </div>
 
       {/* Pricing Cards */}
-      <div className="grid lg:grid-cols-2 gap-8 max-w-4xl mx-auto">
+      <div className="grid lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+
+        {/* Student Pro Plan */}
+        <div className="bg-[#21262d] border border-[#30363d] rounded-2xl hover:border-[#30363d]/80 transition-all">
+          <div className="p-8">
+            <div className="text-center mb-8">
+              <div className="flex justify-center mb-4">
+                <GraduationCap className="w-8 h-8 text-[#f7cc48]" />
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-4">Student Pro</h3>
+              <div className="mb-2">
+                <div className="text-5xl font-bold text-white">
+                  ${billingPeriod === 'annual' ? '8.25' : '9'}
+                  <span className="text-2xl font-normal text-[#7d8590]">/mo</span>
+                </div>
+                {billingPeriod === 'annual' && (
+                  <div className="text-sm text-[#7d8590] line-through">$9/mo</div>
+                )}
+              </div>
+              <div className="text-[#f7cc48]">
+                {billingPeriod === 'annual' ? 'Billed $99 annually' : 'Billed monthly'}
+              </div>
+              <div className="mt-4 text-sm text-[#7d8590]">Full Pro features for students</div>
+              <div className="mt-2 inline-flex items-center gap-1 text-xs text-blue-400 bg-blue-400/10 px-3 py-1 rounded-full">
+                <Info className="w-3 h-3" />
+                Student verification required
+              </div>
+            </div>
+
+            <div className="space-y-4 mb-8">
+              <div className="flex items-start gap-3">
+                <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-white font-semibold">Everything in Pro</p>
+                  <p className="text-xs text-[#7d8590]">Same unlimited features</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-white font-semibold">Academic email required</p>
+                  <p className="text-xs text-[#7d8590]">.edu email verification</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-white font-semibold">40% discount</p>
+                  <p className="text-xs text-[#7d8590]">Support your studies</p>
+                </div>
+              </div>
+            </div>
+
+            <Link 
+              href={`/auth/signup?plan=student-${billingPeriod}`} 
+              className="block w-full bg-[#30363d] hover:bg-[#30363d]/80 text-white font-semibold py-3 px-6 rounded-lg transition-all text-center mb-3"
+            >
+              Verify Student Status
+            </Link>
+            <p className="text-xs text-center text-[#7d8590]">14-day free trial included</p>
+          </div>
+        </div>
 
         {/* Pro Plan */}
         <div className="bg-[#21262d] border-2 border-[#f7cc48] rounded-2xl relative transform lg:scale-105 hover:scale-105 transition-transform">
@@ -66,8 +127,8 @@ export default function PricingClient() {
               <div className="flex items-start gap-3">
                 <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-white font-semibold">AI enrichment</p>
-                  <p className="text-xs text-[#7d8590]">Auto-generated images & audio</p>
+                  <p className="text-white font-semibold">100 AI credits/month</p>
+                  <p className="text-xs text-[#7d8590]">For new content (3,000+ pre-enriched)</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -116,7 +177,7 @@ export default function PricingClient() {
 
             <Link 
               href={`/auth/signup?plan=pro-${billingPeriod}`} 
-              className="block w-full bg-[#f7cc48] hover:bg-[#f7cc48]/90 text-black font-semibold py-3 px-6 rounded-lg transition-all transform hover:scale-105 shadow-lg hover:shadow-xl text-center mb-3"
+              className="block w-full bg-[#f7cc48] hover:bg-[#f7cc48]/90 text-black font-semibold py-4 px-6 rounded-lg transition-all transform hover:scale-105 shadow-lg hover:shadow-xl text-center mb-3 text-lg"
             >
               Start 14-Day Free Trial
             </Link>
@@ -125,49 +186,66 @@ export default function PricingClient() {
         </div>
 
         {/* Lifetime Plan */}
-        <div className="bg-[#21262d] border border-[#30363d] rounded-2xl hover:border-[#30363d]/80 transition-all">
+        <div className="bg-[#21262d] border border-[#30363d] rounded-2xl hover:border-[#30363d]/80 transition-all relative">
+          <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+            <div className="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-4 py-1 rounded-full text-sm font-semibold">BEST VALUE</div>
+          </div>
+          <div className="absolute top-4 right-4">
+            <div className="bg-red-500/10 text-red-400 px-3 py-1 rounded-full text-xs font-semibold border border-red-500/30">LIMITED TIME</div>
+          </div>
           <div className="p-8">
             <div className="text-center mb-8">
-              <h3 className="text-2xl font-bold text-white mb-4">Lifetime</h3>
-              <div className="text-5xl font-bold text-white mb-2">$399</div>
+              <div className="flex justify-center mb-4">
+                <Trophy className="w-8 h-8 text-[#f7cc48]" />
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-2">Lifetime</h3>
+              <p className="text-sm text-purple-400 mb-4 font-semibold">For serious learners only</p>
+              <div className="text-5xl font-bold text-white mb-2">$499</div>
               <div className="text-[#7d8590]">One-time payment</div>
-              <div className="mt-4 text-sm text-[#7d8590]">Own Danbing forever</div>
+              <div className="mt-2 text-sm text-green-400 font-semibold">Pays for itself in under 3 years</div>
             </div>
 
             <div className="space-y-4 mb-8">
               <div className="flex items-start gap-3">
-                <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                <Crown className="w-5 h-5 text-purple-400 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-white font-semibold">Everything in Pro</p>
-                  <p className="text-xs text-[#7d8590]">All premium features included</p>
+                  <p className="text-white font-semibold">Lifetime-exclusive decks</p>
+                  <p className="text-xs text-[#7d8590]">Quarterly content drops</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <Zap className="w-5 h-5 text-yellow-400 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-white font-semibold">200 AI credits/month</p>
+                  <p className="text-xs text-[#7d8590]">Double the Pro allocation</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-white font-semibold">Lifetime access</p>
-                  <p className="text-xs text-[#7d8590]">No recurring fees ever</p>
+                  <p className="text-white font-semibold">Early access forever</p>
+                  <p className="text-xs text-[#7d8590]">All new features first</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                <Trophy className="w-5 h-5 text-yellow-400 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-white font-semibold">Future updates</p>
-                  <p className="text-xs text-[#7d8590]">All new features included</p>
+                  <p className="text-white font-semibold">Annual mastery challenge</p>
+                  <p className="text-xs text-[#7d8590]">Recognition badge</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                <Crown className="w-5 h-5 text-purple-400 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-white font-semibold">Early access</p>
-                  <p className="text-xs text-[#7d8590]">Be first to try new features</p>
+                  <p className="text-white font-semibold">VIP profile status</p>
+                  <p className="text-xs text-[#7d8590]">Stand out in community</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                <Users className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-white font-semibold">VIP support</p>
-                  <p className="text-xs text-[#7d8590]">Priority lifetime support</p>
+                  <p className="text-white font-semibold">Exclusive community</p>
+                  <p className="text-xs text-[#7d8590]">Lifetime-only forum</p>
                 </div>
               </div>
             </div>
@@ -183,9 +261,12 @@ export default function PricingClient() {
       <div className="mt-16">
         <div className="bg-[#21262d] border border-[#30363d] rounded-2xl p-8 max-w-4xl mx-auto">
           <div className="text-center mb-8">
-            <h3 className="text-3xl font-bold text-white mb-4">Team Custom Plan</h3>
-            <p className="text-lg text-[#7d8590] mb-2">For schools, private tutor groups, and student organizations</p>
-            <p className="text-[#7d8590]">Get volume pricing and advanced features for your team</p>
+            <h3 className="text-3xl font-bold text-white mb-4">Team Plan</h3>
+            <div className="text-3xl font-bold text-[#f7cc48] mb-2">
+              Starting at $9/user/month
+            </div>
+            <p className="text-lg text-[#7d8590] mb-2">For schools, private tutor groups, and organizations</p>
+            <p className="text-sm text-green-400">Volume discounts available for 20+ users</p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-6 mb-8">

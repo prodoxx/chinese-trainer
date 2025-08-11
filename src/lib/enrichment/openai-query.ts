@@ -12,7 +12,7 @@ export interface ImageSearchQueryResult {
 export async function generateImageSearchQuery(
   hanzi: string, 
   meaning: string, 
-  pinyin: string
+  _pinyin: string
 ): Promise<ImageSearchQueryResult> {
   if (!openai) {
     console.warn('OpenAI API key not configured, using fallback');
@@ -74,7 +74,7 @@ Otherwise, return ONLY the 2-5 word search query.`;
       query: query,
       prompt: prompt
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error?.status === 429 || error?.code === 'insufficient_quota') {
       console.log(`OpenAI quota exceeded, using fallback for ${hanzi}`);
     } else {

@@ -6,8 +6,9 @@ import Card from "@/lib/db/models/Card";
 import Deck from "@/lib/db/models/Deck";
 import DeckCard from "@/lib/db/models/DeckCard";
 import Dictionary from "@/lib/db/models/Dictionary";
-import { generateTTSAudioR2 } from "@/lib/enrichment/azure-tts-r2";
-import { generateDALLEImageR2 } from "@/lib/enrichment/openai-dalle-r2";
+// Removed unused imports:
+// import { generateTTSAudioR2 } from "@/lib/enrichment/azure-tts-r2";
+// import { generateDALLEImageR2 } from "@/lib/enrichment/openai-dalle-r2";
 import {
 	generateSharedAudio,
 	generateSharedImage,
@@ -19,7 +20,8 @@ import {
 } from "@/lib/utils/pinyin";
 import { getPreferredEntry } from "@/lib/enrichment/multi-pronunciation-handler";
 import { analyzeCharacterComplexity } from "@/lib/enrichment/character-complexity-analyzer";
-import { EnhancedCharacterComplexity } from "@/lib/analytics/enhanced-linguistic-complexity";
+// Removed unused import:
+// import { EnhancedCharacterComplexity } from "@/lib/analytics/enhanced-linguistic-complexity";
 import { analyzeCharacterWithAI } from "@/lib/ai/ai-provider";
 import { registerWorker } from "../worker-monitor";
 
@@ -120,7 +122,8 @@ export const deckEnrichmentR2Worker = new Worker<DeckEnrichmentJobData>(
 					console.log(
 						`\n🔄 Processing card ${processedCards + 1}/${totalCards}: ${card.hanzi}`,
 					);
-					const cardId = card._id.toString();
+					// cardId variable removed as it was unused
+				// const cardId = card._id.toString();
 
 					// Update deck status - dictionary lookup
 					await Deck.findByIdAndUpdate(deckId, {

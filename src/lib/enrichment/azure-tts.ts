@@ -5,7 +5,8 @@ import crypto from 'crypto';
 // Azure Cognitive Services Text-to-Speech configuration
 const AZURE_TTS_KEY = process.env.AZURE_TTS_KEY;
 const AZURE_TTS_REGION = process.env.AZURE_TTS_REGION || 'eastasia';
-const AZURE_TTS_ENDPOINT = `https://${AZURE_TTS_REGION}.api.cognitive.microsoft.com/sts/v1.0/issuetoken`;
+// Endpoint for getting access token (not used in direct synthesis)
+// const AZURE_TTS_ENDPOINT = `https://${AZURE_TTS_REGION}.api.cognitive.microsoft.com/sts/v1.0/issuetoken`;
 const AZURE_TTS_SYNTHESIS_ENDPOINT = `https://${AZURE_TTS_REGION}.tts.speech.microsoft.com/cognitiveservices/v1`;
 
 // Voice configuration for Traditional Chinese (Taiwan)

@@ -20,14 +20,12 @@ import {
   Zap,
   XCircle,
   CheckCircle,
-  Check,
   AlertCircle,
   BookOpen,
   BarChart3,
   Grid3X3,
   List,
   Plus,
-  FileText,
   Upload,
   Trash2
 } from 'lucide-react'
@@ -94,9 +92,26 @@ export default function AdminCardsPage() {
   const [showBulkImport, setShowBulkImport] = useState(false)
   const [bulkCharacters, setBulkCharacters] = useState('')
   const [bulkImporting, setBulkImporting] = useState(false)
-  const [bulkImportResults, setBulkImportResults] = useState<any>(null)
+  const [bulkImportResults, setBulkImportResults] = useState<{
+    success: boolean;
+    summary: {
+      total: number;
+      created: number;
+      skipped: number;
+      errors: number;
+      enrichmentQueued: number;
+      pendingEnrichment?: number;
+      completedEnrichment?: number;
+    };
+    results: {
+      created: { hanzi: string; cardId: string }[];
+      skipped: { hanzi: string; reason: string }[];
+      errors: { hanzi: string; error: string }[];
+      enrichmentJobs: { hanzi: string; cardId: string; jobId: string }[];
+    };
+  } | null>(null)
   const [enrichImmediately, setEnrichImmediately] = useState(true)
-  const [isDevelopment, setIsDevelopment] = useState(false)
+  // const [isDevelopment, setIsDevelopment] = useState(false)
   const [deleteConfirmation, setDeleteConfirmation] = useState<{ cardId: string; hanzi: string } | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [bulkDeleteConfirmation, setBulkDeleteConfirmation] = useState(false)
@@ -120,7 +135,7 @@ export default function AdminCardsPage() {
     }
 
     // Check if we're in development mode
-    setIsDevelopment(process.env.NODE_ENV === 'development')
+    // setIsDevelopment(process.env.NODE_ENV === 'development')
 
     fetchCards()
   }, [session, status, router, showAlert])

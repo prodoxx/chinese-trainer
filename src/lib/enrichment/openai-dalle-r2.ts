@@ -18,7 +18,8 @@ export interface GeneratedImage {
 function generateLearningPrompt(
   hanzi: string,
   meaning: string,
-  pinyin: string,
+  // pinyin parameter not used in current implementation
+  _pinyin: string,
 ): string {
   // Check if this is a word that shouldn't have an image
   const skipWords = [

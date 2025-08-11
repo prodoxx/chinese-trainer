@@ -59,7 +59,7 @@ export async function uploadToR2(
     }
     
     // Build command parameters, only including defined values
-    const commandParams: any = {
+    const commandParams: Record<string, unknown> = {
       Bucket: BUCKET_NAME,
       Key: key,
       Body: body,
@@ -113,7 +113,7 @@ export async function uploadLargeFileToR2(
     }
     
     // Build command parameters, only including defined values
-    const uploadParams: any = {
+    const uploadParams: Record<string, unknown> = {
       Bucket: BUCKET_NAME,
       Key: key,
       Body: body,
@@ -200,7 +200,7 @@ export async function existsInR2(key: string): Promise<boolean> {
 
     await r2Client.send(command);
     return true;
-  } catch (error) {
+  } catch {
     return false;
   }
 }

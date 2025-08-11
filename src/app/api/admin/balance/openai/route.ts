@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // Check authentication and admin role
     const session = await getServerSession(authOptions)
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
       usageData = await usageResponse.json()
       // Calculate total cost from usage data
       if (usageData.data) {
-        totalCost = usageData.data.reduce((sum: number, day: any) => sum + (day.n_requests * 0.001), 0) // Rough estimate
+        totalCost = usageData.data.reduce((sum: number, day: { n_requests: number }) => sum + (day.n_requests * 0.001), 0) // Rough estimate
       }
     }
     
@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
       if (subscriptionResponse.ok) {
         subscriptionData = await subscriptionResponse.json()
       }
-    } catch (error) {
+    } catch {
       // Subscription endpoint might not be available
       console.log('Subscription endpoint not available')
     }
@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
           balance = balanceData.total_available
         }
       }
-    } catch (error) {
+    } catch {
       // Balance endpoint might not be available
       console.log('Balance endpoint not available')
     }

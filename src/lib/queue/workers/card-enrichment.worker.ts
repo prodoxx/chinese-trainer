@@ -18,7 +18,8 @@ import { analyzeCharacterComplexity } from "@/lib/enrichment/character-complexit
 export const cardEnrichmentWorker = new Worker<CardEnrichmentJobData>(
 	"card-enrichment",
 	async (job: Job<CardEnrichmentJobData>) => {
-		const { cardId, userId, deckId, force, disambiguationSelection, aiProvider } = job.data;
+		const { cardId, userId, force, disambiguationSelection } = job.data;
+		// deckId and aiProvider from job.data are not used in current implementation
 
 		console.log(`\n🔄 Starting single card enrichment for card ${cardId}`);
 		console.log(`   Force: ${force}`);
@@ -62,7 +63,7 @@ export const cardEnrichmentWorker = new Worker<CardEnrichmentJobData>(
 			}
 
 			// Look up in dictionary for meaning
-			let dictEntries: any[] = [];
+			let dictEntries: Array<{ definitions: string[]; pinyin: string }> = [];
 			if (!card.meaning || card.meaning === "Unknown character" || force) {
 				dictEntries = await Dictionary.find({
 					traditional: card.hanzi,
@@ -430,7 +431,7 @@ export const cardEnrichmentWorker = new Worker<CardEnrichmentJobData>(
 					imageAttributionUrl: card.imageAttributionUrl,
 				},
 			};
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error("Card enrichment error:", error);
 
 			// Check if this is a non-recoverable error that shouldn't be retried

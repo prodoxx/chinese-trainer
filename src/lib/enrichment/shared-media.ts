@@ -19,8 +19,8 @@ import {
 import { generateAudioContext, needsAudioContext } from "@/lib/enrichment/audio-context-generator";
 
 // Lazy-loaded audio trimming functions
-let _trimAudioBuffer: any = null;
-let _isTrimmingAvailable: any = null;
+let _trimAudioBuffer: ((buffer: Buffer, start: number, duration: number, format: string) => Promise<Buffer>) | null = null;
+let _isTrimmingAvailable: (() => Promise<boolean>) | null = null;
 
 // Helper to get audio trimming functions
 async function getAudioTrimmer() {
@@ -115,8 +115,8 @@ export async function generateSharedAudio(
 					console.log(`   Deleting existing audio at ${existingAudioPath}`);
 					await deleteFromR2(existingAudioPath);
 				}
-			} catch (deleteError) {
-				console.warn(`   Could not delete existing audio:`, deleteError);
+			} catch {
+				console.warn(`   Could not delete existing audio:`);
 			}
 		}
 
@@ -286,7 +286,7 @@ export async function generateSharedImage(
 	pinyin: string = "",
 	force: boolean = false,
 	existingImagePath?: string, // Existing path from database to delete
-	aiProvider: 'openai' = 'openai', // AI provider to use for image prompts
+	_aiProvider: 'openai' = 'openai', // AI provider to use for image prompts (not used in current implementation)
 ): Promise<{ 
 	imageUrl: string; 
 	imagePath: string; 
@@ -327,8 +327,8 @@ export async function generateSharedImage(
 					console.log(`   Deleting existing image at ${existingImagePath}`);
 					await deleteFromR2(existingImagePath);
 				}
-			} catch (deleteError) {
-				console.warn(`   Could not delete existing image:`, deleteError);
+			} catch {
+				console.warn(`   Could not delete existing image:`);
 			}
 		}
 
@@ -418,7 +418,7 @@ export async function generateSharedImage(
 			} else {
 				throw new Error("No AI image prompt available");
 			}
-		} catch (error) {
+		} catch {
 			// Fallback to dynamic prompt generation
 			console.log(
 				`Falling back to dynamic mnemonic prompt generation for: "${meaning}"`,
@@ -469,7 +469,7 @@ export async function generateSharedImage(
 		let currentPrompt = prompt;
 		let validImage = false;
 		let falImageUrl: string | undefined;
-		let validationResult: any = null;
+		let validationResult: { isValid: boolean; confidence?: number; issues?: string[]; details?: Record<string, unknown> } | null = null;
 
 		for (let attempt = 1; attempt <= maxAttempts; attempt++) {
 			console.log(`\n🎨 Image generation attempt ${attempt}/${maxAttempts}`);
@@ -606,7 +606,7 @@ export async function generateSharedImage(
 		console.log(`   Access URL: ${imageUrl}`);
 
 		return { imageUrl, imagePath: newImageKey, cached: false, prompt, queryPrompt, queryResult, queryProvider };
-	} catch (error: any) {
+	} catch (error) {
 		console.error("Shared image generation error:", error);
 		// Log detailed error information for debugging
 		if (error.status === 422 && error.body?.detail) {

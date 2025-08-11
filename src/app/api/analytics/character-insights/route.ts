@@ -113,11 +113,11 @@ export async function POST(request: NextRequest) {
       if (card.commonConfusions && card.commonConfusions.length > 0) {
         // Filter out the character itself and get unique characters
         const uniqueConfusions = card.commonConfusions
-          .filter((conf: any) => conf.character !== card.hanzi)
+          .filter((conf: { character: string; similarity?: number }) => conf.character !== card.hanzi)
           .slice(0, 3);
         
         // Look up meaning and pinyin for each confused character
-        const confusionPromises = uniqueConfusions.map(async (conf: any) => {
+        const confusionPromises = uniqueConfusions.map(async (conf: { character: string; similarity?: number }) => {
           const confusedCard = await Card.findOne({ hanzi: conf.character });
           let meaning = confusedCard?.meaning || '';
           let pinyin = confusedCard?.pinyin || '';
@@ -133,7 +133,7 @@ export async function POST(request: NextRequest) {
               if (pinyin && !hasToneMarks(pinyin)) {
                 try {
                   pinyin = convertPinyinToneNumbersToMarks(pinyin);
-                } catch (e) {
+                } catch {
                   // Keep original if conversion fails
                 }
               }
@@ -285,7 +285,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     await connectDB();
     

@@ -4,7 +4,8 @@
  * This replaces the deprecated CharacterAnalysis service
  */
 
-import Dictionary from '@/lib/db/models/Dictionary';
+// Import removed as Dictionary model is not used in current implementation
+// import Dictionary from '@/lib/db/models/Dictionary';
 
 export interface CharacterComplexityData {
   semanticCategory?: string;

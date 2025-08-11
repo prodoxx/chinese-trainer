@@ -4,6 +4,7 @@ import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
+import { createUserDefaults } from "@/lib/auth/create-user-defaults";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as any,
@@ -81,12 +82,21 @@ export const authOptions: NextAuthOptions = {
               data: { emailVerified: new Date() }
             });
           }
+          
+          // Create default preferences for new users
+          if (dbUser) {
+            await createUserDefaults(dbUser.id);
+          }
         }
         return true;
       }
       
       // For credentials provider
       if (account?.provider === "credentials") {
+        // Create defaults for credentials sign-in too
+        if (user?.id) {
+          await createUserDefaults(user.id);
+        }
         return true;
       }
       

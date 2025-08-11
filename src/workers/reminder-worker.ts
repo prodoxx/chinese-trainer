@@ -12,7 +12,8 @@ import path from 'path';
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
-import { Worker } from 'bullmq';
+// Worker import removed as it's not used in current implementation
+// import { Worker } from 'bullmq';
 import reminderWorker from './review-reminder-worker';
 
 async function startReminderWorker() {

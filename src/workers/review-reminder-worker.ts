@@ -5,8 +5,8 @@ import Deck from '@/lib/db/models/Deck';
 import Review from '@/lib/db/models/Review';
 import { sendReviewReminder, DueCardsData } from '@/lib/email/reminder-service';
 import getRedis from '@/lib/queue/redis';
-import { startOfDay, endOfDay, parseISO, format } from 'date-fns';
-import { toZonedTime } from 'date-fns-tz';
+import { startOfDay, endOfDay } from 'date-fns';
+// Removed unused imports: parseISO, format, toZonedTime
 
 const prisma = new PrismaClient();
 
