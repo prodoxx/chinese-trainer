@@ -133,18 +133,24 @@ export default function DisambiguationModal({
         </div>
 
         {/* Content */}
-        <div className="p-6">
-          <div className="text-center mb-6">
-            <div className="text-8xl font-bold text-white mb-4">{currentCharacter.hanzi}</div>
-            <p className="text-gray-400">
-              {isImport 
-                ? `Row ${currentCharacter.position} in your CSV`
-                : 'Select the meaning for this character'
-              }
-            </p>
-          </div>
+        <div className="relative">
+          <div className="p-6 max-h-[60vh] overflow-y-auto custom-scrollbar">
+            <div className="text-center mb-6 sticky top-0 bg-[#1a1f2e] pb-4 z-10">
+              <div className="text-8xl font-bold text-white mb-4">{currentCharacter.hanzi}</div>
+              <p className="text-gray-400">
+                {isImport 
+                  ? `Row ${currentCharacter.position} in your CSV`
+                  : 'Select the meaning for this character'
+                }
+              </p>
+              {currentCharacter.meanings.length > 4 && (
+                <p className="text-sm text-gray-500 mt-2">
+                  {currentCharacter.meanings.length} meanings available • Scroll to see all
+                </p>
+              )}
+            </div>
 
-          <div className="space-y-3">
+            <div className="space-y-3">
             {currentCharacter.meanings.map((meaning, index) => (
               <button
                 key={index}
@@ -175,7 +181,12 @@ export default function DisambiguationModal({
                 </div>
               </button>
             ))}
+            </div>
           </div>
+          {/* Scroll indicator */}
+          {currentCharacter.meanings.length > 4 && (
+            <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-[#1a1f2e] to-transparent pointer-events-none" />
+          )}
         </div>
 
         {/* Footer */}

@@ -10,15 +10,15 @@ import {
 } from "@/lib/enrichment/shared-media";
 import { getPreferredEntry } from "@/lib/enrichment/multi-pronunciation-handler";
 import { convertPinyinToneNumbersToMarks } from "@/lib/utils/pinyin";
-import { interpretChinese } from "@/lib/enrichment/openai-interpret";
+import { interpretChinese as interpretChineseWithProvider } from "@/lib/ai/ai-provider";
+import { analyzeCharacterWithAI } from "@/lib/ai/ai-provider";
 import { registerWorker } from "../worker-monitor";
-import { analyzeCharacterWithOpenAI } from "@/lib/analytics/openai-linguistic-analysis";
-import { getCharacterAnalysisWithCache } from "@/lib/analytics/character-analysis-service";
+import { analyzeCharacterComplexity } from "@/lib/enrichment/character-complexity-analyzer";
 
 export const cardEnrichmentWorker = new Worker<CardEnrichmentJobData>(
 	"card-enrichment",
 	async (job: Job<CardEnrichmentJobData>) => {
-		const { cardId, userId, deckId, force, disambiguationSelection } = job.data;
+		const { cardId, userId, deckId, force, disambiguationSelection, aiProvider } = job.data;
 
 		console.log(`\n🔄 Starting single card enrichment for card ${cardId}`);
 		console.log(`   Force: ${force}`);
@@ -97,7 +97,15 @@ export const cardEnrichmentWorker = new Worker<CardEnrichmentJobData>(
 					character: card.hanzi,
 				});
 
-				const interpretation = await interpretChinese(card.hanzi);
+				// Use OpenAI for interpretation
+				const aiConfig = {
+					provider: 'openai' as const,
+					enabled: true
+				};
+
+				console.log(`   Using OpenAI for interpretation`);
+
+				const interpretation = await interpretChineseWithProvider(card.hanzi, aiConfig);
 
 				if (interpretation) {
 					// Always use AI pinyin for Taiwan pronunciation
@@ -110,8 +118,21 @@ export const cardEnrichmentWorker = new Worker<CardEnrichmentJobData>(
 					if (interpretation.interpretationPrompt) {
 						card.interpretationPrompt = interpretation.interpretationPrompt;
 					}
+					
+					// Save provider information
+					card.interpretationProvider = 'OpenAI';
+					
+					// Save complete interpretation result
+					card.interpretationResult = {
+						meaning: interpretation.meaning || '',
+						pinyin: interpretation.pinyin || '',
+						context: interpretation.context || '',
+						imagePrompt: interpretation.imagePrompt || '',
+						provider: 'OpenAI',
+						timestamp: new Date()
+					};
 
-					console.log(`   ✓ AI provided: ${card.pinyin} - ${card.meaning}`);
+					console.log(`   ✓ AI provided (OpenAI): ${card.pinyin} - ${card.meaning}`);
 				} else {
 					console.log(`   ⚠️ AI interpretation failed`);
 					// Fallback to dictionary if available
@@ -123,7 +144,7 @@ export const cardEnrichmentWorker = new Worker<CardEnrichmentJobData>(
 				}
 			}
 
-			// Generate character analysis
+			// Generate character complexity analysis
 			if (!card.semanticCategory || force) {
 				console.log(`   📊 Analyzing character complexity...`);
 
@@ -133,21 +154,27 @@ export const cardEnrichmentWorker = new Worker<CardEnrichmentJobData>(
 					character: card.hanzi,
 				});
 
-				const analysis = await getCharacterAnalysisWithCache(card.hanzi);
-				if (analysis) {
-					// Map analysis fields to card fields
-					card.semanticCategory = analysis.semanticCategory;
-					card.tonePattern = analysis.tonePattern;
-					card.strokeCount = analysis.strokeCount;
-					card.componentCount = analysis.componentCount;
-					card.visualComplexity = analysis.visualComplexity;
-					card.overallDifficulty = analysis.overallDifficulty;
-					card.mnemonics = analysis.mnemonics;
-					card.etymology = analysis.etymology;
-					console.log(
-						`   ✓ Character analysis saved: ${analysis.semanticCategory}, difficulty: ${analysis.overallDifficulty}`,
-					);
-				}
+				const complexityAnalysis = await analyzeCharacterComplexity(
+					card.hanzi,
+					card.pinyin,
+					card.meaning
+				);
+
+				// Apply analysis results to card
+				if (complexityAnalysis.semanticCategory) card.semanticCategory = complexityAnalysis.semanticCategory;
+				if (complexityAnalysis.tonePattern) card.tonePattern = complexityAnalysis.tonePattern;
+				if (complexityAnalysis.strokeCount) card.strokeCount = complexityAnalysis.strokeCount;
+				if (complexityAnalysis.componentCount) card.componentCount = complexityAnalysis.componentCount;
+				if (complexityAnalysis.visualComplexity !== undefined) card.visualComplexity = complexityAnalysis.visualComplexity;
+				if (complexityAnalysis.overallDifficulty !== undefined) card.overallDifficulty = complexityAnalysis.overallDifficulty;
+				if (complexityAnalysis.radicals) card.radicals = complexityAnalysis.radicals;
+				if (complexityAnalysis.semanticFields) card.semanticFields = complexityAnalysis.semanticFields;
+				if (complexityAnalysis.conceptType) card.conceptType = complexityAnalysis.conceptType;
+				if (complexityAnalysis.frequency) card.frequency = complexityAnalysis.frequency;
+				if (complexityAnalysis.contextExamples) card.contextExamples = complexityAnalysis.contextExamples;
+				if (complexityAnalysis.collocations) card.collocations = complexityAnalysis.collocations;
+
+				console.log(`   ✓ Character analysis saved: ${card.semanticCategory}, difficulty: ${card.overallDifficulty}`);
 			}
 
 			// Re-generate image if force=true or no image exists
@@ -176,6 +203,7 @@ export const cardEnrichmentWorker = new Worker<CardEnrichmentJobData>(
 					pinyin,
 					force,
 					card.imagePath, // Pass existing path for deletion if force regenerating
+					'openai', // Always use OpenAI for image prompt generation
 				);
 
 				if (imageResult.imageUrl) {
@@ -185,10 +213,29 @@ export const cardEnrichmentWorker = new Worker<CardEnrichmentJobData>(
 					card.imageSourceId = imageResult.cached ? "cached" : "generated";
 					card.imageAttribution = "AI Generated";
 					card.imageAttributionUrl = "";
+					
 					// Save the image prompt if available
 					if (imageResult.prompt) {
 						card.imagePrompt = imageResult.prompt;
 					}
+					
+					// Save query information
+					if (imageResult.queryPrompt) {
+						card.imageSearchQueryPrompt = imageResult.queryPrompt;
+					}
+					
+					// Save query provider and result
+					if (imageResult.queryProvider) {
+						card.queryProvider = 'OpenAI';
+						
+						// Save complete query result
+						card.imageSearchQueryResult = {
+							query: imageResult.queryResult || '',
+							provider: 'OpenAI',
+							timestamp: new Date()
+						};
+					}
+					
 					console.log(
 						`   ✓ Image generated (cached: ${imageResult.cached}, force: ${force})`,
 					);
@@ -231,9 +278,20 @@ export const cardEnrichmentWorker = new Worker<CardEnrichmentJobData>(
 				}
 			}
 
-			// Generate AI insights if they don't exist or if forced
-			if (!card.aiInsights || force) {
-				console.log(`   Generating AI insights...`);
+			// Generate AI insights if they don't exist, are empty, or if forced
+			console.log(`   🧠 Checking AI insights for ${card.hanzi}...`);
+			
+			// Check if AI insights have actual content (not just empty structure)
+			const hasValidAIInsights = card.aiInsights && 
+				card.aiInsights.etymology?.origin && 
+				card.aiInsights.mnemonics?.visual && 
+				card.aiInsights.learningTips?.forBeginners?.length > 0;
+			
+			console.log(`   Current AI insights: ${hasValidAIInsights ? 'VALID' : 'EMPTY/MISSING'}`);
+			console.log(`   Force regeneration: ${force}`);
+			
+			if (!hasValidAIInsights || force) {
+				console.log(`   🚀 Starting AI insights generation for ${card.hanzi}...`);
 
 				await job.updateProgress({
 					stage: "generating_insights",
@@ -242,20 +300,83 @@ export const cardEnrichmentWorker = new Worker<CardEnrichmentJobData>(
 				});
 
 				try {
-					const aiInsights = await analyzeCharacterWithOpenAI(card.hanzi);
-					card.aiInsights = aiInsights;
-					card.aiInsightsGeneratedAt = new Date();
+					// Configure AI provider for insights (reuse from above)
+					const aiConfig = {
+						provider: 'openai' as const,
+						enabled: true
+					};
+
+					console.log(`   📋 AI Config: provider=${aiConfig.provider}, enabled=${aiConfig.enabled}`);
+
+					const aiInsights = await analyzeCharacterWithAI(card.hanzi, aiConfig);
+					
+					console.log(`   ✨ AI insights received:`, {
+						hasEtymology: !!aiInsights?.etymology,
+						hasMnemonics: !!aiInsights?.mnemonics,
+						hasLearningTips: !!aiInsights?.learningTips,
+						hasCommonErrors: !!aiInsights?.commonErrors,
+						hasUsage: !!aiInsights?.usage
+					});
+					
+					// Validate that AI insights have actual content
+					const isValidInsights = aiInsights && 
+						aiInsights.etymology?.origin && 
+						aiInsights.mnemonics?.visual && 
+						aiInsights.learningTips?.forBeginners?.length > 0;
+					
+					if (isValidInsights) {
+						card.aiInsights = aiInsights;
+						card.aiInsightsGeneratedAt = new Date();
+						console.log(`   ✅ Valid AI insights saved to card`);
+						console.log(`   📅 Setting aiInsightsGeneratedAt to: ${card.aiInsightsGeneratedAt}`);
+					} else {
+						console.warn(`   ⚠️ AI insights returned but were empty or invalid`);
+						console.warn(`   Details:`, {
+							etymologyOrigin: aiInsights?.etymology?.origin || 'MISSING',
+							mnemonicsVisual: aiInsights?.mnemonics?.visual || 'MISSING',
+							learningTipsCount: aiInsights?.learningTips?.forBeginners?.length || 0
+						});
+						// Don't save invalid insights
+						card.aiInsights = undefined;
+					}
 					
 					// Save the linguistic analysis prompt
 					if (aiInsights.linguisticAnalysisPrompt) {
 						card.linguisticAnalysisPrompt = aiInsights.linguisticAnalysisPrompt;
 					}
 					
-					console.log(`   ✓ AI insights generated`);
+					// Save provider information for analysis
+					card.analysisProvider = 'OpenAI';
+					
+					// Save complete linguistic analysis result
+					card.linguisticAnalysisResult = {
+						etymology: aiInsights.etymology,
+						mnemonics: aiInsights.mnemonics,
+						commonErrors: aiInsights.commonErrors,
+						usage: aiInsights.usage,
+						learningTips: aiInsights.learningTips,
+						provider: 'OpenAI',
+						timestamp: new Date()
+					};
+					
+					console.log(`   ✓ AI insights generated with OpenAI`);
+					console.log(`   📝 AI insights will be saved to database`);
 				} catch (aiError) {
 					console.error(`   ✗ AI insights generation failed:`, aiError);
-					// Continue without AI insights - it's not critical for basic functionality
+					console.error(`   Error details:`, {
+						message: aiError instanceof Error ? aiError.message : 'Unknown error',
+						stack: aiError instanceof Error ? aiError.stack : undefined
+					});
+					
+					// IMPORTANT: Don't save empty AI insights structure
+					// If generation failed, either keep existing insights or set to null
+					if (!card.aiInsights || !card.aiInsights.etymology?.origin) {
+						console.log(`   ⚠️ Preventing save of empty AI insights structure`);
+						card.aiInsights = undefined; // Remove empty structure
+					}
 				}
+			} else {
+				console.log(`   ⏭️ Skipping AI insights generation (already exists or not forced)`);
 			}
 
 			await job.updateProgress({
@@ -264,10 +385,35 @@ export const cardEnrichmentWorker = new Worker<CardEnrichmentJobData>(
 				character: card.hanzi,
 			});
 
+			// Mark card as cached since enrichment is complete
+			card.cached = true;
+
+			// Debug: Log all fields before save
+			console.log(`   📝 Before save - Card fields:`);
+			console.log(`      - aiInsights: ${card.aiInsights ? 'YES' : 'NO'}`);
+			console.log(`      - aiInsightsGeneratedAt: ${card.aiInsightsGeneratedAt}`);
+			console.log(`      - cached: ${card.cached}`);
+
 			// Save the updated card
 			await card.save();
+			
+			// Debug: Check what was actually saved
+			const savedCard = await Card.findById(card._id);
+			console.log(`   📝 After save - Database check:`);
+			console.log(`      - aiInsights: ${savedCard?.aiInsights ? 'YES' : 'NO'}`);
+			console.log(`      - aiInsightsGeneratedAt: ${savedCard?.aiInsightsGeneratedAt}`);
+			console.log(`      - cached: ${savedCard?.cached}`);
 
 			console.log(`✅ Card enrichment completed for ${card.hanzi}`);
+			
+			// Verify AI insights were saved
+			if (card.aiInsights) {
+				console.log(`   📊 AI insights saved: Yes`);
+				console.log(`   📅 Generation date saved: ${card.aiInsightsGeneratedAt ? 'Yes' : 'No'}`);
+				if (card.aiInsightsGeneratedAt) {
+					console.log(`   📅 Date value: ${card.aiInsightsGeneratedAt}`);
+				}
+			}
 
 			// Return the updated card data
 			return {

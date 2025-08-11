@@ -18,9 +18,9 @@ import {
 	hasToneMarks,
 } from "@/lib/utils/pinyin";
 import { getPreferredEntry } from "@/lib/enrichment/multi-pronunciation-handler";
-import { getCharacterAnalysisWithCache } from "@/lib/analytics/character-analysis-service";
+import { analyzeCharacterComplexity } from "@/lib/enrichment/character-complexity-analyzer";
 import { EnhancedCharacterComplexity } from "@/lib/analytics/enhanced-linguistic-complexity";
-import { analyzeCharacterWithOpenAI } from "@/lib/analytics/openai-linguistic-analysis";
+import { analyzeCharacterWithAI } from "@/lib/ai/ai-provider";
 import { registerWorker } from "../worker-monitor";
 
 export const deckEnrichmentR2Worker = new Worker<DeckEnrichmentJobData>(
@@ -215,7 +215,7 @@ export const deckEnrichmentR2Worker = new Worker<DeckEnrichmentJobData>(
 						}
 					}
 
-					// Generate character analysis
+					// Generate character complexity analysis
 					console.log(`   📊 Analyzing character complexity...`);
 					await Deck.findByIdAndUpdate(deckId, {
 						enrichmentProgress: {
@@ -226,21 +226,27 @@ export const deckEnrichmentR2Worker = new Worker<DeckEnrichmentJobData>(
 						},
 					});
 
-					const analysis = await getCharacterAnalysisWithCache(card.hanzi);
-					if (analysis) {
-						// Map analysis fields to card fields
-						card.semanticCategory = analysis.semanticCategory;
-						card.tonePattern = analysis.tonePattern;
-						card.strokeCount = analysis.strokeCount;
-						card.componentCount = analysis.componentCount;
-						card.visualComplexity = analysis.visualComplexity;
-						card.overallDifficulty = analysis.overallDifficulty;
-						card.mnemonics = analysis.mnemonics;
-						card.etymology = analysis.etymology;
-						console.log(
-							`   ✓ Character analysis saved: ${analysis.semanticCategory}, difficulty: ${analysis.overallDifficulty}`,
-						);
-					}
+					const complexityAnalysis = await analyzeCharacterComplexity(
+						card.hanzi,
+						card.pinyin,
+						card.meaning
+					);
+
+					// Apply analysis results to card
+					if (complexityAnalysis.semanticCategory) card.semanticCategory = complexityAnalysis.semanticCategory;
+					if (complexityAnalysis.tonePattern) card.tonePattern = complexityAnalysis.tonePattern;
+					if (complexityAnalysis.strokeCount) card.strokeCount = complexityAnalysis.strokeCount;
+					if (complexityAnalysis.componentCount) card.componentCount = complexityAnalysis.componentCount;
+					if (complexityAnalysis.visualComplexity !== undefined) card.visualComplexity = complexityAnalysis.visualComplexity;
+					if (complexityAnalysis.overallDifficulty !== undefined) card.overallDifficulty = complexityAnalysis.overallDifficulty;
+					if (complexityAnalysis.radicals) card.radicals = complexityAnalysis.radicals;
+					if (complexityAnalysis.semanticFields) card.semanticFields = complexityAnalysis.semanticFields;
+					if (complexityAnalysis.conceptType) card.conceptType = complexityAnalysis.conceptType;
+					if (complexityAnalysis.frequency) card.frequency = complexityAnalysis.frequency;
+					if (complexityAnalysis.contextExamples) card.contextExamples = complexityAnalysis.contextExamples;
+					if (complexityAnalysis.collocations) card.collocations = complexityAnalysis.collocations;
+
+					console.log(`   ✓ Character analysis saved: ${card.semanticCategory}, difficulty: ${card.overallDifficulty}`);
 
 					// Generate image with R2
 					console.log(`   🎨 Generating image...`);
@@ -323,9 +329,20 @@ export const deckEnrichmentR2Worker = new Worker<DeckEnrichmentJobData>(
 						}
 					}
 
-					// Generate AI insights if they don't exist or if forced
-					if (!card.aiInsights || force) {
-						console.log(`   🧠 Generating AI insights...`);
+					// Generate AI insights if they don't exist, are empty, or if forced
+					console.log(`   🧠 Checking AI insights for ${card.hanzi}...`);
+					
+					// Check if AI insights have actual content (not just empty structure)
+					const hasValidAIInsights = card.aiInsights && 
+						card.aiInsights.etymology?.origin && 
+						card.aiInsights.mnemonics?.visual && 
+						card.aiInsights.learningTips?.forBeginners?.length > 0;
+					
+					console.log(`   Current AI insights: ${hasValidAIInsights ? 'VALID' : 'EMPTY/MISSING'}`);
+					console.log(`   Force regeneration: ${force}`);
+					
+					if (!hasValidAIInsights || force) {
+						console.log(`   🚀 Starting AI insights generation for ${card.hanzi}...`);
 						await Deck.findByIdAndUpdate(deckId, {
 							enrichmentProgress: {
 								totalCards,
@@ -336,20 +353,68 @@ export const deckEnrichmentR2Worker = new Worker<DeckEnrichmentJobData>(
 						});
 
 						try {
-							const aiInsights = await analyzeCharacterWithOpenAI(card.hanzi);
-							card.aiInsights = aiInsights;
-							card.aiInsightsGeneratedAt = new Date();
+							// Use OpenAI for AI insights
+							const aiConfig = {
+								provider: 'openai' as const,
+								enabled: true
+							};
+							
+							console.log(`   📋 Using OpenAI for AI insights generation`);
+							
+							const aiInsights = await analyzeCharacterWithAI(card.hanzi, aiConfig);
+							
+							console.log(`   ✨ AI insights received:`, {
+								hasEtymology: !!aiInsights?.etymology,
+								hasMnemonics: !!aiInsights?.mnemonics,
+								hasLearningTips: !!aiInsights?.learningTips,
+								hasCommonErrors: !!aiInsights?.commonErrors,
+								hasUsage: !!aiInsights?.usage
+							});
+							
+							// Validate that AI insights have actual content
+							const isValidInsights = aiInsights && 
+								aiInsights.etymology?.origin && 
+								aiInsights.mnemonics?.visual && 
+								aiInsights.learningTips?.forBeginners?.length > 0;
+							
+							if (isValidInsights) {
+								card.aiInsights = aiInsights;
+								card.aiInsightsGeneratedAt = new Date();
+								console.log(`   ✅ Valid AI insights saved to card`);
+							} else {
+								console.warn(`   ⚠️ AI insights returned but were empty or invalid`);
+								console.warn(`   Details:`, {
+									etymologyOrigin: aiInsights?.etymology?.origin || 'MISSING',
+									mnemonicsVisual: aiInsights?.mnemonics?.visual || 'MISSING',
+									learningTipsCount: aiInsights?.learningTips?.forBeginners?.length || 0
+								});
+								// Don't save invalid insights
+								card.aiInsights = undefined;
+							}
 							
 							// Save the linguistic analysis prompt
 							if (aiInsights.linguisticAnalysisPrompt) {
 								card.linguisticAnalysisPrompt = aiInsights.linguisticAnalysisPrompt;
 							}
 							
-							console.log(`   ✓ AI insights generated`);
+							console.log(`   ✓ AI insights generated with OpenAI`);
+							console.log(`   📝 AI insights will be saved to database`);
 						} catch (aiError) {
 							console.error(`   ✗ AI insights generation failed:`, aiError);
-							// Continue without AI insights - it's not critical for basic functionality
+							console.error(`   Error details:`, {
+								message: aiError instanceof Error ? aiError.message : 'Unknown error',
+								stack: aiError instanceof Error ? aiError.stack : undefined
+							});
+							
+							// IMPORTANT: Don't save empty AI insights structure
+							// If generation failed, either keep existing insights or set to null
+							if (!card.aiInsights || !card.aiInsights.etymology?.origin) {
+								console.log(`   ⚠️ Preventing save of empty AI insights structure`);
+								card.aiInsights = undefined; // Remove empty structure
+							}
 						}
+					} else {
+						console.log(`   ⏭️ Skipping AI insights generation (already exists or not forced)`);
 					}
 
 					// Mark as cached and save

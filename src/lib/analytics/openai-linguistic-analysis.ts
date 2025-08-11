@@ -5,9 +5,14 @@
 import OpenAI from 'openai';
 import { EnhancedCharacterComplexity, analyzeCharacterWithDictionary } from './enhanced-linguistic-complexity';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-});
+// Initialize OpenAI client with error checking
+const openai = process.env.OPENAI_API_KEY ? new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+}) : null;
+
+if (!openai && process.env.NODE_ENV !== 'test') {
+  console.warn('⚠️ OpenAI API key not configured - AI insights will not be available');
+}
 
 export interface ComprehensiveCharacterAnalysis {
   character: string;
@@ -34,6 +39,8 @@ export interface ComprehensiveCharacterAnalysis {
   }>;
   contextExamples: string[];
   collocations: string[];
+  comprehensiveAnalysisPrompt?: string;
+  confusionGenerationPrompt?: string;
 }
 
 export interface DeepLinguisticAnalysis extends EnhancedCharacterComplexity {
@@ -87,38 +94,48 @@ export async function analyzeCharacterWithOpenAI(
   // First get base analysis from dictionary
   const baseAnalysis = await analyzeCharacterWithDictionary(character);
   
+  // Check if OpenAI is available
+  if (!openai) {
+    console.warn(`⚠️ OpenAI not available for character ${character} - returning base analysis only`);
+    throw new Error('OpenAI API key not configured');
+  }
+  
   try {
     // Create a comprehensive prompt for linguistic analysis
     const prompt = `Analyze the Traditional Chinese character "${character}" (${baseAnalysis.pinyin}) with meanings: ${baseAnalysis.definitions.join(', ')} for Taiwan Mandarin (臺灣國語) learners.
 
-IMPORTANT: This is for Taiwan Mandarin, NOT Mainland Mandarin. Use Traditional Chinese characters and Taiwan-specific pronunciations, vocabulary, and cultural contexts.
+IMPORTANT RULES:
+1. This is for Taiwan Mandarin, NOT Mainland Mandarin. Use Traditional Chinese characters and Taiwan-specific pronunciations, vocabulary, and cultural contexts.
+2. ALWAYS use pinyin with tone marks (e.g., fáng jiān), NEVER tone numbers (e.g., fang2 jian1)
+3. When mentioning ANY Chinese character, include its pinyin with tone marks in parentheses
+   Example: 房 (fáng), 間 (jiān), NOT 房 (fang2), 間 (jian1)
 
 Provide a detailed linguistic analysis in JSON format with the following structure:
 
 {
   "etymology": {
-    "origin": "Brief explanation of character origin",
+    "origin": "Brief explanation of character origin - MUST use pinyin with tone marks",
     "evolution": ["Stage 1", "Stage 2", "Modern form"],
-    "culturalContext": "Cultural significance or usage context"
+    "culturalContext": "Cultural significance or usage context in Taiwan"
   },
   "mnemonics": {
     "visual": "Visual memory aid based on character shape",
     "story": "Story-based mnemonic incorporating meaning",
-    "components": "How components relate to meaning"
+    "components": "How components relate to meaning - use pinyin with tone marks"
   },
   "commonErrors": {
-    "similarCharacters": ["List of visually/phonetically similar characters"],
+    "similarCharacters": ["List similar characters with pinyin tone marks - e.g., '房子 (fáng zi) - house'. NEVER include ${character} itself. For multi-character words, list OTHER complete words, not components."],
     "wrongContexts": ["Common misuse contexts"],
-    "toneConfusions": ["Characters with same sound but different tones"]
+    "toneConfusions": ["Characters with same sound but different tones - use tone marks, e.g., '方 (fāng) - square'. EXCLUDE ${character} itself"]
   },
   "usage": {
-    "commonCollocations": ["Common word combinations"],
+    "commonCollocations": ["Common word combinations with pinyin tone marks - e.g., '臥房 (wò fáng) - bedroom'"],
     "registerLevel": "formal, informal, neutral, or literary (choose one)",
     "frequency": "high/medium/low",
     "domains": ["Areas where commonly used"]
   },
   "learningTips": {
-    "forBeginners": ["Tips for beginners"],
+    "forBeginners": ["Tips for beginners - use pinyin with tone marks when mentioning characters"],
     "forIntermediate": ["Tips for intermediate learners"],
     "forAdvanced": ["Advanced usage tips"]
   }
@@ -137,7 +154,7 @@ Focus on practical learning aids and common confusion points.`;
       messages: [
         {
           role: 'system',
-          content: 'You are a Taiwan Mandarin (臺灣國語) and Traditional Chinese linguistics expert helping create comprehensive learning materials. Provide accurate, pedagogically sound analysis specific to Taiwan Mandarin usage, pronunciation, and cultural context.',
+          content: 'You are a Taiwan Mandarin (臺灣國語) and Traditional Chinese linguistics expert helping create comprehensive learning materials. Provide accurate, pedagogically sound analysis specific to Taiwan Mandarin usage, pronunciation, and cultural context. CRITICAL: Always use pinyin with tone marks (ā, á, ǎ, à, ē, é, ě, è, etc.) and NEVER tone numbers (a1, a2, a3, a4). Example: Use "fáng jiān" NOT "fang2 jian1".',
         },
         {
           role: 'user',
@@ -262,6 +279,9 @@ Provide a structured learning path in JSON format:
 }`;
 
   try {
+    if (!openai) {
+      throw new Error('OpenAI client not initialized');
+    }
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
@@ -339,6 +359,9 @@ Identify:
 Provide analysis in JSON format.`;
 
   try {
+    if (!openai) {
+      throw new Error('OpenAI client not initialized');
+    }
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
@@ -409,6 +432,9 @@ Format each example as:
 Return as JSON array.`;
 
   try {
+    if (!openai) {
+      throw new Error('OpenAI client not initialized');
+    }
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
@@ -485,7 +511,7 @@ Provide a detailed JSON analysis with these exact fields:
   "mnemonics": ["memory aids - MUST include pinyin WITH TONE MARKS in parentheses for EVERY Chinese character. Example: The character 月(yuè) looks like a moon"],
   "commonConfusions": [
     {
-      "character": "similar character (MUST be different from ${character})",
+      "character": "similar character that is DIFFERENT from ${character} - NEVER include ${character} itself",
       "reason": "why they're confused",
       "similarity": 0-1 scale
     }
@@ -494,9 +520,17 @@ Provide a detailed JSON analysis with these exact fields:
   "collocations": ["common word combinations"]
 }
 
+CRITICAL for commonConfusions:
+- NEVER include "${character}" itself in the list
+- For multi-character words like 房間, suggest OTHER complete words (e.g., 時間, 空間), NOT components (房, 間)
+- Each confusion must be a DIFFERENT character/word from "${character}"
+
 Be accurate and educational. Every Chinese character mentioned MUST include its pinyin in parentheses.`;
 
   try {
+    if (!openai) {
+      throw new Error('OpenAI client not initialized');
+    }
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
@@ -513,7 +547,31 @@ Be accurate and educational. Every Chinese character mentioned MUST include its 
     const response = completion.choices[0].message.content;
     if (!response) throw new Error('No response from OpenAI');
 
-    return JSON.parse(response) as ComprehensiveCharacterAnalysis;
+    let result = JSON.parse(response) as ComprehensiveCharacterAnalysis;
+    
+    // Post-process to ensure the character itself is never in commonConfusions
+    if (result.commonConfusions && Array.isArray(result.commonConfusions)) {
+      result.commonConfusions = result.commonConfusions.filter(confusion => {
+        // Remove if it's the same character
+        if (confusion.character === character) {
+          console.log(`Filtering out self-reference: ${character} from commonConfusions`);
+          return false;
+        }
+        // For multi-character words, also filter out single-character components
+        if (character.length > 1 && confusion.character.length === 1) {
+          if (character.includes(confusion.character)) {
+            console.log(`Filtering out component: ${confusion.character} from ${character}`);
+            return false;
+          }
+        }
+        return true;
+      });
+    }
+    
+    // Save the prompt used for this analysis
+    result.comprehensiveAnalysisPrompt = prompt;
+    
+    return result;
   } catch (error) {
     console.error('OpenAI character analysis error:', error);
     // Return basic analysis as fallback

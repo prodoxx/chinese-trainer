@@ -22,7 +22,7 @@ export async function POST(
     await connectDB()
     
     const { deckId } = await context.params
-    const { force = true } = await request.json()
+    const { force = true, aiProvider } = await request.json()
     
     // Get deck info
     const deck = await Deck.findById(deckId)
@@ -48,7 +48,8 @@ export async function POST(
         userId: deck.userId,
         deckName: deck.name,
         sessionId: `admin-${session.user.id}-${Date.now()}`,
-        force
+        force,
+        aiProvider: aiProvider || 'openai' // Default to OpenAI if not specified
       }
     )
     

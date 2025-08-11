@@ -53,7 +53,7 @@ export default function AdminCharacterInsights({ characterId, character, userId,
       const response = await fetch('/api/analytics/character-insights', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ characterId, includeAI: true }),
+        body: JSON.stringify({ characterId }),
       });
       
       const data = await response.json();
@@ -401,36 +401,153 @@ export default function AdminCharacterInsights({ characterId, character, userId,
                       <div className="space-y-3">
                         <div>
                           <h4 className="text-sm text-gray-300 mb-1">Origin</h4>
-                          <p className="text-gray-100">{insights.aiInsights.etymology.origin}</p>
+                          <p className="text-gray-100">{processTextWithPinyin(insights.aiInsights.etymology.origin)}</p>
                         </div>
                         <div>
                           <h4 className="text-sm text-gray-300 mb-1">Evolution</h4>
                           <ol className="list-decimal list-inside space-y-1">
                             {insights.aiInsights.etymology.evolution.map((stage, i) => (
-                              <li key={i} className="text-gray-100">{stage}</li>
+                              <li key={i} className="text-gray-100">{processTextWithPinyin(stage)}</li>
                             ))}
                           </ol>
                         </div>
+                        {insights.aiInsights.etymology.culturalContext && (
+                          <div>
+                            <h4 className="text-sm text-gray-300 mb-1">Cultural Context</h4>
+                            <p className="text-gray-100">{processTextWithPinyin(insights.aiInsights.etymology.culturalContext)}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Common Errors & Confusions */}
+                  {insights.aiInsights.commonErrors && (
+                    <div className="bg-[#232937] rounded-lg p-4 sm:p-6 border border-[#2d3548]">
+                      <h3 className="text-xl font-semibold mb-4 text-[#f7cc48]">Common Errors & Confusions</h3>
+                      <div className="space-y-4">
+                        {insights.aiInsights.commonErrors.similarCharacters?.length > 0 && (
+                          <div>
+                            <h4 className="text-sm text-gray-300 mb-2">Similar Characters (Often Confused)</h4>
+                            <div className="space-y-2">
+                              {insights.aiInsights.commonErrors.similarCharacters.map((char, i) => (
+                                <div key={i} className="flex items-start gap-2">
+                                  <span className="text-[#f7cc48] font-bold">•</span>
+                                  <span className="text-gray-100">{processTextWithPinyin(char)}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {insights.aiInsights.commonErrors.wrongContexts?.length > 0 && (
+                          <div>
+                            <h4 className="text-sm text-gray-300 mb-2">Common Mistakes in Usage</h4>
+                            <ul className="list-disc list-inside space-y-1">
+                              {insights.aiInsights.commonErrors.wrongContexts.map((context, i) => (
+                                <li key={i} className="text-gray-100">{processTextWithPinyin(context)}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {insights.aiInsights.commonErrors.toneConfusions?.length > 0 && (
+                          <div>
+                            <h4 className="text-sm text-gray-300 mb-2">Tone Confusions</h4>
+                            <div className="space-y-1">
+                              {insights.aiInsights.commonErrors.toneConfusions.map((confusion, i) => (
+                                <div key={i} className="text-gray-100">{processTextWithPinyin(confusion)}</div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Usage Information */}
+                  {insights.aiInsights.usage && (
+                    <div className="bg-[#232937] rounded-lg p-4 sm:p-6 border border-[#2d3548]">
+                      <h3 className="text-xl font-semibold mb-4 text-[#f7cc48]">Usage Information</h3>
+                      <div className="space-y-3">
+                        {insights.aiInsights.usage.commonCollocations?.length > 0 && (
+                          <div>
+                            <h4 className="text-sm text-gray-300 mb-2">Common Collocations</h4>
+                            <div className="flex flex-wrap gap-2">
+                              {insights.aiInsights.usage.commonCollocations.map((collocation, i) => (
+                                <span key={i} className="px-3 py-1 bg-[#1a1f2e] rounded-lg text-gray-100 border border-[#2d3548]">
+                                  {processTextWithPinyin(collocation)}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        <div className="grid grid-cols-2 gap-4">
+                          {insights.aiInsights.usage.registerLevel && (
+                            <div>
+                              <h4 className="text-sm text-gray-300 mb-1">Register Level</h4>
+                              <p className="text-gray-100 capitalize">{insights.aiInsights.usage.registerLevel}</p>
+                            </div>
+                          )}
+                          {insights.aiInsights.usage.frequency && (
+                            <div>
+                              <h4 className="text-sm text-gray-300 mb-1">Frequency</h4>
+                              <p className="text-gray-100 capitalize">{insights.aiInsights.usage.frequency}</p>
+                            </div>
+                          )}
+                        </div>
+                        {insights.aiInsights.usage.domains?.length > 0 && (
+                          <div>
+                            <h4 className="text-sm text-gray-300 mb-2">Common Domains</h4>
+                            <div className="flex flex-wrap gap-2">
+                              {insights.aiInsights.usage.domains.map((domain, i) => (
+                                <span key={i} className="px-2 py-1 bg-[#2d3548]/50 rounded text-sm text-gray-200">
+                                  {domain}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
 
                   {/* Learning Tips */}
-                  <div className="bg-[#232937] rounded-lg p-4 sm:p-6 border border-[#2d3548]">
-                    <h3 className="text-xl font-semibold mb-4 text-[#f7cc48]">Learning Tips</h3>
-                    <div className="space-y-3">
-                      {insights.aiInsights.learningTips.forBeginners.length > 0 && (
-                        <div>
-                          <h4 className="text-sm text-gray-300 mb-1">For Beginners</h4>
-                          <ul className="list-disc list-inside space-y-1">
-                            {insights.aiInsights.learningTips.forBeginners.map((tip, i) => (
-                              <li key={i} className="text-gray-100">{tip}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
+                  {insights.aiInsights.learningTips && (
+                    <div className="bg-[#232937] rounded-lg p-4 sm:p-6 border border-[#2d3548]">
+                      <h3 className="text-xl font-semibold mb-4 text-[#f7cc48]">Learning Tips</h3>
+                      <div className="space-y-3">
+                        {insights.aiInsights.learningTips.forBeginners?.length > 0 && (
+                          <div>
+                            <h4 className="text-sm text-gray-300 mb-1">For Beginners</h4>
+                            <ul className="list-disc list-inside space-y-1">
+                              {insights.aiInsights.learningTips.forBeginners.map((tip, i) => (
+                                <li key={i} className="text-gray-100">{processTextWithPinyin(tip)}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {insights.aiInsights.learningTips.forIntermediate?.length > 0 && (
+                          <div>
+                            <h4 className="text-sm text-gray-300 mb-1">For Intermediate</h4>
+                            <ul className="list-disc list-inside space-y-1">
+                              {insights.aiInsights.learningTips.forIntermediate.map((tip, i) => (
+                                <li key={i} className="text-gray-100">{processTextWithPinyin(tip)}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {insights.aiInsights.learningTips.forAdvanced?.length > 0 && (
+                          <div>
+                            <h4 className="text-sm text-gray-300 mb-1">For Advanced</h4>
+                            <ul className="list-disc list-inside space-y-1">
+                              {insights.aiInsights.learningTips.forAdvanced.map((tip, i) => (
+                                <li key={i} className="text-gray-100">{processTextWithPinyin(tip)}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </>
               )}
             </div>

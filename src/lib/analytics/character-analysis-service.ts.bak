@@ -13,6 +13,8 @@ import { EnhancedCharacterComplexity } from './enhanced-linguistic-complexity';
 export interface EnhancedCharacterComplexityWithEnrichment extends EnhancedCharacterComplexity {
   mnemonics?: string[];
   etymology?: string;
+  aiInsights?: any;
+  aiInsightsGeneratedAt?: Date;
 }
 
 /**
@@ -68,7 +70,10 @@ export async function getCharacterAnalysisWithCache(
         collocations: openAIAnalysis.collocations,
         openAIModel: 'gpt-4o-mini',
         analysisVersion: '2.0',
-        lastAnalyzedAt: new Date()
+        lastAnalyzedAt: new Date(),
+        // Save the prompts used
+        comprehensiveAnalysisPrompt: openAIAnalysis.comprehensiveAnalysisPrompt,
+        confusionGenerationPrompt: openAIAnalysis.confusionGenerationPrompt
       },
       { upsert: true, new: true }
     );
@@ -99,8 +104,51 @@ export async function getCharacterAnalysisWithCache(
     semanticTransparency: analysis.semanticTransparency,
     overallDifficulty: analysis.overallDifficulty,
     mnemonics: analysis.mnemonics,
-    etymology: analysis.etymology
+    etymology: analysis.etymology,
+    aiInsights: analysis.aiInsights,
+    aiInsightsGeneratedAt: analysis.aiInsightsGeneratedAt
   };
+}
+
+/**
+ * Save AI insights to CharacterAnalysis collection
+ * This is the central location for AI insights (shared across all users)
+ */
+export async function saveAIInsightsToCharacterAnalysis(
+  character: string,
+  aiInsights: any
+): Promise<void> {
+  await connectDB();
+  
+  await CharacterAnalysis.findOneAndUpdate(
+    { character },
+    {
+      $set: {
+        aiInsights,
+        aiInsightsGeneratedAt: new Date()
+      }
+    },
+    { upsert: true }
+  );
+}
+
+/**
+ * Get AI insights from CharacterAnalysis collection
+ */
+export async function getAIInsightsFromCharacterAnalysis(
+  character: string
+): Promise<any> {
+  await connectDB();
+  
+  const analysis = await CharacterAnalysis.findOne({ character });
+  if (analysis?.aiInsights) {
+    // Check if insights are fresh (less than 30 days old)
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    if (analysis.aiInsightsGeneratedAt && analysis.aiInsightsGeneratedAt > thirtyDaysAgo) {
+      return analysis.aiInsights;
+    }
+  }
+  return null;
 }
 
 /**

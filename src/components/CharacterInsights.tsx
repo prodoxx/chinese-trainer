@@ -55,8 +55,8 @@ export default function CharacterInsights({ characterId, character, onClose, car
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          characterId, 
-          includeAI: false // Don't request AI insights by default - they're slow
+          characterId
+          // AI insights are now only generated during enrichment, not on-demand
         }),
       });
       
@@ -65,10 +65,39 @@ export default function CharacterInsights({ characterId, character, onClose, car
       if (data.success) {
         setInsights(data.insights);
         
-        // Don't fetch AI insights in the background anymore - they should be generated during enrichment
-        // if (!data.insights.aiInsights) {
-        //   fetchAIInsights();
-        // }
+        // Debug logging to check AI insights
+        console.log('Character Insights received for', character, ':', {
+          hasAiInsights: !!data.insights.aiInsights,
+          aiInsightsKeys: data.insights.aiInsights ? Object.keys(data.insights.aiInsights) : [],
+          commonErrors: data.insights.aiInsights?.commonErrors,
+          usage: data.insights.aiInsights?.usage,
+          learningTips: data.insights.aiInsights?.learningTips,
+          etymology: data.insights.aiInsights?.etymology,
+          mnemonics: data.insights.aiInsights?.mnemonics
+        });
+        
+        // Check what will be displayed
+        const willShowCommonErrors = data.insights.aiInsights?.commonErrors && (
+          data.insights.aiInsights.commonErrors.similarCharacters?.length > 0 || 
+          data.insights.aiInsights.commonErrors.wrongContexts?.length > 0 || 
+          data.insights.aiInsights.commonErrors.toneConfusions?.length > 0
+        );
+        
+        const willShowUsage = data.insights.aiInsights?.usage && (
+          data.insights.aiInsights.usage.commonCollocations?.length > 0 || 
+          data.insights.aiInsights.usage.registerLevel || 
+          data.insights.aiInsights.usage.frequency || 
+          data.insights.aiInsights.usage.domains?.length > 0
+        );
+        
+        console.log('Sections that will display:', {
+          etymology: !!data.insights.aiInsights?.etymology,
+          commonErrors: willShowCommonErrors,
+          usage: willShowUsage,
+          learningTips: !!data.insights.aiInsights?.learningTips
+        });
+        
+        // AI insights are now only generated during enrichment, not on-demand
       } else {
         console.error('API returned error:', data.error);
       }
@@ -294,7 +323,7 @@ export default function CharacterInsights({ characterId, character, onClose, car
 
   return (
     <div className="fixed inset-0 bg-[#0f1419]/90 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50">
-      <div className="bg-[#1a1f2e]/95 rounded-2xl max-w-4xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-hidden border border-[#2d3548] shadow-2xl flex flex-col">
+      <div className="bg-[#1a1f2e]/95 rounded-2xl max-w-4xl w-full h-[95vh] sm:h-[90vh] overflow-hidden border border-[#2d3548] shadow-2xl flex flex-col">
         {/* Header */}
         <div className="p-4 sm:p-4 sm:p-6 border-b border-[#2d3548] bg-[#232937] flex justify-between items-start flex-shrink-0">
           <div className="pr-2">
@@ -315,7 +344,7 @@ export default function CharacterInsights({ characterId, character, onClose, car
         </div>
 
         {/* Content */}
-        <div className="p-4 sm:p-6 overflow-y-auto flex-1 pb-safe">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
           {loading && !insights ? (
             <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
               <div className="mb-6">
@@ -514,10 +543,127 @@ export default function CharacterInsights({ characterId, character, onClose, car
                           ))}
                         </ol>
                       </div>
+                      {insights.aiInsights.etymology.culturalContext && (
+                        <div>
+                          <h4 className="text-sm text-gray-300 mb-1">Cultural Context</h4>
+                          <p className="text-gray-100">{processTextWithPinyin(insights.aiInsights.etymology.culturalContext)}</p>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <p className="text-gray-100">{processTextWithPinyin((insights.complexity as any).etymology)}</p>
                   )}
+                </div>
+              )}
+
+              {/* Common Errors - Show if AI insights are available */}
+              {insights.aiInsights?.commonErrors && (
+                <div className="bg-[#232937] rounded-lg p-4 sm:p-6 border border-[#2d3548]">
+                  <h3 className="text-xl font-semibold mb-4 text-[#f7cc48]">Common Errors & Confusions</h3>
+                  <div className="space-y-4">
+                    {insights.aiInsights.commonErrors.similarCharacters?.length > 0 && (
+                      <div>
+                        <h4 className="text-sm text-gray-300 mb-2">Commonly Confused With</h4>
+                        <div className="space-y-2">
+                          {insights.aiInsights.commonErrors.similarCharacters.map((char, i) => (
+                            <div key={i} className="flex items-start gap-2">
+                              <span className="text-[#f7cc48] font-bold">•</span>
+                              <span className="text-gray-100">{processTextWithPinyin(char)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {insights.aiInsights.commonErrors.wrongContexts?.length > 0 && (
+                      <div>
+                        <h4 className="text-sm text-gray-300 mb-2">Wrong Contexts</h4>
+                        <ul className="list-disc list-inside space-y-1">
+                          {insights.aiInsights.commonErrors.wrongContexts.map((context, i) => (
+                            <li key={i} className="text-gray-100">{processTextWithPinyin(context)}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {insights.aiInsights.commonErrors.toneConfusions?.length > 0 && (
+                      <div>
+                        <h4 className="text-sm text-gray-300 mb-2">Tone Confusions</h4>
+                        <div className="space-y-1">
+                          {insights.aiInsights.commonErrors.toneConfusions.map((confusion, i) => (
+                            <div key={i} className="text-gray-100">{processTextWithPinyin(confusion)}</div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Usage Information - Show if AI insights are available */}
+              {insights.aiInsights?.usage && (
+                <div className="bg-[#232937] rounded-lg p-4 sm:p-6 border border-[#2d3548]">
+                  <h3 className="text-xl font-semibold mb-4 text-[#f7cc48]">Usage Information</h3>
+                  <div className="space-y-3">
+                    {insights.aiInsights.usage.commonCollocations?.length > 0 && (
+                      <div>
+                        <h4 className="text-sm text-gray-300 mb-2">Common Collocations</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {insights.aiInsights.usage.commonCollocations.map((collocation, i) => (
+                            <span key={i} className="px-3 py-1 bg-[#1a1f2e] rounded-lg text-gray-100 border border-[#2d3548]">
+                              {processTextWithPinyin(collocation)}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    <div className="grid grid-cols-2 gap-4">
+                      {insights.aiInsights.usage.registerLevel && (
+                        <div>
+                          <h4 className="text-sm text-gray-300 mb-1">Register Level</h4>
+                          <p className="text-gray-100 capitalize">{insights.aiInsights.usage.registerLevel}</p>
+                        </div>
+                      )}
+                      {insights.aiInsights.usage.frequency && (
+                        <div>
+                          <h4 className="text-sm text-gray-300 mb-1">Frequency</h4>
+                          <p className="text-gray-100 capitalize">{insights.aiInsights.usage.frequency}</p>
+                        </div>
+                      )}
+                    </div>
+                    {insights.aiInsights.usage.domains?.length > 0 && (
+                      <div>
+                        <h4 className="text-sm text-gray-300 mb-2">Common Domains</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {insights.aiInsights.usage.domains.map((domain, i) => (
+                            <span key={i} className="px-2 py-1 bg-[#2d3548]/50 rounded text-sm text-gray-200">
+                              {domain}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* DEBUG: Show raw AI insights data */}
+              {process.env.NODE_ENV === 'development' && insights.aiInsights && (
+                <div className="bg-red-900/20 rounded-lg p-4 border border-red-500 mb-4">
+                  <h3 className="text-red-400 font-bold mb-2">DEBUG: AI Insights Available</h3>
+                  <div className="text-xs text-gray-300">
+                    <p>Etymology: {insights.aiInsights.etymology ? '✓' : '✗'}</p>
+                    <p>Common Errors: {insights.aiInsights.commonErrors ? '✓' : '✗'}</p>
+                    <p>- Similar chars: {insights.aiInsights.commonErrors?.similarCharacters?.length || 0}</p>
+                    <p>- Wrong contexts: {insights.aiInsights.commonErrors?.wrongContexts?.length || 0}</p>
+                    <p>- Tone confusions: {insights.aiInsights.commonErrors?.toneConfusions?.length || 0}</p>
+                    <p>Usage: {insights.aiInsights.usage ? '✓' : '✗'}</p>
+                    <p>- Collocations: {insights.aiInsights.usage?.commonCollocations?.length || 0}</p>
+                    <p>- Register: {insights.aiInsights.usage?.registerLevel || 'none'}</p>
+                    <p>- Frequency: {insights.aiInsights.usage?.frequency || 'none'}</p>
+                    <p>Learning Tips: {insights.aiInsights.learningTips ? '✓' : '✗'}</p>
+                    <p>- Beginners: {insights.aiInsights.learningTips?.forBeginners?.length || 0}</p>
+                    <p>- Intermediate: {insights.aiInsights.learningTips?.forIntermediate?.length || 0}</p>
+                    <p>- Advanced: {insights.aiInsights.learningTips?.forAdvanced?.length || 0}</p>
+                  </div>
                 </div>
               )}
 

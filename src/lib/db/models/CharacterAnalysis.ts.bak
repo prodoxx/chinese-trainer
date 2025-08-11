@@ -43,6 +43,38 @@ export interface ICharacterAnalysis extends Document {
   contextExamples: string[];
   collocations: string[];
   
+  // AI insights for learning
+  aiInsights?: {
+    etymology: {
+      origin: string;
+      evolution: string[];
+      culturalContext: string;
+    };
+    mnemonics: {
+      visual: string;
+      story: string;
+      components: string;
+    };
+    commonErrors: {
+      similarCharacters: string[];
+      wrongContexts: string[];
+      toneConfusions: string[];
+    };
+    usage: {
+      commonCollocations: string[];
+      registerLevel: string;
+      frequency: string;
+      domains: string[];
+    };
+    learningTips: {
+      forBeginners: string[];
+      forIntermediate: string[];
+      forAdvanced: string[];
+    };
+    linguisticAnalysisPrompt?: string;
+  };
+  aiInsightsGeneratedAt?: Date;
+  
   // OpenAI analysis metadata
   openAIModel: string;
   analysisVersion: string;
@@ -95,6 +127,38 @@ const CharacterAnalysisSchema = new Schema<ICharacterAnalysis>(
     frequency: { type: Number },
     contextExamples: [{ type: String }],
     collocations: [{ type: String }],
+    
+    // AI insights for learning
+    aiInsights: {
+      etymology: {
+        origin: { type: String },
+        evolution: [{ type: String }],
+        culturalContext: { type: String }
+      },
+      mnemonics: {
+        visual: { type: String },
+        story: { type: String },
+        components: { type: String }
+      },
+      commonErrors: {
+        similarCharacters: [{ type: String }],
+        wrongContexts: [{ type: String }],
+        toneConfusions: [{ type: String }]
+      },
+      usage: {
+        commonCollocations: [{ type: String }],
+        registerLevel: { type: String },
+        frequency: { type: String },
+        domains: [{ type: String }]
+      },
+      learningTips: {
+        forBeginners: [{ type: String }],
+        forIntermediate: [{ type: String }],
+        forAdvanced: [{ type: String }]
+      },
+      linguisticAnalysisPrompt: { type: String }
+    },
+    aiInsightsGeneratedAt: { type: Date },
     
     // OpenAI analysis metadata
     openAIModel: { type: String },

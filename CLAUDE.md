@@ -24,6 +24,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `bun run clean-db` - Clean all decks, cards, and reviews from database
 - `bun run migrate-to-r2:dry` - Dry run migration from GridFS to Cloudflare R2
 - `bun run migrate-to-r2` - Migrate media files from GridFS to Cloudflare R2
+- `bun run fix-indexes` - Fix MongoDB card collection indexes (removes duplicate key errors)
 
 ### Database Management (PostgreSQL/Prisma)
 - `bun run db:generate` - Generate Prisma client after schema changes

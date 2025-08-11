@@ -1,0 +1,46 @@
+// Add these to your existing schema.prisma file
+
+model UserReminderPreferences {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Reminder settings
+  enabled           Boolean  @default(true)
+  reminderTime      String   @default("09:00") // Time in HH:MM format (user's local time)
+  timezone          String   @default("UTC")
+  minCardsThreshold Int      @default(5) // Only send reminder if at least X cards are due
+  
+  // Frequency settings
+  dailyReminders    Boolean  @default(true)
+  weeklyDigest      Boolean  @default(false)
+  
+  // Last sent tracking
+  lastDailyReminder DateTime?
+  lastWeeklyDigest  DateTime?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@index([userId])
+  @@index([enabled, reminderTime])
+}
+
+model ReminderLog {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type            String   // "daily" | "weekly" | "manual"
+  status          String   // "sent" | "failed" | "skipped"
+  cardsDue        Int
+  decksIncluded   Json     // Array of deck names
+  
+  emailId         String?  // Resend email ID for tracking
+  errorMessage    String?
+  
+  sentAt          DateTime @default(now())
+  
+  @@index([userId, sentAt])
+  @@index([type, status])
+}

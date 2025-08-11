@@ -15,10 +15,43 @@ export interface ICard extends Document {
   imageAttribution?: string;
   imageAttributionUrl?: string;
   unsplashImageId?: string; // Keep for backward compatibility
+  // AI Processing Information
   imagePrompt?: string; // The prompt used to generate the image
-  interpretationPrompt?: string; // The prompt used for OpenAI interpretation (meaning, pinyin, context)
+  interpretationPrompt?: string; // The prompt used for AI interpretation (meaning, pinyin, context)
   linguisticAnalysisPrompt?: string; // The prompt used for linguistic analysis (AI insights)
   imageSearchQueryPrompt?: string; // The prompt used to generate image search queries
+  confusionGenerationPrompt?: string; // The prompt used to generate commonly confused characters
+  comprehensiveAnalysisPrompt?: string; // The prompt used for comprehensive character analysis
+  
+  // AI Provider Information
+  interpretationProvider?: 'OpenAI';
+  analysisProvider?: 'OpenAI';
+  queryProvider?: 'OpenAI';
+  
+  // AI Results Storage
+  interpretationResult?: {
+    meaning: string;
+    pinyin: string;
+    context: string;
+    imagePrompt: string;
+    provider: string;
+    timestamp: Date;
+  };
+  linguisticAnalysisResult?: {
+    etymology?: any;
+    mnemonics?: any;
+    commonErrors?: any;
+    usage?: any;
+    learningTips?: any;
+    provider: string;
+    timestamp: Date;
+  };
+  imageSearchQueryResult?: {
+    query: string;
+    provider: string;
+    timestamp: Date;
+  };
+  
   cached: boolean;
   disambiguated?: boolean; // True if user manually selected from multiple meanings
   // Linguistic analysis fields
@@ -82,10 +115,43 @@ const CardSchema = new Schema<ICard>(
     imageAttribution: { type: String },
     imageAttributionUrl: { type: String },
     unsplashImageId: { type: String }, // Keep for backward compatibility
+    // AI Processing Information
     imagePrompt: { type: String }, // The prompt used to generate the image
-    interpretationPrompt: { type: String }, // The prompt used for OpenAI interpretation
+    interpretationPrompt: { type: String }, // The prompt used for AI interpretation
     linguisticAnalysisPrompt: { type: String }, // The prompt used for linguistic analysis
     imageSearchQueryPrompt: { type: String }, // The prompt used to generate image search queries
+    confusionGenerationPrompt: { type: String }, // The prompt used to generate commonly confused characters
+    comprehensiveAnalysisPrompt: { type: String }, // The prompt used for comprehensive character analysis
+    
+    // AI Provider Information
+    interpretationProvider: { type: String, enum: ['OpenAI'] },
+    analysisProvider: { type: String, enum: ['OpenAI'] },
+    queryProvider: { type: String, enum: ['OpenAI'] },
+    
+    // AI Results Storage
+    interpretationResult: {
+      meaning: { type: String },
+      pinyin: { type: String },
+      context: { type: String },
+      imagePrompt: { type: String },
+      provider: { type: String },
+      timestamp: { type: Date }
+    },
+    linguisticAnalysisResult: {
+      etymology: { type: Schema.Types.Mixed },
+      mnemonics: { type: Schema.Types.Mixed },
+      commonErrors: { type: Schema.Types.Mixed },
+      usage: { type: Schema.Types.Mixed },
+      learningTips: { type: Schema.Types.Mixed },
+      provider: { type: String },
+      timestamp: { type: Date }
+    },
+    imageSearchQueryResult: {
+      query: { type: String },
+      provider: { type: String },
+      timestamp: { type: Date }
+    },
+    
     cached: { type: Boolean, default: false },
     disambiguated: { type: Boolean, default: false },
     // Linguistic analysis fields

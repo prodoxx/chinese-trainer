@@ -10,7 +10,7 @@ import {
 	generateUniqueMediaKeys,
 } from "@/lib/r2-storage";
 import { fal } from "@fal-ai/client";
-import { interpretChinese } from "@/lib/enrichment/openai-interpret";
+import { interpretChinese as interpretChineseWithProvider } from "@/lib/ai/ai-provider";
 import {
 	validateAIGeneratedImage,
 	getRefinedPromptForIssues,
@@ -286,10 +286,19 @@ export async function generateSharedImage(
 	pinyin: string = "",
 	force: boolean = false,
 	existingImagePath?: string, // Existing path from database to delete
-): Promise<{ imageUrl: string; imagePath: string; cached: boolean; prompt?: string }> {
+	aiProvider: 'openai' = 'openai', // AI provider to use for image prompts
+): Promise<{ 
+	imageUrl: string; 
+	imagePath: string; 
+	cached: boolean; 
+	prompt?: string;
+	queryPrompt?: string;
+	queryResult?: string;
+	queryProvider?: string;
+}> {
 	if (!process.env.FAL_KEY) {
 		console.warn("Fal.ai API key not configured");
-		return { imageUrl: "", imagePath: "", cached: false, prompt: undefined };
+		return { imageUrl: "", imagePath: "", cached: false, prompt: undefined, queryPrompt: undefined, queryResult: undefined, queryProvider: undefined };
 	}
 
 	try {
@@ -303,7 +312,7 @@ export async function generateSharedImage(
 				// Return secure API endpoint - strip 'media/' prefix for cleaner URLs
 				const imagePath = checkKey.replace("media/", "");
 				const imageUrl = `/api/media/${imagePath}`;
-				return { imageUrl, imagePath: checkKey, cached: true, prompt: undefined };
+				return { imageUrl, imagePath: checkKey, cached: true, prompt: undefined, queryPrompt: undefined, queryResult: undefined, queryProvider: undefined };
 			}
 		}
 		
@@ -325,27 +334,86 @@ export async function generateSharedImage(
 
 		// Generate mnemonic-focused prompt using AI interpretation
 		let prompt = "";
+		let queryProvider: string | undefined;
+		let queryPrompt: string | undefined;
+		let queryResult: string | undefined;
 
 		try {
-			// Use our existing OpenAI interpretation to get a better image prompt
+			// Use AI interpretation to get a better image prompt
 			// Pass the disambiguated meaning as context for accurate image generation
-			const interpretation = await interpretChinese(hanzi, meaning);
+			const aiConfig = {
+				provider: 'openai' as const,
+				enabled: true
+			};
+			
+			const interpretation = await interpretChineseWithProvider(hanzi, aiConfig, meaning);
+			
+			// Store query information
+			queryProvider = 'OpenAI';
+			queryPrompt = interpretation?.interpretationPrompt || '';
+			queryResult = interpretation?.imagePrompt || '';
+			
 			if (interpretation && interpretation.imagePrompt) {
+				// Clean any Chinese characters or text references from the prompt
+				const cleanedPrompt = interpretation.imagePrompt
+					.replace(/[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]/g, '') // Remove Chinese chars
+					// Remove phrases that reference text/characters
+					.replace(/\bwith[^,.]*(written|text|characters|words|letters|labeled)[^,.]*[,.]?/gi, '')
+					.replace(/\b(the )?(character|text|word|letter|writing|label)[^,.]*(showing|displaying|above|below|beside)[^,.]*[,.]?/gi, '')
+					.replace(/\bto emphasize that[^,.]*means[^,.]*[,.]?/gi, '') // Remove "to emphasize that X means Y"
+					.replace(/\bmeans "[^"]*"/gi, '') // Remove 'means "something"'
+					.replace(/\bmeans '[^']*'/gi, '') // Remove "means 'something'"
+					.replace(/\b(written|labeled|marked|showing|displaying) (in|with|as)[^,.]*[,.]?/gi, '')
+					.replace(/\bin bold\b/gi, '')
+					.replace(/\bwith.*written\b/gi, '')
+					.replace(/\bcharacters.*showing\b/gi, '')
+					.replace(/\btext.*displaying\b/gi, '')
+					.replace(/\bwords.*on\b/gi, '')
+					.replace(/\bwith.*characters\b/gi, '')
+					.replace(/\bthe character.*above\b/gi, '')
+					.replace(/\bwritten in bold\b/gi, '')
+					.replace(/\bare written\b/gi, '')
+					.replace(/\bwith text\b/gi, '')
+					.replace(/\bshowing text\b/gi, '')
+					.replace(/\bdisplaying words\b/gi, '')
+					.replace(/\blabeled\b/gi, '')
+					// Clean up the result
+					.replace(/\s+/g, ' ')
+					.replace(/\s+([,.])/g, '$1')
+					.replace(/,\s*,/g, ',')
+					.replace(/\.\s*\./g, '.')
+					.replace(/^\s*[,.]/, '') // Remove leading punctuation
+					.trim();
+				
 				// Adapt the prompt for fal.ai - focus on mnemonic visual association
-				const basePrompt = interpretation.imagePrompt
+				const basePrompt = cleanedPrompt
 					.replace(/CRITICAL.*$/, "")
 					.trim();
+				
+				// If the prompt is too short or generic after cleaning, generate a better one
+				if (!basePrompt || basePrompt.length < 30 || 
+					basePrompt.includes("illustration of a gray cloud") ||
+					basePrompt.includes("clear illustration representing")) {
+					// Generate a specific prompt based on the meaning
+					const meaningLower = meaning.toLowerCase();
+					if (meaningLower === "rain" || meaningLower.includes("rain")) {
+						prompt = `Dark storm cloud with heavy rain falling onto wet ground, raindrops creating ripples in puddles. Photorealistic, moody weather scene. No text anywhere.`;
+					} else {
+						// Fall back to meaning-based generation
+						prompt = `Photorealistic visual for "${meaning}": Simple, clear scene with minimal elements. Professional photography, no text anywhere.`;
+					}
+				} else {
+					// Prefer simpler scenes to reduce AI artifacts - maximum 3 people
+					const simplificationHint =
+						meaning.toLowerCase().includes("play") ||
+						meaning.toLowerCase().includes("group")
+							? " Show MAXIMUM 3 people only for clarity."
+							: " Prefer single person or object when possible.";
 
-				// Prefer simpler scenes to reduce AI artifacts - maximum 3 people
-				const simplificationHint =
-					meaning.toLowerCase().includes("play") ||
-					meaning.toLowerCase().includes("group")
-						? " Show MAXIMUM 3 people only for clarity."
-						: " Prefer single person or object when possible.";
-
-				prompt = `Mnemonic visual aid for learning: ${basePrompt} Photorealistic image that helps students remember the meaning "${meaning}" through real-life association.${simplificationHint} No text, letters, numbers, or written characters anywhere. Professional photography style, natural lighting, high quality, web-friendly resolution.`;
+					prompt = `Mnemonic visual aid for learning: ${basePrompt} Photorealistic image that helps students remember the meaning "${meaning}" through real-life association.${simplificationHint} No text, letters, numbers, or written characters anywhere. Professional photography style, natural lighting, high quality, web-friendly resolution.`;
+				}
 				console.log(
-					`Using AI-generated mnemonic prompt for ${hanzi}: "${meaning}"`,
+					`Using AI-generated mnemonic prompt (${queryProvider}) for ${hanzi}: "${meaning}"`,
 				);
 			} else {
 				throw new Error("No AI image prompt available");
@@ -537,7 +605,7 @@ export async function generateSharedImage(
 		const imageUrl = `/api/media/${imagePath}`;
 		console.log(`   Access URL: ${imageUrl}`);
 
-		return { imageUrl, imagePath: newImageKey, cached: false, prompt };
+		return { imageUrl, imagePath: newImageKey, cached: false, prompt, queryPrompt, queryResult, queryProvider };
 	} catch (error: any) {
 		console.error("Shared image generation error:", error);
 		// Log detailed error information for debugging
@@ -547,7 +615,7 @@ export async function generateSharedImage(
 				JSON.stringify(error.body.detail, null, 2),
 			);
 		}
-		return { imageUrl: "", imagePath: "", cached: false, prompt: undefined };
+		return { imageUrl: "", imagePath: "", cached: false, prompt: undefined, queryPrompt: undefined, queryResult: undefined, queryProvider: undefined };
 	}
 }
 

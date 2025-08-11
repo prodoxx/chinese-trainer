@@ -82,6 +82,7 @@ export interface DeckEnrichmentJobData {
   deckName: string;
   sessionId: string;
   force?: boolean;
+  aiProvider?: 'openai';
 }
 
 export interface DeckImportJobData {
@@ -99,4 +100,5 @@ export interface CardEnrichmentJobData {
   deckId: string;
   force: boolean;
   disambiguationSelection?: { pinyin: string; meaning: string };
+  aiProvider?: 'openai';
 }

@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db/mongodb';
-import { analyzeCharacterWithOpenAI, analyzeConfusionPatterns } from '@/lib/analytics/openai-linguistic-analysis';
-import { getCharacterAnalysisWithCache, getSimilarCharacters } from '@/lib/analytics/character-analysis-service';
-import { calculateEnhancedConfusionProbability } from '@/lib/analytics/enhanced-linguistic-complexity';
 import Review from '@/lib/db/models/Review';
 import Card from '@/lib/db/models/Card';
-import CharacterAnalysis from '@/lib/db/models/CharacterAnalysis';
 import Dictionary from '@/lib/db/models/Dictionary';
 import { convertPinyinToneNumbersToMarks, hasToneMarks } from '@/lib/utils/pinyin';
 
@@ -18,7 +14,7 @@ export async function POST(request: NextRequest) {
     await connectDB();
     timings.dbConnect = Date.now() - connectStart;
     
-    const { characterId, includeAI = false } = await request.json();
+    const { characterId } = await request.json();
     
     // Validate characterId
     if (!characterId || characterId === '') {
@@ -37,47 +33,42 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Get linguistic analysis - always use cache service to get full data including mnemonics
+    // Get all analysis data directly from the card (everything is now in Cards collection)
     const analysisStart = Date.now();
-    let complexityAnalysis;
-    
-    try {
-      // Always use the character analysis service to get full data including mnemonics/etymology
-      complexityAnalysis = await getCharacterAnalysisWithCache(card.hanzi);
-      timings.linguisticAnalysis = Date.now() - analysisStart;
-      console.log(`Linguistic analysis from service took ${timings.linguisticAnalysis}ms`);
-    } catch (error) {
-      console.error('Failed to get character analysis:', error);
-      // Fallback to basic card data if service fails
-      complexityAnalysis = {
-        character: card.hanzi,
-        pinyin: card.pinyin,
-        definitions: [card.meaning],
-        strokeCount: card.strokeCount || 0,
-        radicalCount: 0,
-        componentCount: card.componentCount || 0,
-        characterLength: card.hanzi.length,
-        isPhonetic: false,
-        isSemantic: true,
-        semanticCategory: card.semanticCategory || 'unknown',
-        phoneticComponent: undefined,
-        tonePattern: card.tonePattern || '',
-        toneDifficulty: 0.5,
-        semanticFields: [],
-        concreteAbstract: 'concrete',
-        polysemy: 1,
-        frequency: 3,
-        contextDiversity: 1,
-        visualComplexity: card.visualComplexity || 0.5,
-        phoneticTransparency: 0.5,
-        semanticTransparency: 0.7,
-        overallDifficulty: card.overallDifficulty || 0.5,
-        mnemonics: card.mnemonics || [],
-        etymology: card.etymology || ''
-      };
-      timings.linguisticAnalysis = Date.now() - analysisStart;
-      console.log(`Linguistic analysis fallback from card took ${timings.linguisticAnalysis}ms`);
-    }
+    const complexityAnalysis = {
+      character: card.hanzi,
+      pinyin: card.pinyin,
+      definitions: [card.meaning],
+      strokeCount: card.strokeCount || 0,
+      radicalCount: card.radicals?.length || 0,
+      componentCount: card.componentCount || 0,
+      characterLength: card.hanzi.length,
+      isPhonetic: false,
+      isSemantic: true,
+      semanticCategory: card.semanticCategory || 'general',
+      semanticFields: card.semanticFields || [],
+      conceptType: card.conceptType || 'concrete',
+      phoneticComponent: undefined,
+      tonePattern: card.tonePattern || '',
+      toneDescription: card.toneDescription || '',
+      toneDifficulty: card.toneDifficulty || 0.5,
+      concreteAbstract: card.conceptType || 'concrete',
+      polysemy: 1,
+      frequency: card.frequency || 3,
+      contextDiversity: card.collocations?.length || 1,
+      contextExamples: card.contextExamples || [],
+      collocations: card.collocations || [],
+      visualComplexity: card.visualComplexity || 0.5,
+      phoneticTransparency: card.phoneticTransparency || 0.5,
+      semanticTransparency: card.semanticTransparency || 0.7,
+      overallDifficulty: card.overallDifficulty || 0.5,
+      mnemonics: card.mnemonics || [],
+      etymology: card.etymology || '',
+      commonConfusions: card.commonConfusions || [],
+      radicals: card.radicals || []
+    };
+    timings.linguisticAnalysis = Date.now() - analysisStart;
+    console.log(`Card data retrieval took ${timings.linguisticAnalysis}ms`);
     
     // Get review history for this character
     const review = await Review.findOne({ cardId: characterId });
@@ -91,47 +82,37 @@ export async function POST(request: NextRequest) {
       difficulty: review.ease || 2.5,
     } : null;
     
-    // Always include AI insights if they're already cached, regardless of includeAI flag
+    // Get AI insights directly from the card
     let aiInsights = null;
     
-    // Check if AI insights are already cached in the card
-    if (card.aiInsights && card.aiInsightsGeneratedAt) {
-      // Check if cached insights are recent (less than 30 days old)
-      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-      if (card.aiInsightsGeneratedAt > thirtyDaysAgo) {
-        console.log('Using cached AI insights for character:', card.hanzi);
+    if (card.aiInsights) {
+      // Check if AI insights have actual content (not just empty structure)
+      const hasValidContent = card.aiInsights.etymology?.origin && 
+        card.aiInsights.mnemonics?.visual && 
+        card.aiInsights.learningTips?.forBeginners?.length > 0;
+      
+      if (hasValidContent) {
+        console.log('Using AI insights from Card for:', card.hanzi);
         aiInsights = card.aiInsights;
+      } else {
+        console.log('Card has empty AI insights structure for:', card.hanzi);
       }
+    } else {
+      console.log('No AI insights found for character:', card.hanzi, '- should be generated during enrichment');
     }
     
-    // Only generate new AI insights if explicitly requested and none exist
-    if (includeAI && !aiInsights) {
-      try {
-        console.log('Generating new AI insights for character:', card.hanzi);
-        aiInsights = await analyzeCharacterWithOpenAI(card.hanzi);
-        
-        // Cache the AI insights in the card
-        await Card.findByIdAndUpdate(characterId, {
-          aiInsights,
-          aiInsightsGeneratedAt: new Date(),
-        });
-      } catch (error) {
-        console.error('AI analysis failed:', error);
-      }
-    }
+    // Never generate AI insights on-demand anymore - they should only be generated during enrichment
+    // This prevents the slow loading when opening the Character Insights modal
     
-    // Skip confusion analysis for now - it's too slow
-    // TODO: Implement a faster confusion analysis or move to background job
+    // Get confusion analysis from card's commonConfusions field
     let confusionAnalysis = [];
     
     const confusionStart = Date.now();
     
-    // For now, just get commonly confused characters from the cache if available
     try {
-      const cachedAnalysis = await CharacterAnalysis.findOne({ character: card.hanzi });
-      if (cachedAnalysis?.commonConfusions) {
+      if (card.commonConfusions && card.commonConfusions.length > 0) {
         // Filter out the character itself and get unique characters
-        const uniqueConfusions = cachedAnalysis.commonConfusions
+        const uniqueConfusions = card.commonConfusions
           .filter((conf: any) => conf.character !== card.hanzi)
           .slice(0, 3);
         
@@ -156,21 +137,6 @@ export async function POST(request: NextRequest) {
                   // Keep original if conversion fails
                 }
               }
-              
-              // Background: Create card for this character if it doesn't exist
-              if (!confusedCard && pinyin && meaning) {
-                Card.create({
-                  hanzi: conf.character,
-                  pinyin,
-                  meaning,
-                  cached: false // Will be enriched later
-                }).catch(err => {
-                  // Ignore duplicate key errors
-                  if (err.code !== 11000) {
-                    console.error('Error creating card for confusion character:', err);
-                  }
-                });
-              }
             }
           }
           
@@ -179,11 +145,11 @@ export async function POST(request: NextRequest) {
             meaning,
             pinyin,
             confusion: {
-              visual: conf.similarity,
+              visual: conf.similarity || 0.5,
               semantic: 0,
               phonetic: 0,
               tonal: 0,
-              total: conf.similarity
+              total: conf.similarity || 0.5
             }
           };
         });

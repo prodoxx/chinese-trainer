@@ -58,6 +58,8 @@ model User {
   sessions          Session[]
   profile           UserProfile?
   settings          UserSettings?
+  reminderPreferences UserReminderPreferences?
+  reminderLogs      ReminderLog[]
 }
 
 model VerificationToken {
@@ -96,6 +98,37 @@ model UserSettings {
   showFlashDemo         Boolean  @default(true) // Show flash session demo
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
+
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserReminderPreferences {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  enabled               Boolean  @default(true)
+  reminderTime          String   @default("09:00") // Time in HH:mm format
+  timezone              String   @default("UTC")
+  frequency             String   @default("daily") // daily, weekly
+  weeklyDay             Int?     // Day of week (0-6, Sunday-Saturday)
+  minCardsThreshold     Int      @default(5) // Minimum cards to trigger reminder
+  dailyReminders        Boolean  @default(true)
+  weeklyDigest          Boolean  @default(false)
+  lastDailyReminder     DateTime? // Track when last daily reminder was sent
+  lastWeeklyDigest      DateTime? // Track when last weekly digest was sent
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ReminderLog {
+  id                    String   @id @default(cuid())
+  userId                String
+  type                  String   // daily, weekly, manual
+  dueCards              Int
+  status                String   @default("sent") // sent, failed
+  error                 String?
+  createdAt             DateTime @default(now())
 
   user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

@@ -28,7 +28,8 @@ import {
   List,
   Plus,
   FileText,
-  Upload
+  Upload,
+  Trash2
 } from 'lucide-react'
 import { useAlert } from '@/hooks/useAlert'
 import AdminCharacterInsights from '@/components/AdminCharacterInsights'
@@ -95,10 +96,15 @@ export default function AdminCardsPage() {
   const [bulkImporting, setBulkImporting] = useState(false)
   const [bulkImportResults, setBulkImportResults] = useState<any>(null)
   const [enrichImmediately, setEnrichImmediately] = useState(true)
+  const [isDevelopment, setIsDevelopment] = useState(false)
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{ cardId: string; hanzi: string } | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const [bulkDeleteConfirmation, setBulkDeleteConfirmation] = useState(false)
+  const [bulkDeleting, setBulkDeleting] = useState(false)
   const pollIntervalsRef = useRef<Map<string, NodeJS.Timeout>>(new Map())
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Check if user is admin
+  // Check if user is admin and set development mode
   useEffect(() => {
     if (status === 'loading') return
     
@@ -112,6 +118,9 @@ export default function AdminCardsPage() {
       router.push('/decks')
       return
     }
+
+    // Check if we're in development mode
+    setIsDevelopment(process.env.NODE_ENV === 'development')
 
     fetchCards()
   }, [session, status, router, showAlert])
@@ -193,6 +202,92 @@ export default function AdminCardsPage() {
   const handleRefresh = () => {
     setRefreshing(true)
     fetchCards()
+  }
+
+  const handleDeleteCard = async () => {
+    if (!deleteConfirmation) return
+    
+    setDeleting(true)
+    try {
+      const response = await fetch(`/api/admin/cards/${deleteConfirmation.cardId}/delete`, {
+        method: 'DELETE'
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        if (data.deckCount) {
+          showAlert(
+            data.message,
+            { type: 'error' }
+          )
+        } else {
+          showAlert(data.error || 'Failed to delete card', { type: 'error' })
+        }
+        return
+      }
+
+      const message = data.deletedCard?.analysisDeleted 
+        ? `Card "${deleteConfirmation.hanzi}" and its character analysis deleted successfully`
+        : `Card "${deleteConfirmation.hanzi}" deleted successfully`
+      showAlert(message, { type: 'success' })
+      setDeleteConfirmation(null)
+      fetchCards() // Refresh the list
+    } catch (error) {
+      console.error('Error deleting card:', error)
+      showAlert('Failed to delete card', { type: 'error' })
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  const handleBulkDelete = async () => {
+    if (!bulkDeleteConfirmation || selectedCards.size === 0) return
+    
+    setBulkDeleting(true)
+    try {
+      const response = await fetch('/api/admin/cards/bulk-delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          cardIds: Array.from(selectedCards)
+        })
+      })
+      
+      const data = await response.json()
+      
+      if (!response.ok) {
+        showAlert(data.error || 'Failed to delete cards', { type: 'error' })
+        return
+      }
+      
+      // Show detailed results
+      let message = data.message
+      
+      if (data.results.skipped.length > 0) {
+        message += '\n\nSkipped cards (in use by decks):'
+        data.results.skipped.forEach((card: any) => {
+          message += `\n• ${card.hanzi}: ${card.reason}`
+        })
+      }
+      
+      showAlert(message, { 
+        type: data.results.deleted.length > 0 ? 'success' : 'warning'
+      })
+      
+      // Clear selection and refresh
+      setSelectedCards(new Set())
+      setBulkDeleteConfirmation(false)
+      fetchCards()
+      
+    } catch (error) {
+      console.error('Error during bulk delete:', error)
+      showAlert('Failed to delete cards', { type: 'error' })
+    } finally {
+      setBulkDeleting(false)
+    }
   }
 
   const handleReEnrichCard = async (cardId: string) => {
@@ -432,7 +527,8 @@ export default function AdminCardsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           characters,
-          enrichImmediately 
+          enrichImmediately,
+          aiProvider: 'openai'
         })
       })
 
@@ -473,7 +569,7 @@ export default function AdminCardsPage() {
   }
 
   const updateEnrichmentCount = (increment: boolean = false) => {
-    setBulkImportResults(prev => {
+    setBulkImportResults((prev: any) => {
       if (!prev) return prev
       const updated = { ...prev }
       if (increment) {
@@ -790,13 +886,22 @@ export default function AdminCardsPage() {
                   </button>
                   
                   {selectedCards.size > 0 && (
-                    <button
-                      onClick={handleBulkReEnrich}
-                      className="flex items-center gap-2 px-4 py-2 bg-[#f7cc48] hover:bg-[#f7cc48]/90 text-black font-medium rounded-lg transition-colors"
-                    >
-                      <Zap className="w-4 h-4" />
-                      Re-enrich {selectedCards.size} Cards
-                    </button>
+                    <>
+                      <button
+                        onClick={handleBulkReEnrich}
+                        className="flex items-center gap-2 px-4 py-2 bg-[#f7cc48] hover:bg-[#f7cc48]/90 text-black font-medium rounded-lg transition-colors"
+                      >
+                        <Zap className="w-4 h-4" />
+                        Re-enrich {selectedCards.size} Cards
+                      </button>
+                      <button
+                        onClick={() => setBulkDeleteConfirmation(true)}
+                        className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Delete {selectedCards.size} Cards
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
@@ -893,23 +998,33 @@ export default function AdminCardsPage() {
                             {formatDate(card.updatedAt)}
                           </td>
                           <td className="px-6 py-4">
-                            <button
-                              onClick={() => handleReEnrichCard(card._id)}
-                              disabled={reEnrichingCards.has(card._id)}
-                              className="flex items-center gap-2 px-3 py-1 bg-[#21262d] hover:bg-[#30363d] text-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-                            >
-                              {reEnrichingCards.has(card._id) ? (
-                                <div className="flex items-center gap-2">
-                                  <RefreshCw className="w-3 h-3 animate-spin" />
-                                  <span className="text-xs">{enrichmentStatus.get(card._id) || 'Processing...'}</span>
-                                </div>
-                              ) : (
-                                <>
-                                  <Zap className="w-3 h-3" />
-                                  Re-enrich
-                                </>
-                              )}
-                            </button>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => handleReEnrichCard(card._id)}
+                                disabled={reEnrichingCards.has(card._id)}
+                                className="flex items-center gap-2 px-3 py-1 bg-[#21262d] hover:bg-[#30363d] text-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                              >
+                                {reEnrichingCards.has(card._id) ? (
+                                  <div className="flex items-center gap-2">
+                                    <RefreshCw className="w-3 h-3 animate-spin" />
+                                    <span className="text-xs">{enrichmentStatus.get(card._id) || 'Processing...'}</span>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <Zap className="w-3 h-3" />
+                                    Re-enrich
+                                  </>
+                                )}
+                              </button>
+                              <button
+                                onClick={() => setDeleteConfirmation({ cardId: card._id, hanzi: card.hanzi })}
+                                className="flex items-center gap-2 px-3 py-1 bg-red-900/30 hover:bg-red-900/50 text-red-400 rounded-md transition-colors text-sm"
+                                title="Delete card"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                                Delete
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -1015,30 +1130,42 @@ export default function AdminCardsPage() {
                             </div>
                           )}
                           
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleReEnrichCard(card._id)
-                            }}
-                            disabled={isReEnriching}
-                            className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                              isReEnriching 
-                                ? 'bg-gray-700 text-gray-400 cursor-not-allowed' 
-                                : 'bg-[#f7cc48] hover:bg-[#f7cc48]/90 text-black'
-                            }`}
-                          >
-                            {isReEnriching ? (
-                              <>
-                                <Loader2 className="w-3 h-3 animate-spin" />
-                                <span className="text-xs">Enriching...</span>
-                              </>
-                            ) : (
-                              <>
-                                <Zap className="w-3 h-3" />
-                                <span>Re-enrich</span>
-                              </>
-                            )}
-                          </button>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleReEnrichCard(card._id)
+                              }}
+                              disabled={isReEnriching}
+                              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                isReEnriching 
+                                  ? 'bg-gray-700 text-gray-400 cursor-not-allowed' 
+                                  : 'bg-[#f7cc48] hover:bg-[#f7cc48]/90 text-black'
+                              }`}
+                            >
+                              {isReEnriching ? (
+                                <>
+                                  <Loader2 className="w-3 h-3 animate-spin" />
+                                  <span className="text-xs">Enriching...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Zap className="w-3 h-3" />
+                                  <span>Re-enrich</span>
+                                </>
+                              )}
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setDeleteConfirmation({ cardId: card._id, hanzi: card.hanzi })
+                              }}
+                              className="px-3 py-2 bg-red-900/30 hover:bg-red-900/50 text-red-400 rounded-lg transition-colors text-sm"
+                              title="Delete card"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     )
@@ -1138,6 +1265,141 @@ export default function AdminCardsPage() {
         />
       )}
       
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmation && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !deleting) {
+              setDeleteConfirmation(null)
+            }
+          }}
+        >
+          <div className="bg-[#161b22] rounded-2xl p-6 max-w-md w-full border border-[#30363d] shadow-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-3 bg-red-900/20 rounded-lg">
+                <Trash2 className="w-6 h-6 text-red-400" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-white">Delete Card</h2>
+                <p className="text-sm text-gray-400">This action cannot be undone</p>
+              </div>
+            </div>
+            
+            <div className="mb-6">
+              <p className="text-gray-300 mb-3">
+                Are you sure you want to delete this card?
+              </p>
+              <div className="bg-[#0d1117] border border-[#30363d] rounded-lg p-4">
+                <div className="text-3xl font-bold text-[#f7cc48] text-center mb-2">
+                  {deleteConfirmation.hanzi}
+                </div>
+                <p className="text-sm text-gray-500 text-center">
+                  This will permanently delete the card and its associated media files.
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeleteConfirmation(null)}
+                disabled={deleting}
+                className="flex-1 py-2 bg-[#21262d] hover:bg-[#30363d] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteCard}
+                disabled={deleting}
+                className="flex-1 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+              >
+                {deleting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    Delete Card
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Delete Confirmation Modal */}
+      {bulkDeleteConfirmation && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !bulkDeleting) {
+              setBulkDeleteConfirmation(false)
+            }
+          }}
+        >
+          <div className="bg-[#161b22] rounded-2xl p-6 max-w-md w-full border border-[#30363d] shadow-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-3 bg-red-900/20 rounded-lg">
+                <Trash2 className="w-6 h-6 text-red-400" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-white">Delete Multiple Cards</h2>
+                <p className="text-sm text-gray-400">This action cannot be undone</p>
+              </div>
+            </div>
+            
+            <div className="mb-6">
+              <p className="text-gray-300 mb-3">
+                Are you sure you want to delete {selectedCards.size} selected card{selectedCards.size > 1 ? 's' : ''}?
+              </p>
+              <div className="bg-[#0d1117] border border-[#30363d] rounded-lg p-4">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-[#f7cc48] mb-2">
+                    {selectedCards.size} Cards
+                  </div>
+                  <p className="text-sm text-gray-500">
+                    Cards that are used in decks will be skipped automatically.
+                  </p>
+                  <p className="text-sm text-gray-500 mt-2">
+                    This will permanently delete the cards, their character analyses, and associated media files.
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={() => setBulkDeleteConfirmation(false)}
+                disabled={bulkDeleting}
+                className="flex-1 py-2 bg-[#21262d] hover:bg-[#30363d] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleBulkDelete}
+                disabled={bulkDeleting}
+                className="flex-1 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+              >
+                {bulkDeleting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    Delete {selectedCards.size} Cards
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Bulk Import Modal */}
       {showBulkImport && (
         <div 
@@ -1179,18 +1441,21 @@ export default function AdminCardsPage() {
                   </p>
                 </div>
                 
-                <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    id="enrichImmediately"
-                    checked={enrichImmediately}
-                    onChange={(e) => setEnrichImmediately(e.target.checked)}
-                    disabled={bulkImporting}
-                    className="rounded border-gray-600 text-[#f7cc48] focus:ring-[#f7cc48]"
-                  />
-                  <label htmlFor="enrichImmediately" className="text-sm text-gray-300">
-                    Enrich cards immediately after import
-                  </label>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      id="enrichImmediately"
+                      checked={enrichImmediately}
+                      onChange={(e) => setEnrichImmediately(e.target.checked)}
+                      disabled={bulkImporting}
+                      className="rounded border-gray-600 text-[#f7cc48] focus:ring-[#f7cc48]"
+                    />
+                    <label htmlFor="enrichImmediately" className="text-sm text-gray-300">
+                      Enrich cards immediately after import
+                    </label>
+                  </div>
+                  
                 </div>
                 
                 <div className="flex gap-3 pt-2">

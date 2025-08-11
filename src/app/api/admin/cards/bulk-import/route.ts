@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { characters, enrichImmediately } = await request.json()
+    const { characters, enrichImmediately, aiProvider } = await request.json()
 
     if (!characters || !Array.isArray(characters)) {
       return NextResponse.json(
@@ -90,7 +90,8 @@ export async function POST(request: NextRequest) {
                 cardId: newCard._id.toString(),
                 userId: session.user.id,
                 deckId: null, // No deck association for bulk import
-                force: false
+                force: false,
+                aiProvider: aiProvider || 'openai' // Default to OpenAI if not specified
               }
             )
 

@@ -4,7 +4,7 @@ const openai = new OpenAI({
 	apiKey: process.env.OPENAI_API_KEY!,
 });
 
-interface InterpretationResult {
+export interface InterpretationResult {
 	meaning: string;
 	pinyin?: string;
 	context?: string;
