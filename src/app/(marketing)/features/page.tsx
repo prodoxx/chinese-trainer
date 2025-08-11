@@ -609,7 +609,7 @@ export default async function FeaturesPage() {
                   <span className="text-green-400">✓</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-[#7d8590]">100 characters to start</span>
+                  <span className="text-[#7d8590]">14-day free trial</span>
                   <span className="text-green-400">✓</span>
                 </div>
                 <div className="flex items-center justify-between">
@@ -622,13 +622,9 @@ export default async function FeaturesPage() {
                 </div>
               </div>
               
-              <Link href="/auth/signup" className="block w-full bg-[#f7cc48] hover:bg-[#f7cc48]/90 text-black font-semibold text-lg px-8 py-4 rounded-lg transition-all transform hover:scale-105 shadow-lg hover:shadow-xl mb-4">
+              <Link href="/auth/signup" className="block w-full bg-[#f7cc48] hover:bg-[#f7cc48]/90 text-black font-semibold text-lg px-8 py-4 rounded-lg transition-all transform hover:scale-105 shadow-lg hover:shadow-xl">
                 Start Learning Now
               </Link>
-              
-              <p className="text-sm text-[#7d8590]">
-                Join 50,000+ active learners
-              </p>
             </div>
           </div>
         </div>

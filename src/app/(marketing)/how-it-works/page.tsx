@@ -516,7 +516,7 @@ export default async function HowItWorksPage() {
               </Link>
               
               <div className="text-sm text-[#7d8590]">
-                No credit card • 100 characters free • Cancel anytime
+                No credit card • 14-day free trial • Cancel anytime
               </div>
             </div>
           </div>

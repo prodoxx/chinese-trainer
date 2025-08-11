@@ -59,7 +59,7 @@ export default async function MarketingHomePage() {
                 <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                100 characters free
+                14-day free trial
               </div>
               <div className="flex items-center">
                 <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -387,40 +387,40 @@ export default async function MarketingHomePage() {
             </p>
 
             <div className="bg-[#21262d] border border-[#30363d] rounded-lg p-8 mb-8 max-w-md mx-auto">
-              <h3 className="text-2xl font-bold text-white mb-4">Free Forever Plan</h3>
+              <h3 className="text-2xl font-bold text-white mb-4">Start with 14-Day Free Trial</h3>
               <ul className="space-y-3 mb-6 text-left">
                 <li className="flex items-start">
                   <svg className="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                  <span className="text-[#7d8590]">100 characters with full AI enrichment</span>
+                  <span className="text-[#7d8590]">Unlimited characters with AI enrichment</span>
                 </li>
                 <li className="flex items-start">
                   <svg className="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                  <span className="text-[#7d8590]">Unlimited flash sessions</span>
+                  <span className="text-[#7d8590]">All premium features included</span>
                 </li>
                 <li className="flex items-start">
                   <svg className="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                  <span className="text-[#7d8590]">Spaced repetition scheduling</span>
+                  <span className="text-[#7d8590]">Spaced repetition & analytics</span>
                 </li>
                 <li className="flex items-start">
                   <svg className="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                  <span className="text-[#7d8590]">Progress analytics</span>
+                  <span className="text-[#7d8590]">No credit card required</span>
                 </li>
               </ul>
               <Link href="/auth/signup" className="block w-full bg-[#f7cc48] hover:bg-[#f7cc48]/90 text-black font-semibold text-lg px-8 py-4 rounded-lg transition-all transform hover:scale-105 shadow-lg hover:shadow-xl">
-                Get Started Free
+                Start Free Trial
               </Link>
             </div>
 
             <div className="text-sm text-[#7d8590]">
-              No credit card required • Takes 30 seconds • Cancel anytime
+              No credit card required • 14-day trial • Cancel anytime
             </div>
           </div>
         </div>
