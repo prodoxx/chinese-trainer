@@ -311,7 +311,8 @@ export default function PricingClient() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6 mb-8 max-w-3xl mx-auto">
+          <div className="flex items-center justify-center mb-8">
+            <div className="grid md:grid-cols-2 gap-6 max-w-3xl">
             <div className="space-y-4">
               <div className="flex items-start gap-3">
                 <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
@@ -357,6 +358,7 @@ export default function PricingClient() {
                   <p className="text-sm text-[#7d8590]">Direct line to our team</p>
                 </div>
               </div>
+            </div>
             </div>
           </div>
 
