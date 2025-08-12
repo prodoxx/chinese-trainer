@@ -4,7 +4,6 @@ import Deck from "../src/lib/db/models/Deck";
 import Card from "../src/lib/db/models/Card";
 import Review from "../src/lib/db/models/Review";
 import DeckCard from "../src/lib/db/models/DeckCard";
-import CharacterAnalysis from "@/lib/db/models/CharacterAnalysis";
 import StudySession from "@/lib/db/models/StudySession";
 
 async function cleanDatabase() {
@@ -50,10 +49,6 @@ async function cleanDatabase() {
 		// Delete all cards
 		await Card.deleteMany({});
 		console.log("✓ Cards deleted");
-
-		// Delete all character analysis
-		await CharacterAnalysis.deleteMany({});
-		console.log("✓ Character analysis deleted");
 
 		// Delete all study sessions
 		await StudySession.deleteMany({});
