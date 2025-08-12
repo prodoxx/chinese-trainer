@@ -259,8 +259,8 @@ export default function AdminCharacterInsights({ characterId, character, userId,
                     />
                   )}
                   <div className="flex-1">
-                    <div className="text-5xl font-bold mb-2">{insights.character.hanzi}</div>
                     <div className="text-2xl text-[#f7cc48] mb-1">{insights.character.pinyin}</div>
+                    <div className="text-5xl font-bold mb-2">{insights.character.hanzi}</div>
                     <div className="text-lg text-gray-300">{insights.character.meaning}</div>
                   </div>
                 </div>

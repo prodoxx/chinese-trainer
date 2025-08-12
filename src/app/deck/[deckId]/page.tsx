@@ -669,8 +669,8 @@ export default function DeckView() {
                 )}
                 
                 <div className="text-center mb-4">
-                  <div className="text-6xl font-bold mb-2 text-white hanzi group-hover:text-[#f7cc48] transition-colors">{card.hanzi}</div>
                   <div className="text-xl text-[#f7cc48]/80 mb-2">{card.pinyin || '...'}</div>
+                  <div className="text-6xl font-bold mb-2 text-white hanzi group-hover:text-[#f7cc48] transition-colors">{card.hanzi}</div>
                   <div className="text-sm text-gray-300">{card.english?.join(', ') || '...'}</div>
                 </div>
 
