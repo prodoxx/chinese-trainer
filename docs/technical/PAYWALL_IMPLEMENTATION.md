@@ -44,12 +44,13 @@ This document outlines the paywall strategy and implementation details for Danbi
 - Early access to features
 - VIP status
 
-### 6. Team (Custom pricing)
-- Admin dashboard
-- Shared decks
-- Progress tracking
-- 2,000 credits per user
-- API access
+### 6. Team (Future - On Request)
+*Note: Team features will be implemented only if users request them*
+- Admin dashboard (planned)
+- Shared decks (planned)
+- Progress tracking (planned)
+- 2,000 credits per user (planned)
+- API access (planned)
 
 ## Database Schema
 
@@ -491,7 +492,7 @@ export interface SubscriptionFeatures {
   canAddCharacters: boolean;
   canUseAIFeatures: boolean;
   canViewInsights: boolean;
-  canExportData: boolean;
+  canExportData: boolean; // Coming soon - deferred to post-launch
   canAccessAnalytics: boolean;
   maxDecks: number;
   maxCardsPerDeck: number;
@@ -522,7 +523,7 @@ export class PaywallService {
         canAddCharacters: true,
         canUseAIFeatures: true,
         canViewInsights: true,
-        canExportData: true,
+        canExportData: false, // Coming soon
         canAccessAnalytics: true,
         maxDecks: -1, // unlimited
         maxCardsPerDeck: -1,
@@ -546,7 +547,7 @@ export class PaywallService {
         canAddCharacters: true,
         canUseAIFeatures: true,
         canViewInsights: true,
-        canExportData: true,
+        canExportData: false, // Coming soon
         canAccessAnalytics: true,
         maxDecks: -1,
         maxCardsPerDeck: -1,
@@ -558,7 +559,7 @@ export class PaywallService {
         canAddCharacters: true,
         canUseAIFeatures: true,
         canViewInsights: true,
-        canExportData: true,
+        canExportData: false, // Coming soon
         canAccessAnalytics: true,
         maxDecks: -1,
         maxCardsPerDeck: -1,
@@ -570,7 +571,7 @@ export class PaywallService {
         canAddCharacters: true,
         canUseAIFeatures: true,
         canViewInsights: true,
-        canExportData: true,
+        canExportData: false, // Coming soon
         canAccessAnalytics: true,
         maxDecks: -1,
         maxCardsPerDeck: -1,
@@ -908,9 +909,9 @@ const PAYWALL_MESSAGES = {
     cta: "Upgrade to Pro"
   },
   canExportData: {
-    title: "Export is a Pro Feature",
-    description: "Export your progress and generate certificates with a Pro subscription.",
-    cta: "Upgrade to Pro"
+    title: "Export Feature Coming Soon",
+    description: "Progress export and certificates will be available for Pro users in an upcoming update.",
+    cta: "Get Notified"
   }
 };
 ```
@@ -1038,9 +1039,10 @@ await analytics.track('plan_upgraded', {
    - Handle mid-cycle downgrades
    - Preserve data but restrict access
 
-3. **Team Plans**
-   - Shared credit pools
-   - Admin override capabilities
+3. **Team Plans** (Deferred - On Request Only)
+   - Will implement if users request team features
+   - Shared credit pools (planned)
+   - Admin override capabilities (planned)
 
 4. **Student Verification**
    - .edu email validation

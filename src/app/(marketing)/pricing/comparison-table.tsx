@@ -155,7 +155,10 @@ export default function ComparisonTable() {
               Lifetime
               <div className="text-xs font-normal text-purple-400 mt-1">Best Value</div>
             </th>
-            <th className="text-center py-4 px-4 text-white font-semibold">Team</th>
+            <th className="text-center py-4 px-4 text-white font-semibold">
+              Team
+              <div className="text-xs font-normal text-[#7d8590] mt-1">10+ users</div>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -176,8 +179,8 @@ export default function ComparisonTable() {
               <div className="text-xs text-green-400">Pays for itself</div>
             </td>
             <td className="text-center py-4 px-4 text-white">
-              From $9/user
-              <div className="text-xs text-[#7d8590]">Volume discounts</div>
+              Contact us
+              <div className="text-xs text-[#7d8590]">Custom pricing</div>
             </td>
           </tr>
           

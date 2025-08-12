@@ -176,7 +176,7 @@ export default function PricingClient() {
               <div className="flex items-start gap-3">
                 <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-white font-semibold">Export progress</p>
+                  <p className="text-white font-semibold">Export progress <span className="text-xs text-blue-400">(Coming Soon)</span></p>
                   <p className="text-xs text-[#7d8590]">PDF reports & certificates</p>
                 </div>
               </div>
@@ -279,39 +279,41 @@ export default function PricingClient() {
         </div>
       </div>
 
-      {/* Team Custom Plan - Below pricing table */}
+      {/* Team Plan - Available on Request */}
       <div className="mt-16">
-        <div className="bg-[#21262d] border border-[#30363d] rounded-2xl p-8 max-w-4xl mx-auto">
+        <div className="bg-[#21262d] border border-[#30363d] rounded-2xl p-8 max-w-5xl mx-auto">
           <div className="text-center mb-8">
             <h3 className="text-3xl font-bold text-white mb-4">Team Plan</h3>
-            <div className="text-3xl font-bold text-[#f7cc48] mb-2">
-              Starting at $9/user/month
-            </div>
-            <p className="text-lg text-[#7d8590] mb-2">For schools, private tutor groups, and organizations</p>
-            <p className="text-sm text-green-400">Volume discounts available for 20+ users</p>
+            <div className="text-3xl font-bold text-[#f7cc48] mb-2">Starting at $9/user/month</div>
+            <p className="text-lg text-[#7d8590] mb-2">
+              For schools, private tutor groups, and organizations
+            </p>
+            <p className="text-sm text-green-400">
+              Volume discounts available for 20+ users
+            </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6 mb-8">
+          <div className="grid md:grid-cols-2 gap-6 mb-8 max-w-3xl mx-auto">
             <div className="space-y-4">
               <div className="flex items-start gap-3">
                 <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-white">10+ users</p>
-                  <p className="text-xs text-[#7d8590]">Volume discounts available</p>
+                  <p className="text-white font-semibold">10+ users</p>
+                  <p className="text-sm text-[#7d8590]">Volume discounts available</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-white">Everything in Pro</p>
-                  <p className="text-xs text-[#7d8590]">For every team member</p>
+                  <p className="text-white font-semibold">Everything in Pro</p>
+                  <p className="text-sm text-[#7d8590]">For every team member</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-white">Admin dashboard</p>
-                  <p className="text-xs text-[#7d8590]">Track student progress</p>
+                  <p className="text-white font-semibold">Admin dashboard</p>
+                  <p className="text-sm text-[#7d8590]">Track student progress</p>
                 </div>
               </div>
             </div>
@@ -319,22 +321,22 @@ export default function PricingClient() {
               <div className="flex items-start gap-3">
                 <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-white">Shared decks</p>
-                  <p className="text-xs text-[#7d8590]">Distribute content easily</p>
+                  <p className="text-white font-semibold">Shared decks</p>
+                  <p className="text-sm text-[#7d8590]">Distribute content easily</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-white">Custom onboarding</p>
-                  <p className="text-xs text-[#7d8590]">Tailored setup for your needs</p>
+                  <p className="text-white font-semibold">Custom onboarding</p>
+                  <p className="text-sm text-[#7d8590]">Tailored setup for your needs</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-white">Dedicated support</p>
-                  <p className="text-xs text-[#7d8590]">Direct line to our team</p>
+                  <p className="text-white font-semibold">Dedicated support</p>
+                  <p className="text-sm text-[#7d8590]">Direct line to our team</p>
                 </div>
               </div>
             </div>
@@ -344,7 +346,7 @@ export default function PricingClient() {
             <Link href="mailto:team@danbing.ai?subject=Team%20Plan%20Inquiry" className="inline-block bg-[#f7cc48] hover:bg-[#f7cc48]/90 text-black font-semibold py-3 px-8 rounded-lg transition-all">
               Contact Us for Pricing
             </Link>
-            <p className="text-xs text-[#7d8590] mt-3">We'll create a custom plan that fits your needs</p>
+            <p className="text-sm text-[#7d8590] mt-3">We'll create a custom plan that fits your needs</p>
           </div>
         </div>
       </div>
