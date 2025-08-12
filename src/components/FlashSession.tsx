@@ -130,8 +130,8 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
               // Start the flash session with preview
               setPhase('flash');
               setSessionStartTime(Date.now());
-              setViewPhase('preview');
-              setShowPreview(true);
+              setViewPhase('orthographic');
+              setShowPreview(false);
             } else {
               // Move to next block when countdown finishes
               continueToNextBlock();
@@ -209,8 +209,8 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
           setCurrentBlockSize(blockSize);
           setBlockCards(sessionCards.slice(0, blockSize));
           setCurrentBlock(1);
-          setViewPhase('preview');
-          setShowPreview(true);
+          setViewPhase('orthographic');
+          setShowPreview(false);
           
           // Always check for demo first
           if (showDemo !== false && !demoCompleted) {
@@ -286,8 +286,8 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
         setCurrentBlockSize(0);
         setCurrentBlockStartIndex(0);
         setCurrentBlock(1);
-        setViewPhase('preview');
-        setShowPreview(true);
+        setViewPhase('orthographic');
+        setShowPreview(false);
         setTotalCardsStudied(0);
         setElapsedTime(0);
         setPausedTime(0);
@@ -627,8 +627,8 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
     setBlockCards(cards.slice(nextBlockStart, nextBlockStart + nextBlockSize));
     setCurrentIndex(0);
     setCurrentBlock(1);
-    setViewPhase('preview');
-    setShowPreview(true);
+    setViewPhase('orthographic');
+    setShowPreview(false);
     setPhase('flash');
   };
   
@@ -1041,10 +1041,33 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
   
   // Show countdown screen
   if (phase === 'countdown') {
+    // Calculate upcoming cards
+    const nextBlockStart = currentBlockStartIndex + currentBlockSize;
+    const nextBlockSize = Math.min(MINI_QUIZ_INTERVAL, cards.length - nextBlockStart);
+    const upcomingCards = cards.slice(nextBlockStart, nextBlockStart + nextBlockSize);
+    
     return (
       <div className="fixed inset-0 bg-black flex items-center justify-center p-4" onClick={unlockAudio}>
         <div className="text-center">
           <h2 className="text-xl sm:text-2xl md:text-3xl text-white mb-6 sm:mb-8">Get ready for the next drill</h2>
+          
+          {/* Show upcoming characters */}
+          {upcomingCards.length > 0 && (
+            <div className="mb-8">
+              <p className="text-gray-400 text-sm mb-3">Upcoming characters:</p>
+              <div className="flex justify-center gap-4 sm:gap-6 flex-wrap">
+                {upcomingCards.map((card, idx) => (
+                  <span 
+                    key={idx}
+                    className="text-3xl sm:text-4xl md:text-5xl text-[#f7cc48] font-bold"
+                  >
+                    {card.hanzi}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          
           <div className="text-6xl sm:text-7xl md:text-8xl font-bold text-gray-400">{countdownSeconds}</div>
         </div>
       </div>
@@ -1106,21 +1129,6 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
     );
   }
   
-  // Show preview grid
-  if (viewPhase === 'preview' && showPreview) {
-    return (
-      <div className="fixed inset-0 bg-black flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-gray-500 text-sm mb-4">Upcoming characters</div>
-          <div className="grid grid-cols-3 gap-4">
-            {blockCards.slice(0, 6).map((card, idx) => (
-              <div key={idx} className="text-4xl text-[#f7cc48]/60">{card.hanzi}</div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
   
   // Render different views based on current phase
   return (
@@ -1140,16 +1148,16 @@ export default function FlashSession({ deckId, mode, onExit }: FlashSessionProps
             {/* Block 1 & 3: Character + pinyin + audio */}
             {(currentBlock === 1 || currentBlock === 3) && (
               <>
-                <div className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-white">{currentCard.pinyin}</div>
-                <div className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-[#f7cc48]">{currentCard.hanzi}</div>
+                <div className="text-2xl sm:text-3xl md:text-4xl text-white">{currentCard.pinyin}</div>
+                <div className="text-7xl sm:text-8xl md:text-9xl font-bold text-[#f7cc48]">{currentCard.hanzi}</div>
               </>
             )}
             
             {/* Block 2: Combined view - everything together */}
             {currentBlock === 2 && (
               <>
-                <div className="text-3xl sm:text-4xl md:text-5xl text-white">{currentCard.pinyin}</div>
-                <div className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-[#f7cc48]">{currentCard.hanzi}</div>
+                <div className="text-2xl sm:text-3xl md:text-4xl text-white">{currentCard.pinyin}</div>
+                <div className="text-6xl sm:text-7xl md:text-8xl font-bold text-[#f7cc48]">{currentCard.hanzi}</div>
                 {currentCard.imageUrl && (
                   <div className="w-40 h-40 sm:w-48 sm:h-48 md:w-56 md:h-56 lg:w-64 lg:h-64 mx-auto my-4">
                     <img

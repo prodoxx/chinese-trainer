@@ -228,7 +228,7 @@ export default function DeckList({ onSelectDeck }: DeckListProps) {
 				{decks.map((deck) => (
 					<div
 						key={deck.id}
-						className="group relative bg-gradient-to-br from-[#1e2329] to-[#161b22] rounded-3xl border border-[#30363d] p-6 sm:p-8 transition-all duration-300 hover:border-[#f7cc48]/40 overflow-hidden shadow-xl hover:shadow-2xl hover:scale-[1.01] hover:-translate-y-1"
+						className="group relative bg-gradient-to-br from-[#1e2329] to-[#161b22] rounded-3xl border border-[#30363d] p-6 sm:p-8 transition-all duration-300 hover:border-[#f7cc48]/40 overflow-x-hidden shadow-xl hover:shadow-2xl hover:scale-[1.01] hover:-translate-y-1"
 					>
 						{/* Animated gradient overlay */}
 						<div className="absolute inset-0 bg-gradient-to-br from-[#f7cc48]/5 via-transparent to-orange-500/5 opacity-0 group-hover:opacity-100 transition-all duration-500" />
@@ -348,12 +348,12 @@ export default function DeckList({ onSelectDeck }: DeckListProps) {
 							
 							{/* Action Buttons */}
 							{deck.status === "ready" && (
-								<div className="overflow-x-auto scrollbar-hidden -mx-2 px-2 mt-4">
+								<div className="overflow-x-auto overflow-y-visible scrollbar-hidden -mx-2 px-2 mt-4 pb-1">
 									<div className="flex gap-2 min-w-max">
 										{deck.stats && deck.stats.newCards > 0 && (
 											<button
 												onClick={() => onSelectDeck(deck.id, "new")}
-												className="min-w-[140px] px-4 py-3 bg-gradient-to-r from-[#f7cc48]/15 to-yellow-500/15 hover:from-[#f7cc48]/25 hover:to-yellow-500/25 text-[#f7cc48] rounded-xl transition-all duration-200 flex items-center justify-center gap-2.5 border border-[#f7cc48]/20 hover:border-[#f7cc48]/40 shadow-md hover:shadow-xl hover:scale-[1.02] hover:-translate-y-0.5 group cursor-pointer text-sm font-semibold backdrop-blur-sm"
+												className="min-w-[140px] px-4 py-3 bg-gradient-to-r from-[#f7cc48]/15 to-yellow-500/15 hover:from-[#f7cc48]/25 hover:to-yellow-500/25 text-[#f7cc48] rounded-xl transition-all duration-200 flex items-center justify-center gap-2.5 border border-[#f7cc48]/20 hover:border-[#f7cc48]/40 shadow-md hover:shadow-xl group cursor-pointer text-sm font-semibold backdrop-blur-sm"
 												title={`Study ${deck.stats.newCards} new cards`}
 											>
 												<Sparkles className="w-4 h-4 group-hover:scale-110 transition-transform flex-shrink-0" />
@@ -363,7 +363,7 @@ export default function DeckList({ onSelectDeck }: DeckListProps) {
 										{deck.stats && (deck.stats.overdue > 0 || deck.stats.dueToday > 0) && (
 											<button
 												onClick={() => onSelectDeck(deck.id, "review")}
-												className="min-w-[140px] px-4 py-3 bg-gradient-to-r from-orange-600/15 to-red-500/15 hover:from-orange-600/25 hover:to-red-500/25 text-orange-400 rounded-xl transition-all duration-200 flex items-center justify-center gap-2.5 border border-orange-600/20 hover:border-orange-500/40 shadow-md hover:shadow-xl hover:scale-[1.02] hover:-translate-y-0.5 group cursor-pointer text-sm font-semibold backdrop-blur-sm"
+												className="min-w-[140px] px-4 py-3 bg-gradient-to-r from-orange-600/15 to-red-500/15 hover:from-orange-600/25 hover:to-red-500/25 text-orange-400 rounded-xl transition-all duration-200 flex items-center justify-center gap-2.5 border border-orange-600/20 hover:border-orange-500/40 shadow-md hover:shadow-xl group cursor-pointer text-sm font-semibold backdrop-blur-sm"
 												title={`Review ${deck.stats.overdue + deck.stats.dueToday} due cards`}
 											>
 												<Zap className="w-4 h-4 group-hover:scale-110 transition-transform flex-shrink-0" />
@@ -373,7 +373,7 @@ export default function DeckList({ onSelectDeck }: DeckListProps) {
 										{deck.stats && deck.stats.totalCards > deck.stats.newCards && (
 											<button
 												onClick={() => onSelectDeck(deck.id, "practice")}
-												className="min-w-[140px] px-4 py-3 bg-gradient-to-r from-green-600/15 to-emerald-500/15 hover:from-green-600/25 hover:to-emerald-500/25 text-green-400 rounded-xl transition-all duration-200 flex items-center justify-center gap-2.5 border border-green-600/20 hover:border-green-500/40 shadow-md hover:shadow-xl hover:scale-[1.02] hover:-translate-y-0.5 group cursor-pointer text-sm font-semibold backdrop-blur-sm"
+												className="min-w-[140px] px-4 py-3 bg-gradient-to-r from-green-600/15 to-emerald-500/15 hover:from-green-600/25 hover:to-emerald-500/25 text-green-400 rounded-xl transition-all duration-200 flex items-center justify-center gap-2.5 border border-green-600/20 hover:border-green-500/40 shadow-md hover:shadow-xl group cursor-pointer text-sm font-semibold backdrop-blur-sm"
 												title={`Practice quiz on all ${deck.stats.totalCards - deck.stats.newCards} studied cards`}
 											>
 												<Brain className="w-4 h-4 group-hover:scale-110 transition-transform flex-shrink-0" />

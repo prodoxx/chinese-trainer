@@ -64,7 +64,7 @@ export default function Quiz({ cards, deckId, onComplete, onExit }: QuizProps) {
   
   useEffect(() => {
     generateQuestions();
-  }, [cards]);
+  }, [cards, deckId]);
   
   useEffect(() => {
     setQuestionStartTime(Date.now());
@@ -118,7 +118,7 @@ export default function Quiz({ cards, deckId, onComplete, onExit }: QuizProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           characters: cards.map(c => c.hanzi),
-          limit: 3 
+          limit: 5 // Get more confused characters to ensure we have enough
         }),
       });
       
@@ -128,6 +128,45 @@ export default function Quiz({ cards, deckId, onComplete, onExit }: QuizProps) {
       }
     } catch (error) {
       console.error('Failed to fetch confused characters:', error);
+    }
+    
+    // Fetch all cards from deck for better distractor pool
+    let allDeckCards: Card[] = [];
+    try {
+      const response = await fetch(`/api/decks/${deckId}/cards`);
+      if (response.ok) {
+        const data = await response.json();
+        allDeckCards = data.cards || [];
+      }
+    } catch (error) {
+      console.error('Failed to fetch all deck cards:', error);
+    }
+    
+    // Pre-fetch cards by semantic category for cards that need them
+    const semanticCategoryMap: Record<string, Card[]> = {};
+    for (const card of shuffled) {
+      // Get semantic category from the card (assuming it's available)
+      const semanticCategory = (card as any).semanticCategory;
+      if (semanticCategory && !semanticCategoryMap[semanticCategory]) {
+        try {
+          const response = await fetch('/api/cards/similar-category', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              semanticCategory,
+              excludeIds: cards.map(c => c.id),
+              limit: 10
+            }),
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            semanticCategoryMap[semanticCategory] = data.cards || [];
+          }
+        } catch (error) {
+          console.error(`Failed to fetch cards for category ${semanticCategory}:`, error);
+        }
+      }
     }
     
     for (let i = 0; i < numQuestions; i++) {
@@ -140,16 +179,78 @@ export default function Quiz({ cards, deckId, onComplete, onExit }: QuizProps) {
         .filter(c => c.id !== correctCard.id && confusedChars.includes(c.hanzi))
         .slice(0, 3);
       
-      // If not enough confused characters, add random distractors
-      const remainingCount = 3 - confusedDistractors.length;
-      const randomDistractors = remainingCount > 0 
+      // If not enough from current session, look in all deck cards
+      if (confusedDistractors.length < 3 && allDeckCards.length > 0) {
+        const additionalConfused = allDeckCards
+          .filter(c => 
+            c.id !== correctCard.id && 
+            confusedChars.includes(c.hanzi) &&
+            !confusedDistractors.some(d => d.id === c.id)
+          )
+          .slice(0, 3 - confusedDistractors.length);
+        confusedDistractors.push(...additionalConfused);
+      }
+      
+      // If still not enough, add random distractors from session cards
+      let remainingCount = 3 - confusedDistractors.length;
+      const sessionDistractors = remainingCount > 0 
         ? cards
             .filter(c => c.id !== correctCard.id && !confusedDistractors.some(d => d.id === c.id))
             .sort(() => Math.random() - 0.5)
             .slice(0, remainingCount)
         : [];
       
-      options.push(...confusedDistractors, ...randomDistractors);
+      options.push(...confusedDistractors, ...sessionDistractors);
+      
+      // If still not 4 options, add from all deck cards
+      if (options.length < 4 && allDeckCards.length > 0) {
+        remainingCount = 4 - options.length;
+        const deckDistractors = allDeckCards
+          .filter(c => !options.some(o => o.id === c.id))
+          .sort(() => Math.random() - 0.5)
+          .slice(0, remainingCount);
+        options.push(...deckDistractors);
+      }
+      
+      // If still not 4 options, fetch cards from same semantic category
+      if (options.length < 4) {
+        const semanticCategory = (correctCard as any).semanticCategory;
+        if (semanticCategory && semanticCategoryMap[semanticCategory]) {
+          remainingCount = 4 - options.length;
+          const categoryDistractors = semanticCategoryMap[semanticCategory]
+            .filter(c => !options.some(o => o.id === c.id))
+            .slice(0, remainingCount);
+          options.push(...categoryDistractors);
+        }
+      }
+      
+      // Final fallback: use any enriched cards from the database
+      if (options.length < 4) {
+        try {
+          // Fetch random enriched cards as last resort
+          const response = await fetch('/api/cards/similar-category', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              semanticCategory: 'general', // Use a generic category
+              excludeIds: options.map(o => o.id),
+              limit: 4 - options.length
+            }),
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            if (data.cards && data.cards.length > 0) {
+              options.push(...data.cards.slice(0, 4 - options.length));
+            }
+          }
+        } catch (error) {
+          console.error('Failed to fetch fallback cards:', error);
+        }
+      }
+      
+      // Ensure we have exactly 4 options
+      options.splice(4);
       options.sort(() => Math.random() - 0.5);
       
       // Cycle through question types

@@ -232,7 +232,7 @@ export default async function PricingPage() {
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-4xl sm:text-5xl font-bold text-white mb-6">Start Your Chinese Journey Today</h2>
             <p className="text-xl text-[#7d8590] mb-8 max-w-2xl mx-auto">
-              Join 50,000+ learners mastering Chinese characters with science-based methods and AI assistance.
+              Join learners mastering Chinese characters with science-based methods and AI assistance.
             </p>
 
             <div className="bg-[#21262d] border border-[#30363d] rounded-2xl p-8 mb-8 max-w-md mx-auto">

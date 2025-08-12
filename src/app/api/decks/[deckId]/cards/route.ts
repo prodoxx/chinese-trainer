@@ -66,6 +66,7 @@ export async function GET(
         imageAttributionUrl: card.imageAttributionUrl,
         audioUrl: card.audioUrl,
         cached: card.cached,
+        semanticCategory: card.semanticCategory,
       }))
     });
     
