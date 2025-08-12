@@ -344,17 +344,11 @@ export default async function AboutPage() {
                       <Award className="w-5 h-5 text-[#f7cc48]" />
                       <span className="text-[#7d8590]">Experienced language educators</span>
                     </div>
+                    <div className="flex items-center gap-3">
+                      <Brain className="w-5 h-5 text-[#f7cc48]" />
+                      <span className="text-[#7d8590]">Linguists researchers from NTNU (Taiwan's #1 University for Chinese Learning)</span>
+                    </div>
                   </div>
-                </div>
-                
-                <div className="text-center md:text-left">
-                  <div className="inline-flex items-center bg-[#f7cc48]/10 text-[#f7cc48] text-sm px-4 py-2 rounded-full font-medium mb-4">
-                    <Rocket className="w-4 h-4 mr-2" />
-                    Backed by Y Combinator
-                  </div>
-                  <p className="text-[#7d8590]">
-                    We&apos;re proud to be supported by the world&apos;s top startup accelerator, alongside companies like Airbnb, Dropbox, and Stripe.
-                  </p>
                 </div>
               </div>
             </div>
@@ -378,17 +372,6 @@ export default async function AboutPage() {
               <Link href="/science" className="bg-[#30363d] hover:bg-[#30363d]/80 text-white font-semibold text-lg px-8 py-4 rounded-lg transition-all">
                 Learn the Science
               </Link>
-            </div>
-            
-            <div className="mt-8 flex items-center justify-center gap-6 text-sm text-[#7d8590]">
-              <div className="flex items-center gap-2">
-                <Users className="w-4 h-4" />
-                <span>50,000+ active learners</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <TrendingUp className="w-4 h-4" />
-                <span>85% faster than traditional methods</span>
-              </div>
             </div>
           </div>
         </div>

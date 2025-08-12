@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
+import { GoogleAnalytics } from '@next/third-parties/google';
 
 export default function MarketingLayout({
 	children,
@@ -332,6 +333,9 @@ export default function MarketingLayout({
 					</div>
 				</div>
 			</footer>
+			{process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
+				<GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
+			)}
 		</div>
 	);
 }

@@ -127,8 +127,8 @@ export default function PricingClient() {
               <div className="flex items-start gap-3">
                 <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-white font-semibold">100 AI credits/month</p>
-                  <p className="text-xs text-[#7d8590]">For new content (3,000+ pre-enriched)</p>
+                  <p className="text-white font-semibold">2,000 AI credits/month</p>
+                  <p className="text-xs text-[#7d8590]">~50 new characters (5,000+ pre-enriched)</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -157,6 +157,13 @@ export default function PricingClient() {
                 <div>
                   <p className="text-white font-semibold">Advanced analytics</p>
                   <p className="text-xs text-[#7d8590]">Track progress in detail</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-white font-semibold">2-month credit rollover</p>
+                  <p className="text-xs text-[#7d8590]">Bank up to 4,000 credits</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -216,8 +223,8 @@ export default function PricingClient() {
               <div className="flex items-start gap-3">
                 <Zap className="w-5 h-5 text-yellow-400 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-white font-semibold">200 AI credits/month</p>
-                  <p className="text-xs text-[#7d8590]">Double the Pro allocation</p>
+                  <p className="text-white font-semibold">4,000 AI credits/month</p>
+                  <p className="text-xs text-[#7d8590]">~100 new characters (2x Pro allocation)</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -242,6 +249,13 @@ export default function PricingClient() {
                 </div>
               </div>
               <div className="flex items-start gap-3">
+                <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-white font-semibold">3-month credit rollover</p>
+                  <p className="text-xs text-[#7d8590]">Bank up to 12,000 credits</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
                 <Users className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="text-white font-semibold">Exclusive community</p>
@@ -254,6 +268,14 @@ export default function PricingClient() {
               Get Lifetime Access
             </Link>
           </div>
+        </div>
+      </div>
+
+      {/* Credit Add-ons Info */}
+      <div className="mt-12 text-center">
+        <div className="inline-flex items-center gap-2 bg-blue-500/10 text-blue-400 px-4 py-2 rounded-full text-sm">
+          <Zap className="w-4 h-4" />
+          <span>Need more credits? Purchase additional at <strong>$4.99 per 1,000 credits</strong> (~25 characters) anytime</span>
         </div>
       </div>
 

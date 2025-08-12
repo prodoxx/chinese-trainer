@@ -1,14 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Nunito } from "next/font/google";
 import NextTopLoader from 'nextjs-toploader';
-import { GoogleTagManager } from '@next/third-parties/google';
-import { Suspense } from 'react';
 import "./globals.css";
 import "./cursor-fix.css";
 import { AlertProvider } from "@/hooks/useAlert";
 import { AudioProvider } from "@/contexts/AudioContext";
 import { Providers } from "./providers";
-import GoogleAnalytics from "@/components/GoogleAnalytics";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -89,11 +86,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const measurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
-
   return (
     <html lang="en">
-      {measurementId && <GoogleTagManager gtmId={measurementId} />}
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${nunito.variable} antialiased`}
       >
@@ -115,11 +109,6 @@ export default function RootLayout({
             </AlertProvider>
           </AudioProvider>
         </Providers>
-        {measurementId && (
-          <Suspense fallback={null}>
-            <GoogleAnalytics />
-          </Suspense>
-        )}
       </body>
     </html>
   );

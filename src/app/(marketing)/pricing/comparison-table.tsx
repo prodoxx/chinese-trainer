@@ -58,12 +58,16 @@ export default function ComparisonTable() {
     
     // AI Features
     { feature: 'AI Enrichment', isSection: true, lite: '', studentPro: '', pro: '', lifetime: '', team: '' },
-    { feature: 'Pre-enriched Database', indent: true, lite: '3,000+ chars', studentPro: '3,000+ chars', pro: '3,000+ chars', lifetime: '3,000+ chars', team: '3,000+ chars' },
+    { feature: 'Pre-enriched Database', indent: true, lite: '5,000+ chars', studentPro: '5,000+ chars', pro: '5,000+ chars', lifetime: '5,000+ chars', team: '5,000+ chars' },
     { feature: 'Dictionary Lookup (CC-CEDICT)', indent: true, lite: false, studentPro: true, pro: true, lifetime: true, team: true },
     { feature: 'AI-Generated Images', indent: true, lite: 'locked', studentPro: true, pro: true, lifetime: true, team: true },
     { feature: 'Taiwan Mandarin Audio (TTS)', indent: true, lite: 'locked', studentPro: true, pro: true, lifetime: true, team: true },
     { feature: 'Basic Mnemonics', indent: true, lite: false, studentPro: true, pro: true, lifetime: true, team: true },
-    { feature: 'Monthly AI Credits (for new chars)', indent: true, lite: '0', studentPro: '100/month', pro: '100/month', lifetime: '200/month', team: '100/user' },
+    { feature: 'Monthly AI Credits', indent: true, lite: '0', studentPro: '2,000/mo', pro: '2,000/mo', lifetime: '4,000/mo', team: '2,000/user' },
+    { feature: 'Characters per month (~40 credits each)', indent: true, lite: '0', studentPro: '~50', pro: '~50', lifetime: '~100', team: '~50/user' },
+    { feature: 'Credit Rollover', indent: true, lite: false, studentPro: '2 months', pro: '2 months', lifetime: '3 months', team: '2 months' },
+    { feature: 'Max Banked Credits', indent: true, lite: '0', studentPro: '4,000', pro: '4,000', lifetime: '12,000', team: '4,000/user' },
+    { feature: 'Overflow Credit Purchase', indent: true, lite: false, studentPro: true, pro: true, lifetime: true, team: true },
     
     // Character Insights
     { feature: 'Character Insights', isSection: true, lite: '', studentPro: '', pro: '', lifetime: '', team: '' },
@@ -98,11 +102,11 @@ export default function ComparisonTable() {
     { feature: 'Lifetime-Only Perks', isSection: true, lite: '', studentPro: '', pro: '', lifetime: '', team: '' },
     { feature: 'Exclusive study decks', indent: true, lite: false, studentPro: false, pro: false, lifetime: true, team: false },
     { feature: 'Quarterly content drops', indent: true, lite: false, studentPro: false, pro: false, lifetime: true, team: false },
-    { feature: 'Double AI enrichment credits', indent: true, lite: false, studentPro: false, pro: false, lifetime: true, team: false },
     { feature: 'Early access to all features', indent: true, lite: false, studentPro: false, pro: false, lifetime: true, team: false },
     { feature: 'Annual mastery challenge', indent: true, lite: false, studentPro: false, pro: false, lifetime: true, team: false },
     { feature: 'VIP profile badge', indent: true, lite: false, studentPro: false, pro: false, lifetime: true, team: false },
     { feature: 'Lifetime-only community forum', indent: true, lite: false, studentPro: false, pro: false, lifetime: true, team: false },
+    { feature: 'Priority feature requests', indent: true, lite: false, studentPro: false, pro: false, lifetime: true, team: false },
     
     // Accessibility
     { feature: 'Accessibility', isSection: true, lite: '', studentPro: '', pro: '', lifetime: '', team: '' },

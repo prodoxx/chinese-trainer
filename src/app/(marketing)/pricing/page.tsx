@@ -164,8 +164,46 @@ export default async function PricingPage() {
                   </svg>
                 </summary>
                 <div className="mt-4 px-6 pb-6">
+                  <p className="text-[#7d8590] mb-4">
+                    AI enrichment credits are only used for new vocabulary or characters that need fresh content and analysis. Danbing AI already has 5,000+ pre-enriched characters in its database with images, audio, and insights ready to use - these don't require any credits.
+                  </p>
+                  <p className="text-[#7d8590] mb-4">
+                    <strong>Credit allocations:</strong><br/>
+                    • Student Pro & Pro: 2,000 credits/month (~50 new characters)<br/>
+                    • Lifetime: 4,000 credits/month (~100 new characters)<br/>
+                    • Team: 2,000 credits per user/month
+                  </p>
+                  <p className="text-[#7d8590] mb-4">
+                    <strong>Credit usage:</strong><br/>
+                    • Each new character enrichment costs approximately 40 credits<br/>
+                    • This includes AI analysis, image generation, and audio synthesis<br/>
+                    • Looking up existing characters is always free
+                  </p>
                   <p className="text-[#7d8590]">
-                    AI enrichment credits are only used for new vocabulary or characters that need fresh content and analysis. Danbing AI already has 3,000+ pre-enriched characters in its database with images, audio, and insights ready to use - these don't require any credits. Credits are only consumed when you import unique or rare characters not yet in our database. Pro and Student Pro plans get 100 credits per month, while Lifetime members get 200 credits. Credits refresh monthly and unused credits don't roll over.
+                    <strong>Rollover & overflow:</strong><br/>
+                    • Pro plans: Credits roll over for 2 months (max 4,000 banked)<br/>
+                    • Lifetime: Credits roll over for 3 months (max 12,000 banked)<br/>
+                    • Need more? Purchase additional credits at $4.99 per 1,000 credits<br/>
+                    • Bulk packages available for teams and heavy users
+                  </p>
+                </div>
+              </details>
+
+              <details className="group">
+                <summary className="flex justify-between items-center cursor-pointer list-none bg-[#21262d] border border-[#30363d] rounded-lg p-6 hover:border-[#f7cc48]/50 transition-all">
+                  <h4 className="text-lg font-semibold text-white">What happens if I run out of credits?</h4>
+                  <svg className="w-5 h-5 text-[#7d8590] group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </summary>
+                <div className="mt-4 px-6 pb-6">
+                  <p className="text-[#7d8590]">
+                    If you use all your monthly credits, you have several options:<br/>
+                    • Use characters from our 5,000+ pre-enriched database (always free)<br/>
+                    • Purchase additional credits at $4.99 per 1,000 credits (~25 characters)<br/>
+                    • Wait for your credits to refresh at the start of your next billing cycle<br/>
+                    • Check if you have rollover credits from previous months<br/><br/>
+                    Most users never run out - 2,000 credits covers ~50 new characters per month, which aligns with typical learning pace for serious students.
                   </p>
                 </div>
               </details>
