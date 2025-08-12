@@ -6,11 +6,48 @@ import Link from "next/link";
 import { redirectIfAuthenticated } from "@/lib/auth-helpers";
 
 export const metadata = {
-	title: "The Science Behind Danbing - Evidence-Based Chinese Learning",
+	title: "The Science - How Danbing AI Makes Chinese Learning 10x More Effective",
 	description:
-		"Learn why Danbing's method works. Based on 50+ years of cognitive science research including dual coding theory, spaced repetition, and the testing effect.",
+		"Peer-reviewed research behind our method: Dual coding theory, spaced repetition (SM-2), testing effect, and working memory optimization. See why traditional methods fail.",
 	keywords:
-		"cognitive science language learning, spaced repetition research, dual coding theory, SM-2 algorithm, memory science, Chinese learning research",
+		"language learning science, spaced repetition research, dual coding theory, SM-2 algorithm, memory consolidation, cognitive load theory, Chinese character recognition research, neuroscience of language learning, forgetting curve, active recall",
+	openGraph: {
+		title: "The Science Behind Danbing AI's 10x Learning Speed",
+		description: "Peer-reviewed research: Why our AI-powered method works and traditional Chinese learning fails.",
+		url: "https://danbing.ai/science",
+		siteName: "Danbing AI",
+		images: [
+			{
+				url: "https://static.danbing.ai/danbing_medium.png",
+				width: 1200,
+				height: 630,
+				alt: "Danbing AI - Science-Based Chinese Learning",
+			},
+		],
+		locale: "en_US",
+		type: "article",
+	},
+	twitter: {
+		card: "summary_large_image",
+		title: "The Science Behind 10x Faster Chinese Learning",
+		description: "Dual coding + spaced repetition + AI = Chinese fluency. See the research.",
+		images: ["https://static.danbing.ai/danbing_medium.png"],
+		creator: "@danbingai",
+	},
+	alternates: {
+		canonical: "https://danbing.ai/science",
+	},
+	robots: {
+		index: true,
+		follow: true,
+		googleBot: {
+			index: true,
+			follow: true,
+			"max-video-preview": -1,
+			"max-image-preview": "large",
+			"max-snippet": -1,
+		},
+	},
 };
 
 export default async function SciencePage() {

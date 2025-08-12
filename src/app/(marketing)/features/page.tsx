@@ -3,9 +3,46 @@ import Link from "next/link"
 import { redirectIfAuthenticated } from "@/lib/auth-helpers"
 
 export const metadata = {
-  title: "Features - Danbing AI Chinese Learning Platform | Advanced Flashcard System",
-  description: "Discover Danbing's AI-powered features: smart flashcards, character insights, spaced repetition, and real-time analytics. Learn Chinese 10x faster with our science-based tools.",
-  keywords: "Chinese learning features, AI flashcards, spaced repetition software, character insights, Taiwan Mandarin tools, language learning analytics, dual-phase learning system",
+  title: "Features - AI-Powered Tools That Make Chinese Learning Addictive",
+  description: "Visual mnemonics, perfect pronunciation, smart spaced repetition, and real-time progress tracking. Every feature is optimized for maximum retention and minimum effort.",
+  keywords: "AI Chinese flashcards, visual memory techniques, spaced repetition system, Chinese pronunciation tool, character recognition training, language learning analytics, mnemonic generator, stroke order practice, tone training software, Chinese learning automation",
+  openGraph: {
+    title: "Features That Make Chinese Learning Actually Work",
+    description: "AI mnemonics + perfect audio + smart repetition = fluency. See all features that make Danbing different.",
+    url: "https://danbing.ai/features",
+    siteName: "Danbing AI",
+    images: [
+      {
+        url: "https://static.danbing.ai/danbing_medium.png",
+        width: 1200,
+        height: 630,
+        alt: "Danbing AI Features - Complete Chinese Learning Toolkit",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "AI Features That Make Chinese Click",
+    description: "Visual mnemonics, perfect pronunciation, smart repetition. See why learners love Danbing.",
+    images: ["https://static.danbing.ai/danbing_medium.png"],
+    creator: "@danbingai",
+  },
+  alternates: {
+    canonical: "https://danbing.ai/features",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
 };
 
 export default async function FeaturesPage() {

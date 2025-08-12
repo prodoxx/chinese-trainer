@@ -3,9 +3,46 @@ import Link from "next/link"
 import { redirectIfAuthenticated } from "@/lib/auth-helpers"
 
 export const metadata = {
-  title: "How Danbing Works - AI-Powered Chinese Learning System",
-  description: "Learn how our dual-phase flash system and AI enrichment help you master Chinese characters 10x faster. Based on 50+ years of cognitive science research.",
-  keywords: "Chinese learning method, spaced repetition system, dual-phase learning, cognitive science language learning, AI flashcards, SM-2 algorithm",
+  title: "How It Works - 4 Simple Steps to Chinese Fluency | Danbing AI",
+  description: "Upload characters → AI creates rich flashcards → Practice 90 seconds daily → Track progress. See exactly how our science-based system accelerates your learning.",
+  keywords: "how to learn Chinese fast, Chinese learning process, flashcard system tutorial, spaced repetition guide, AI language learning method, step by step Chinese learning, beginner Chinese guide, character memorization technique, language learning workflow",
+  openGraph: {
+    title: "How Danbing AI Works - 90 Seconds to Better Chinese",
+    description: "4 simple steps: Upload → AI enriches → Practice → Master. See the exact process that makes learning 10x faster.",
+    url: "https://danbing.ai/how-it-works",
+    siteName: "Danbing AI",
+    images: [
+      {
+        url: "https://static.danbing.ai/danbing_medium.png",
+        width: 1200,
+        height: 630,
+        alt: "How Danbing AI Works - Step by Step Guide",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "4 Steps to Chinese Fluency with Danbing AI",
+    description: "Upload → AI enriches → Practice 90 seconds → Track progress. It's that simple.",
+    images: ["https://static.danbing.ai/danbing_medium.png"],
+    creator: "@danbingai",
+  },
+  alternates: {
+    canonical: "https://danbing.ai/how-it-works",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
 };
 
 export default async function HowItWorksPage() {

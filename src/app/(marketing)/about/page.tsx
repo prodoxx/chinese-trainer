@@ -3,9 +3,46 @@ import Link from "next/link"
 import { redirectIfAuthenticated } from "@/lib/auth-helpers"
 
 export const metadata = {
-  title: "About Danbing AI - The Science Behind Learning Chinese 10x Faster",
-  description: "Learn how Danbing AI combines 50+ years of memory research with cutting-edge AI to help you master Traditional Chinese characters in just 90 seconds per session.",
-  keywords: "about Danbing AI, Chinese learning methodology, spaced repetition science, AI language learning, Traditional Chinese education, Taiwan Mandarin learning platform",
+  title: "About Us - The Team Behind Danbing AI's Chinese Learning Revolution",
+  description: "Built by linguists from NTNU Taiwan, engineers from top tech companies, and cognitive scientists. Discover how we're making Traditional Chinese accessible to everyone through AI and science.",
+  keywords: "Danbing AI team, NTNU Taiwan linguistics, Chinese learning research, language learning science, cognitive psychology, memory research, AI education technology, EdTech startup, language acquisition experts",
+  openGraph: {
+    title: "About Danbing AI - Making Chinese Learning Actually Work",
+    description: "Built by NTNU linguists and cognitive scientists. Learn how we combine 50+ years of memory research with AI.",
+    url: "https://danbing.ai/about",
+    siteName: "Danbing AI",
+    images: [
+      {
+        url: "https://static.danbing.ai/danbing_medium.png",
+        width: 1200,
+        height: 630,
+        alt: "Danbing AI Team - Language Learning Experts",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "The Team Behind Danbing AI",
+    description: "NTNU linguists + cognitive scientists + AI engineers = Chinese learning that actually works.",
+    images: ["https://static.danbing.ai/danbing_medium.png"],
+    creator: "@danbingai",
+  },
+  alternates: {
+    canonical: "https://danbing.ai/about",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
 };
 
 export default async function AboutPage() {

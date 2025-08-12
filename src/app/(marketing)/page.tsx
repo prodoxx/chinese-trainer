@@ -3,9 +3,46 @@ import Link from "next/link"
 import { redirectIfAuthenticated } from "@/lib/auth-helpers"
 
 export const metadata = {
-  title: "Danbing AI - Learn Chinese Characters 10x Faster with Science-Based Flashcards",
-  description: "Master Traditional Chinese characters in 90-second sessions using AI-powered flashcards, spaced repetition, and cognitive science. Free to start, syncs across devices.",
-  keywords: "Chinese learning app, Traditional Chinese flashcards, Taiwan Mandarin, spaced repetition, AI language learning, Chinese character recognition, HSK preparation, TOCFL study tool",
+  title: "Danbing AI - Learn Chinese 10x Faster with AI Flashcards",
+  description: "Master Traditional Chinese in 90-second daily sessions. AI-powered flashcards with visual mnemonics, perfect pronunciation, and spaced repetition. Trusted by language learners worldwide.",
+  keywords: "learn Chinese online, Traditional Chinese flashcards, Taiwan Mandarin learning, AI language tutor, Chinese character memorization, spaced repetition software, TOCFL preparation, HSK study app, Chinese learning app 2025, best Chinese learning software",
+  openGraph: {
+    title: "Danbing AI - Learn Chinese 10x Faster with AI",
+    description: "Master Traditional Chinese in 90-second daily sessions. AI-powered flashcards that actually work.",
+    url: "https://danbing.ai",
+    siteName: "Danbing AI",
+    images: [
+      {
+        url: "https://static.danbing.ai/danbing_medium.png",
+        width: 1200,
+        height: 630,
+        alt: "Danbing AI - Learn Chinese with AI-Powered Flashcards",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Danbing AI - Learn Chinese 10x Faster",
+    description: "Master Traditional Chinese in 90-second daily sessions with AI-powered flashcards.",
+    images: ["https://static.danbing.ai/danbing_medium.png"],
+    creator: "@danbingai",
+  },
+  alternates: {
+    canonical: "https://danbing.ai",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
 };
 
 export default async function MarketingHomePage() {

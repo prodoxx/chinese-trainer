@@ -5,9 +5,46 @@ import PricingClient from "./pricing-client"
 import ComparisonTable from "./comparison-table"
 
 export const metadata = {
-  title: "Pricing - Danbing AI Chinese Learning | Simple, Transparent Pricing",
-  description: "Start learning Chinese free forever or unlock unlimited characters with Pro. Save 20% with annual billing. No hidden fees, cancel anytime.",
-  keywords: "Chinese learning app pricing, language learning subscription, Chinese flashcard app cost, spaced repetition software pricing, Taiwan Mandarin learning price",
+  title: "Pricing - Start Free, Go Pro When Ready | Danbing AI",
+  description: "Free forever for casual learners. Pro unlocks unlimited AI-generated flashcards, advanced analytics, and priority support. Save 20% annually. Cancel anytime.",
+  keywords: "Chinese learning app pricing, Danbing AI cost, language learning subscription, free Chinese flashcards, premium Chinese learning, TOCFL preparation pricing, HSK study app cost, best value Chinese course, affordable Chinese tutor alternative",
+  openGraph: {
+    title: "Simple, Fair Pricing - Danbing AI",
+    description: "Start free, upgrade when ready. Pro unlocks unlimited AI flashcards and advanced features. Save 20% annually.",
+    url: "https://danbing.ai/pricing",
+    siteName: "Danbing AI",
+    images: [
+      {
+        url: "https://static.danbing.ai/danbing_medium.png",
+        width: 1200,
+        height: 630,
+        alt: "Danbing AI Pricing - Free and Pro Plans",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Danbing AI Pricing - Start Learning Chinese Free",
+    description: "Free forever for basics. Pro unlocks unlimited AI flashcards. Save 20% with annual billing.",
+    images: ["https://static.danbing.ai/danbing_medium.png"],
+    creator: "@danbingai",
+  },
+  alternates: {
+    canonical: "https://danbing.ai/pricing",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
 };
 
 export default async function PricingPage() {
