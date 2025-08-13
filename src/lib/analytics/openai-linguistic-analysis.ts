@@ -582,7 +582,7 @@ Be accurate and educational. Every Chinese character mentioned MUST include its 
     const response = completion.choices[0].message.content;
     if (!response) throw new Error('No response from OpenAI');
 
-    let result = JSON.parse(response) as ComprehensiveCharacterAnalysis;
+    const result = JSON.parse(response) as ComprehensiveCharacterAnalysis;
     
     // Post-process to ensure the character itself is never in commonConfusions
     if (result.commonConfusions && Array.isArray(result.commonConfusions)) {

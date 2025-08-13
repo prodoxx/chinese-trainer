@@ -162,8 +162,8 @@ function generateDefaultAnalysis(
   // Check semantic categories
   if (char1.meaning && char2.meaning) {
     const foodWords = ['bun', 'dumpling', 'food', 'eat', 'steam', 'cook', 'bread'];
-    const isFood1 = foodWords.some(w => char1.meaning.toLowerCase().includes(w));
-    const isFood2 = foodWords.some(w => char2.meaning.toLowerCase().includes(w));
+    const isFood1 = foodWords.some(w => char1.meaning!.toLowerCase().includes(w));
+    const isFood2 = foodWords.some(w => char2.meaning!.toLowerCase().includes(w));
     
     if (isFood1 && isFood2) {
       reasons.push('Both are food items');

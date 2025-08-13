@@ -1153,7 +1153,7 @@ export default function AdminCardsPage() {
                                         setCustomImagePrompt(card.imagePrompt)
                                       } else {
                                         const { optimizeImagePrompt } = await import('@/lib/enrichment/prompt-optimization-service')
-                                        const result = await optimizeImagePrompt(card.hanzi, card.meaning, card.pinyin, card.imagePrompt)
+                                        const result = await optimizeImagePrompt(card.hanzi, card.meaning, card.pinyin, card.imagePrompt || undefined)
                                         setCustomImagePrompt(result.prompt)
                                       }
                                       setTempImageUrl(null)
@@ -1326,7 +1326,7 @@ export default function AdminCardsPage() {
                                     setCustomImagePrompt(card.imagePrompt)
                                   } else {
                                     const { optimizeImagePrompt } = await import('@/lib/enrichment/prompt-optimization-service')
-                                    const result = await optimizeImagePrompt(card.hanzi, card.meaning, card.pinyin, card.imagePrompt)
+                                    const result = await optimizeImagePrompt(card.hanzi, card.meaning, card.pinyin, card.imagePrompt || undefined)
                                     setCustomImagePrompt(result.prompt)
                                   }
                                   setTempImageUrl(null)

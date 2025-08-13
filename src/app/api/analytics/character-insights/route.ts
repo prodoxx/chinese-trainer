@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
           .slice(0, 3);
         
         // Look up meaning and pinyin for each confused character
-        const confusionPromises = uniqueConfusions.map(async (conf: { character: string; similarity?: number }) => {
+        const confusionPromises = uniqueConfusions.map(async (conf: any) => {
           const confusedCard = await Card.findOne({ hanzi: conf.character });
           let meaning = confusedCard?.meaning || '';
           let pinyin = confusedCard?.pinyin || '';

@@ -689,16 +689,16 @@ export default function CharacterInsights({ characterId, character, onClose, car
                             const match = typeof char === 'string' ? 
                               char.match(/^(.+?)\s*-\s*(.+?)\s*-\s*\[(.+?)\]$/) : null;
                             
-                            let displayText = processTextWithPinyin(typeof char === 'string' ? char : char.character || '');
+                            let displayText = processTextWithPinyin(typeof char === 'string' ? char : (char as any).character || '');
                             let reason = null;
                             
                             if (match) {
                               // Extract the character part and reason
                               displayText = processTextWithPinyin(match[1] + ' - ' + match[2]);
                               reason = match[3];
-                            } else if (typeof char === 'object' && char.reason) {
-                              displayText = processTextWithPinyin(char.character || '');
-                              reason = char.reason;
+                            } else if (typeof char === 'object' && (char as any).reason) {
+                              displayText = processTextWithPinyin((char as any).character || '');
+                              reason = (char as any).reason;
                             }
                             
                             return (

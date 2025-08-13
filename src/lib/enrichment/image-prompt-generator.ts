@@ -3,6 +3,8 @@
  * Generates appropriate prompts based on semantic category and meaning
  */
 
+import { generateIntelligentPrompt } from './intelligent-prompt-generator';
+
 interface CharacterAnalysis {
   category: 'person' | 'object' | 'action' | 'emotion' | 'place' | 'abstract' | 'nature' | 'food';
   shouldShowPerson: boolean;
@@ -122,9 +124,6 @@ function analyzeCharacter(hanzi: string, meaning: string): CharacterAnalysis {
  * Generate an appropriate image prompt based on character analysis
  */
 export function generateImagePrompt(hanzi: string, meaning: string, pinyin: string): string {
-  // Import the intelligent prompt generator
-  const { generateIntelligentPrompt } = require('./intelligent-prompt-generator');
-  
   // Use intelligent generation instead of hardcoded cases
   return generateIntelligentPrompt(hanzi, meaning, pinyin);
 }

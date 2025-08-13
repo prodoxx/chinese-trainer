@@ -76,7 +76,7 @@ export async function incrementEnrichmentCount(userId: string, count: number = 1
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
   // Get or create enrichment usage record
-  let usage = await prisma.dailyEnrichmentUsage.findUnique({
+  const usage = await prisma.dailyEnrichmentUsage.findUnique({
     where: { userId }
   });
 
