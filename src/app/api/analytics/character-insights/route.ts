@@ -111,6 +111,8 @@ export async function POST(request: NextRequest) {
     
     try {
       if (card.commonConfusions && card.commonConfusions.length > 0) {
+        console.log(`Character ${card.hanzi} has commonConfusions:`, card.commonConfusions.map((c: any) => c.character));
+        
         // Filter out the character itself and get unique characters
         const uniqueConfusions = card.commonConfusions
           .filter((conf: { character: string; similarity?: number }) => conf.character !== card.hanzi)

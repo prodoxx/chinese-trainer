@@ -105,11 +105,12 @@ export async function analyzeCharacterWithOpenAI(
     // Create a comprehensive prompt for linguistic analysis
     const prompt = `Analyze the Traditional Chinese character "${character}" (${baseAnalysis.pinyin}) with meanings: ${baseAnalysis.definitions.join(', ')} for Taiwan Mandarin (臺灣國語) learners.
 
-IMPORTANT RULES:
-1. This is for Taiwan Mandarin, NOT Mainland Mandarin. Use Traditional Chinese characters and Taiwan-specific pronunciations, vocabulary, and cultural contexts.
+CRITICAL RULES:
+1. This is for Taiwan Mandarin, NOT Mainland Mandarin. Use ONLY Traditional Chinese characters (繁體字), NEVER Simplified Chinese (简体字).
 2. ALWAYS use pinyin with tone marks (e.g., fáng jiān), NEVER tone numbers (e.g., fang2 jian1)
 3. When mentioning ANY Chinese character, include its pinyin with tone marks in parentheses
-   Example: 房 (fáng), 間 (jiān), NOT 房 (fang2), 間 (jian1)
+4. NEVER use simplified characters like 活, 伙, 货. Use traditional: 活, 夥, 貨
+5. For the character "${character}", provide confusions that are ACTUALLY similar to it, not generic examples
 
 Provide a detailed linguistic analysis in JSON format with the following structure:
 
@@ -125,9 +126,9 @@ Provide a detailed linguistic analysis in JSON format with the following structu
     "components": "How components relate to meaning - use pinyin with tone marks"
   },
   "commonErrors": {
-    "similarCharacters": ["Format: '房子 (fáng zi) - house - [reason]'", "Max 3 items", "EXCLUDE ${character}"],
-    "wrongContexts": ["Common misuse contexts"],
-    "toneConfusions": ["Characters with same sound but different tones - use tone marks, e.g., '方 (fāng) - square'. EXCLUDE ${character} itself"]
+    "similarCharacters": ["List ACTUAL Traditional Chinese characters similar to ${character}", "Format: 'character (pinyin) - meaning - specific reason'", "Max 3 items", "MUST EXCLUDE ${character} itself", "Use ONLY Traditional Chinese characters"],
+    "wrongContexts": ["Common misuse contexts specific to ${character}"],
+    "toneConfusions": ["Traditional Chinese characters with same/similar pronunciation as ${character} but different tones", "Include pinyin with tone marks", "MUST EXCLUDE ${character} itself"]
   },
   "usage": {
     "commonCollocations": ["Common word combinations with pinyin tone marks - e.g., '臥房 (wò fáng) - bedroom'"],
@@ -155,7 +156,7 @@ Focus on practical learning aids and common confusion points.`;
       messages: [
         {
           role: 'system',
-          content: 'You are a Taiwan Mandarin (臺灣國語) and Traditional Chinese linguistics expert helping create comprehensive learning materials. Provide accurate, pedagogically sound analysis specific to Taiwan Mandarin usage, pronunciation, and cultural context. CRITICAL: Always use pinyin with tone marks (ā, á, ǎ, à, ē, é, ě, è, etc.) and NEVER tone numbers (a1, a2, a3, a4). Example: Use "fáng jiān" NOT "fang2 jian1".',
+          content: 'You are a Taiwan Mandarin (臺灣國語) and Traditional Chinese (繁體字) linguistics expert. CRITICAL REQUIREMENTS: 1) Use ONLY Traditional Chinese characters, NEVER Simplified Chinese. 2) Always use pinyin with tone marks (ā, á, ǎ, à), NEVER tone numbers. 3) For similarCharacters, provide characters that are ACTUALLY visually or phonetically similar to the input character, not generic examples. 4) Examples: Use 夥 NOT 伙, 貨 NOT 货, 過 NOT 过.',
         },
         {
           role: 'user',
@@ -502,23 +503,17 @@ export async function analyzeCharacterComprehensively(
 ): Promise<ComprehensiveCharacterAnalysis> {
   const prompt = `Analyze this Traditional Chinese character/word comprehensively for Taiwan Mandarin language learning:
 
-Character: ${character} (Traditional Chinese)
+Character: ${character} (Traditional Chinese 繁體字)
 Pinyin: ${pinyin} (Taiwan Mandarin pronunciation)
 Meaning: ${meaning}
 
 CRITICAL RULES:
-1. This is for Taiwan Mandarin (臺灣國語), NOT Mainland Mandarin. Use Traditional Chinese characters and Taiwan-specific pronunciations.
-2. ACCURACY IS PARAMOUNT: Never confuse similar characters. For example:
-   - 友 (yǒu) means "friend" - NOT to be confused with 有 (yǒu) meaning "to have"
-   - 朋友 (péng yǒu) means "friend" - composed of 朋(péng) + 友(yǒu), NOT 朋 + 有
-   - IMPORTANT: 朋友 does NOT contain the character 有 (to have). It contains 友 (friend).
-3. ALWAYS include pinyin with tone marks when mentioning Chinese characters in explanations.
-   Format: character(pinyin) - Example: 朋(péng), 友(yǒu), 有(yǒu)
-4. When analyzing etymology or components, verify each character is correct:
-   - Look at the actual visual components of the character
-   - Do not assume characters based on pronunciation
-   - 友 and 有 are DIFFERENT characters despite same pronunciation
-5. Double-check every character you reference to ensure accuracy.
+1. Use ONLY Traditional Chinese characters (繁體字), NEVER Simplified Chinese (简体字)
+   - Use 夥 NOT 伙, 貨 NOT 货, 過 NOT 过, 會 NOT 会, 說 NOT 说
+2. This is for Taiwan Mandarin (臺灣國語), NOT Mainland Mandarin.
+3. ACCURACY IS PARAMOUNT: Never confuse similar characters.
+4. ALWAYS include pinyin with tone marks when mentioning Chinese characters.
+5. For commonConfusions, provide characters that are ACTUALLY similar to "${character}", not generic examples like 房子 or 鞋子.
 
 IMPORTANT: If analyzing a multi-character word (e.g., 朋友), analyze the WHOLE WORD, not imaginary components.
 For 朋友: It consists of 朋(péng) + 友(yǒu), NOT 朋 + 有. Both characters mean "friend".
@@ -546,8 +541,8 @@ Provide a detailed JSON analysis with these exact fields:
   "mnemonics": ["memory aids - MUST include pinyin WITH TONE MARKS in parentheses for EVERY Chinese character. Example: The character 月(yuè) looks like a moon"],
   "commonConfusions": [
     {
-      "character": "similar character that is DIFFERENT from ${character} - NEVER include ${character} itself",
-      "reason": "why they're confused",
+      "character": "Traditional Chinese character that is visually/phonetically similar to ${character} (NOT generic examples)",
+      "reason": "specific reason why THIS character is confused with ${character}",
       "similarity": 0-1 scale
     }
   ],
@@ -557,8 +552,12 @@ Provide a detailed JSON analysis with these exact fields:
 
 CRITICAL for commonConfusions:
 - NEVER include "${character}" itself in the list
-- For multi-character words like 房間, suggest OTHER complete words (e.g., 時間, 空間), NOT components (房, 間)
-- Each confusion must be a DIFFERENT character/word from "${character}"
+- Provide characters that are ACTUALLY similar to "${character}" based on:
+  * Visual similarity (similar radicals or components)
+  * Phonetic similarity (same/similar pronunciation)
+  * Semantic overlap (related meanings)
+- Use ONLY Traditional Chinese characters
+- Do NOT use generic examples like 房子, 鞋子, 帽子 unless they are actually similar to "${character}"
 
 Be accurate and educational. Every Chinese character mentioned MUST include its pinyin in parentheses.`;
 
@@ -571,7 +570,7 @@ Be accurate and educational. Every Chinese character mentioned MUST include its 
       messages: [
         {
           role: "system",
-          content: "You are an expert in Taiwan Mandarin (臺灣國語) and Traditional Chinese linguistics. Provide accurate, detailed character analysis for learners. CRITICAL: Never confuse similar characters (e.g., 友(yǒu) friend vs 有(yǒu) have). The word 朋友 is composed of 朋(péng) + 友(yǒu) NOT 朋 + 有. Always include pinyin with tone marks when mentioning ANY Chinese character in your explanations, using the format: character(pinyin). Verify visual components - do not assume based on pronunciation. Double-check character accuracy before responding."
+          content: "You are an expert in Taiwan Mandarin (臺灣國語) and Traditional Chinese (繁體字). CRITICAL: 1) Use ONLY Traditional Chinese characters, NEVER Simplified. 2) For commonConfusions, provide characters ACTUALLY similar to the input (visual/phonetic/semantic), not generic examples. 3) Never return 房子, 鞋子, 帽子 unless they're genuinely similar to the input character. 4) Always use pinyin with tone marks. 5) Examples of Traditional vs Simplified: 說 NOT 说, 會 NOT 会, 夥 NOT 伙, 貨 NOT 货."
         },
         { role: "user", content: prompt }
       ],
@@ -584,8 +583,9 @@ Be accurate and educational. Every Chinese character mentioned MUST include its 
 
     const result = JSON.parse(response) as ComprehensiveCharacterAnalysis;
     
-    // Post-process to ensure the character itself is never in commonConfusions
+    // Post-process to ensure quality of commonConfusions
     if (result.commonConfusions && Array.isArray(result.commonConfusions)) {
+      // Filter out bad data
       result.commonConfusions = result.commonConfusions.filter(confusion => {
         // Remove if it's the same character
         if (confusion.character === character) {
@@ -598,6 +598,12 @@ Be accurate and educational. Every Chinese character mentioned MUST include its 
             console.log(`Filtering out component: ${confusion.character} from ${character}`);
             return false;
           }
+        }
+        // Remove generic hardcoded examples that shouldn't be there
+        const genericExamples = ['房子', '鞋子', '帽子', '箱子', '孩子'];
+        if (genericExamples.includes(confusion.character) && !character.includes('子')) {
+          console.log(`Filtering out generic example: ${confusion.character} for ${character}`);
+          return false;
         }
         return true;
       });
