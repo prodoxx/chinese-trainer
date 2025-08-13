@@ -69,9 +69,17 @@ export async function POST(request: NextRequest) {
       })
     )
     
+    // Return job details so frontend can track progress
+    const jobDetails = jobs.map((job, index) => ({
+      jobId: job.id,
+      cardId: cards[index]._id.toString(),
+      hanzi: cards[index].hanzi
+    }))
+    
     return NextResponse.json({
       success: true,
       jobCount: jobs.length,
+      jobs: jobDetails,
       message: `Re-enrichment started for ${jobs.length} cards`
     })
     

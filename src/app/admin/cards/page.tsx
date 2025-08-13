@@ -485,12 +485,97 @@ export default function AdminCardsPage() {
 
       if (!response.ok) throw new Error('Failed to re-enrich cards')
 
-      await response.json()
-      showAlert(`Re-enrichment started for ${selectedCards.size} cards`, { type: 'success' })
+      const data = await response.json()
+      showAlert(`Re-enrichment started for ${data.jobCount} cards`, { type: 'success' })
       setSelectedCards(new Set())
       
-      // Refresh after a delay
-      setTimeout(() => fetchCards(), 2000)
+      // Start polling for each job
+      if (data.jobs && data.jobs.length > 0) {
+        data.jobs.forEach((job: { jobId: string; cardId: string; hanzi: string }) => {
+          // Mark as re-enriching
+          setReEnrichingCards(prev => new Set(prev).add(job.cardId))
+          setEnrichmentStatus(prev => new Map(prev).set(job.cardId, `Enriching ${job.hanzi}...`))
+          
+          // Start polling for this job
+          const pollInterval = setInterval(async () => {
+            try {
+              const statusResponse = await fetch(`/api/admin/cards/job-status?jobId=${job.jobId}`)
+              if (!statusResponse.ok) throw new Error('Failed to fetch job status')
+              
+              const jobStatus = await statusResponse.json()
+              
+              if (jobStatus.progress) {
+                setEnrichmentStatus(prev => {
+                  const next = new Map(prev)
+                  next.set(job.cardId, jobStatus.progress.message || `Processing ${job.hanzi}...`)
+                  return next
+                })
+              }
+              
+              if (jobStatus.state === 'completed' || jobStatus.state === 'failed') {
+                clearInterval(pollInterval)
+                pollIntervalsRef.current.delete(job.cardId)
+                
+                // Update UI
+                setReEnrichingCards(prev => {
+                  const next = new Set(prev)
+                  next.delete(job.cardId)
+                  return next
+                })
+                setEnrichmentStatus(prev => {
+                  const next = new Map(prev)
+                  next.delete(job.cardId)
+                  return next
+                })
+                
+                if (jobStatus.state === 'completed') {
+                  // Refresh the card in the list
+                  fetchCards()
+                } else if (jobStatus.state === 'failed') {
+                  const failureReason = jobStatus.failedReason || 'Unknown error'
+                  console.error(`Enrichment failed for ${job.hanzi}:`, failureReason)
+                }
+              }
+            } catch (error) {
+              console.error('Error polling job status:', error)
+              clearInterval(pollInterval)
+              pollIntervalsRef.current.delete(job.cardId)
+              setReEnrichingCards(prev => {
+                const next = new Set(prev)
+                next.delete(job.cardId)
+                return next
+              })
+              setEnrichmentStatus(prev => {
+                const next = new Map(prev)
+                next.delete(job.cardId)
+                return next
+              })
+            }
+          }, 1000) // Poll every second
+          
+          // Store the interval
+          pollIntervalsRef.current.set(job.cardId, pollInterval)
+          
+          // Stop polling after 2 minutes
+          setTimeout(() => {
+            const interval = pollIntervalsRef.current.get(job.cardId)
+            if (interval) {
+              clearInterval(interval)
+              pollIntervalsRef.current.delete(job.cardId)
+            }
+            setReEnrichingCards(prev => {
+              const next = new Set(prev)
+              next.delete(job.cardId)
+              return next
+            })
+            setEnrichmentStatus(prev => {
+              const next = new Map(prev)
+              next.delete(job.cardId)
+              return next
+            })
+          }, 120000)
+        })
+      }
     } catch (error) {
       console.error('Error bulk re-enriching:', error)
       showAlert('Failed to start bulk re-enrichment', { type: 'error' })

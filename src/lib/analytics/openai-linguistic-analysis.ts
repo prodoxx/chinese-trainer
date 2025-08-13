@@ -126,9 +126,9 @@ Provide a detailed linguistic analysis in JSON format with the following structu
     "components": "How components relate to meaning - use pinyin with tone marks"
   },
   "commonErrors": {
-    "similarCharacters": ["List ACTUAL Traditional Chinese characters similar to ${character}", "Format: 'character (pinyin) - meaning - specific reason'", "Max 3 items", "MUST EXCLUDE ${character} itself", "Use ONLY Traditional Chinese characters"],
-    "wrongContexts": ["Common misuse contexts specific to ${character}"],
-    "toneConfusions": ["Traditional Chinese characters with same/similar pronunciation as ${character} but different tones", "Include pinyin with tone marks", "MUST EXCLUDE ${character} itself"]
+    "similarCharacters": ["Traditional Chinese (繁體字) characters similar to ${character}", "MUST be Traditional: 貨 not 货, 獲 not 获, 過 not 过", "Format: 'character (pinyin) - meaning - reason'", "Example for 火: '灰(huī) - ash - contains fire radical' NOT '货(huo) - goods'", "Max 3 items"],
+    "wrongContexts": ["Contexts where ${character} is misused"],
+    "toneConfusions": ["Traditional Chinese with different tone from ${character}", "For 火(huǒ) use: '貨(huò) - goods' NOT '货(huò)'", "MUST use Traditional characters"]
   },
   "usage": {
     "commonCollocations": ["Common word combinations with pinyin tone marks - e.g., '臥房 (wò fáng) - bedroom'"],
@@ -149,18 +149,22 @@ Consider the character's:
 - Tone pattern: ${baseAnalysis.tonePattern}
 - Semantic fields: ${baseAnalysis.semanticFields.join(', ')}
 
-Focus on practical learning aids and common confusion points.`;
+Focus on practical learning aids and common confusion points.\n\nFINAL CHECK: Before responding, scan your entire response. If you see ANY of these Simplified characters (货, 获, 过, 会, 说, 热, 学, 书), replace them with Traditional (貨, 獲, 過, 會, 說, 熱, 學, 書).`;
 
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
         {
           role: 'system',
-          content: 'You are a Taiwan Mandarin (臺灣國語) and Traditional Chinese (繁體字) linguistics expert. CRITICAL REQUIREMENTS: 1) Use ONLY Traditional Chinese characters, NEVER Simplified Chinese. 2) Always use pinyin with tone marks (ā, á, ǎ, à), NEVER tone numbers. 3) For similarCharacters, provide characters that are ACTUALLY visually or phonetically similar to the input character, not generic examples. 4) Examples: Use 夥 NOT 伙, 貨 NOT 货, 過 NOT 过.',
+          content: '⚠️ CRITICAL: You are analyzing Traditional Chinese (繁體字) for TAIWAN users. You MUST use the Traditional Chinese writing system as used in Taiwan.\n\n🚫 NEVER write these Simplified characters:\n货 (WRONG) → 貨 (CORRECT)\n获 (WRONG) → 獲 (CORRECT)\n过 (WRONG) → 過 (CORRECT)\n会 (WRONG) → 會 (CORRECT)\n说 (WRONG) → 說 (CORRECT)\n热 (WRONG) → 熱 (CORRECT)\n学 (WRONG) → 學 (CORRECT)\n书 (WRONG) → 書 (CORRECT)\n\n✅ REQUIREMENTS:\n1. Every Chinese character MUST be Traditional (繁體字)\n2. This is for Taiwan (臺灣), not mainland China\n3. Before writing ANY character, ask yourself: "Is this the Traditional form used in Taiwan?"\n4. If you catch yourself writing Simplified, IMMEDIATELY correct it\n5. For confusions, provide characters that are ACTUALLY similar to the input, not random examples\n6. Use pinyin with tone marks (huǒ not huo3)\n\n⚠️ DOUBLE-CHECK: Review your response before submitting. If you see 货 change it to 貨. If you see 获 change it to 獲.',
+        },
+        {
+          role: 'assistant',
+          content: 'I understand. I will use ONLY Traditional Chinese characters (繁體字) as used in Taiwan. I will NOT use Simplified characters like 货, 获, 过, 会, 说. I will provide character-specific confusions that make sense for the input character.',
         },
         {
           role: 'user',
-          content: prompt,
+          content: prompt + '\n\nREMEMBER: Use Traditional Chinese (繁體字) ONLY. If you write 货, change it to 貨. If you write 获, change it to 獲. This is for Taiwan users.',
         },
       ],
       temperature: 0.3,
@@ -507,16 +511,34 @@ Character: ${character} (Traditional Chinese 繁體字)
 Pinyin: ${pinyin} (Taiwan Mandarin pronunciation)
 Meaning: ${meaning}
 
-CRITICAL RULES:
-1. Use ONLY Traditional Chinese characters (繁體字), NEVER Simplified Chinese (简体字)
-   - Use 夥 NOT 伙, 貨 NOT 货, 過 NOT 过, 會 NOT 会, 說 NOT 说
-2. This is for Taiwan Mandarin (臺灣國語), NOT Mainland Mandarin.
-3. ACCURACY IS PARAMOUNT: Never confuse similar characters.
-4. ALWAYS include pinyin with tone marks when mentioning Chinese characters.
-5. For commonConfusions, provide characters that are ACTUALLY similar to "${character}", not generic examples like 房子 or 鞋子.
+ABSOLUTE REQUIREMENTS FOR YOUR ANALYSIS:
+
+1. CHARACTER SYSTEM: You MUST use Traditional Chinese characters (繁體字) as used in Taiwan.
+   - This is NON-NEGOTIABLE. Every single Chinese character must be Traditional.
+   - Before including any character, verify it is the Traditional form.
+
+2. CONFUSION ANALYSIS: For "${character}", provide commonConfusions that are:
+   - GENUINELY confusable with "${character}" (not random examples)
+   - Based on visual similarity, phonetic similarity, or semantic overlap
+   - Specific to how "${character}" is actually confused by learners
+
+3. TAIWAN CONTEXT: All content must reflect:
+   - Taiwan Mandarin pronunciation (臺灣國語)
+   - Taiwan-specific vocabulary and usage
+   - Cultural contexts relevant to Taiwan
+
+4. FORMAT: Include pinyin with tone marks (ā, á, ǎ, à) for every Chinese character mentioned.
+
+5. QUALITY: Your analysis must be accurate, educational, and specific to "${character}".
 
 IMPORTANT: If analyzing a multi-character word (e.g., 朋友), analyze the WHOLE WORD, not imaginary components.
 For 朋友: It consists of 朋(péng) + 友(yǒu), NOT 朋 + 有. Both characters mean "friend".
+
+IMPORTANT: Analyze the SPECIFIC character "${character}" and provide confusions that make sense for THIS character.
+For example:
+- If analyzing 火(huǒ), appropriate confusions might be: 灰(huī)-ash, 灼(zhuó)-scorch, 滅(miè)-extinguish
+- If analyzing 書(shū), appropriate confusions might be: 畫(huà)-painting, 晝(zhòu)-daytime, 盡(jìn)-exhaust
+- Do NOT use generic examples like 房子, 鞋子, 帽子 unless they're genuinely similar to "${character}"
 
 Provide a detailed JSON analysis with these exact fields:
 {
@@ -541,9 +563,9 @@ Provide a detailed JSON analysis with these exact fields:
   "mnemonics": ["memory aids - MUST include pinyin WITH TONE MARKS in parentheses for EVERY Chinese character. Example: The character 月(yuè) looks like a moon"],
   "commonConfusions": [
     {
-      "character": "Traditional Chinese character that is visually/phonetically similar to ${character} (NOT generic examples)",
-      "reason": "specific reason why THIS character is confused with ${character}",
-      "similarity": 0-1 scale
+      "character": "A Traditional Chinese character that learners genuinely confuse with ${character}",
+      "reason": "Clear explanation of why these two characters are confused (visual/phonetic/semantic)",
+      "similarity": 0-1 scale indicating degree of confusion likelihood
     }
   ],
   "contextExamples": ["example sentences using this character"],
@@ -552,14 +574,15 @@ Provide a detailed JSON analysis with these exact fields:
 
 CRITICAL for commonConfusions:
 - NEVER include "${character}" itself in the list
-- Provide characters that are ACTUALLY similar to "${character}" based on:
-  * Visual similarity (similar radicals or components)
-  * Phonetic similarity (same/similar pronunciation)
-  * Semantic overlap (related meanings)
-- Use ONLY Traditional Chinese characters
-- Do NOT use generic examples like 房子, 鞋子, 帽子 unless they are actually similar to "${character}"
+- Analyze "${character}" and provide REAL confusions learners face
+- Each confusion must be a Traditional Chinese character:
+  ✅ CORRECT: 貨(huò), 獲(huò), 過(guò), 會(huì)
+  ❌ WRONG: 货(huò), 获(huò), 过(guò), 会(huì)
+- Base confusions on actual similarity (visual/phonetic/semantic)
+- Provide clear, specific reasons for each confusion
+- This is for TAIWAN users - use Traditional Chinese ONLY
 
-Be accurate and educational. Every Chinese character mentioned MUST include its pinyin in parentheses.`;
+Be accurate and educational. Every Chinese character mentioned MUST include its pinyin in parentheses.\n\n🚨 LAST REMINDER: You are writing for TAIWAN. Use Traditional Chinese (繁體字). If your response contains 货 or 获 or any Simplified character, it is WRONG. Check and fix before responding.`;
 
   try {
     if (!openai) {
@@ -570,9 +593,16 @@ Be accurate and educational. Every Chinese character mentioned MUST include its 
       messages: [
         {
           role: "system",
-          content: "You are an expert in Taiwan Mandarin (臺灣國語) and Traditional Chinese (繁體字). CRITICAL: 1) Use ONLY Traditional Chinese characters, NEVER Simplified. 2) For commonConfusions, provide characters ACTUALLY similar to the input (visual/phonetic/semantic), not generic examples. 3) Never return 房子, 鞋子, 帽子 unless they're genuinely similar to the input character. 4) Always use pinyin with tone marks. 5) Examples of Traditional vs Simplified: 說 NOT 说, 會 NOT 会, 夥 NOT 伙, 貨 NOT 货."
+          content: "🚨 CRITICAL WARNING: You MUST use Traditional Chinese (繁體字) as used in Taiwan. This is MANDATORY.\n\n❌ BANNED SIMPLIFIED CHARACTERS - NEVER USE THESE:\n• 货 → USE 貨 INSTEAD\n• 获 → USE 獲 INSTEAD\n• 过 → USE 過 INSTEAD\n• 会 → USE 會 INSTEAD\n• 说 → USE 說 INSTEAD\n• 热 → USE 熱 INSTEAD\n• 学 → USE 學 INSTEAD\n• 书 → USE 書 INSTEAD\n\n✅ INSTRUCTIONS:\n1. You are analyzing for TAIWAN users who use Traditional Chinese\n2. Every single Chinese character must be Traditional\n3. For commonConfusions, provide characters genuinely similar to the input\n4. Include clear reasons for each confusion\n5. Use pinyin with tone marks\n\n⚠️ FINAL CHECK: Before submitting, scan your response. If you see 货 or 获, you have made an error. Fix it."
         },
-        { role: "user", content: prompt }
+        { 
+          role: "assistant", 
+          content: "I understand I must use Traditional Chinese (繁體字) as used in Taiwan. I will NOT use Simplified characters. For example, I will write 貨 not 货, 獲 not 获, 過 not 过. I will provide accurate confusions specific to the input character."
+        },
+        { 
+          role: "user", 
+          content: prompt + "\n\n⚠️ FINAL REMINDER: This is for TAIWAN. Every Chinese character must be Traditional (繁體字). Do NOT use Simplified characters like 货, 获, 过. Double-check before responding."
+        }
       ],
       temperature: 0.3,
       response_format: { type: "json_object" }
@@ -598,12 +628,6 @@ Be accurate and educational. Every Chinese character mentioned MUST include its 
             console.log(`Filtering out component: ${confusion.character} from ${character}`);
             return false;
           }
-        }
-        // Remove generic hardcoded examples that shouldn't be there
-        const genericExamples = ['房子', '鞋子', '帽子', '箱子', '孩子'];
-        if (genericExamples.includes(confusion.character) && !character.includes('子')) {
-          console.log(`Filtering out generic example: ${confusion.character} for ${character}`);
-          return false;
         }
         return true;
       });
