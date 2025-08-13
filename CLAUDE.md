@@ -124,5 +124,14 @@ If you have existing media in MongoDB GridFS:
 - Automatic image optimization available
 - Better scalability for large media libraries
 
+## Railway Deployment Configuration
+
+### Worker Health Check
+When deploying on Railway with separate services, configure the worker health check URL:
+- Set `WORKER_HEALTH_URL` to the internal network URL of your worker service
+- Example: `WORKER_HEALTH_URL=http://worker.railway.internal:3001/health`
+- This allows the main app to communicate with the worker service over Railway's internal network
+- If not set, it defaults to `http://localhost:${WORKER_HEALTH_PORT}/health` for local development
+
 ## Best Practices and Reminders
 - Always update the documentations when we change things that needs the documentations to be updated or we add new features or changes that require new documentations

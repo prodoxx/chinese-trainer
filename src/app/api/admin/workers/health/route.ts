@@ -24,7 +24,11 @@ export async function GET(request: NextRequest) {
     
     try {
       // Try to fetch from worker health server if it's running
-      const healthResponse = await fetch('http://localhost:3001/health')
+      // Use WORKER_HEALTH_URL for Railway internal network or fall back to localhost
+      const workerHealthUrl = process.env.WORKER_HEALTH_URL || 
+        `http://localhost:${process.env.WORKER_HEALTH_PORT || '3001'}/health`
+      
+      const healthResponse = await fetch(workerHealthUrl)
       if (healthResponse.ok) {
         const healthData = await healthResponse.json()
         
