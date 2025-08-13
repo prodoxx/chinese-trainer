@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import connectDB from '@/lib/db/mongodb'
-import Card from '@/lib/db/models/Card'
-import { validateTraditionalChinese } from '@/lib/utils/chinese-validation'
-import { getCardEnrichmentQueue } from '@/lib/queue/queues'
-import { checkSharedMediaExists } from '@/lib/enrichment/shared-media'
+import { getBulkImportQueue } from '@/lib/queue/queues'
+import crypto from 'crypto'
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,105 +24,113 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    await connectDB()
+    // Generate a unique session ID for this import
+    const sessionId = crypto.randomUUID()
 
-    const results = {
-      created: [] as any[],
-      skipped: [] as any[],
-      errors: [] as any[],
-      enrichmentJobs: [] as any[]
-    }
-
-    // Process each character
-    for (const hanzi of characters) {
-      try {
-        // Validate Traditional Chinese
-        const validation = validateTraditionalChinese(hanzi)
-        if (!validation.isValid) {
-          results.errors.push({
-            hanzi,
-            error: validation.errors[0] || 'Invalid Traditional Chinese'
-          })
-          continue
-        }
-
-        const cleanedHanzi = validation.cleanedText
-
-        // Check if card already exists
-        const existingCard = await Card.findOne({ hanzi: cleanedHanzi })
-        
-        if (existingCard) {
-          results.skipped.push({
-            hanzi: cleanedHanzi,
-            reason: 'Already exists',
-            cardId: existingCard._id
-          })
-          continue
-        }
-
-        // Create new card
-        const newCard = new Card({
-          hanzi: cleanedHanzi,
-          cached: false
-        })
-
-        await newCard.save()
-
-        results.created.push({
-          hanzi: cleanedHanzi,
-          cardId: newCard._id
-        })
-
-        // Queue for enrichment if requested
-        if (enrichImmediately) {
-          // Check if shared media already exists
-          const { audioExists, imageExists } = await checkSharedMediaExists(cleanedHanzi)
-          
-          // Only queue if we actually need enrichment
-          if (!audioExists || !imageExists || !newCard.pinyin || !newCard.meaning) {
-            const queue = getCardEnrichmentQueue()
-            const job = await queue.add(
-              'enrich-card',
-              {
-                cardId: newCard._id.toString(),
-                userId: session.user.id,
-                deckId: null, // No deck association for bulk import
-                force: false,
-                aiProvider: aiProvider || 'openai' // Default to OpenAI if not specified
-              }
-            )
-
-            results.enrichmentJobs.push({
-              hanzi: cleanedHanzi,
-              cardId: newCard._id,
-              jobId: job.id
-            })
-          }
-        }
-      } catch (error) {
-        console.error(`Error processing character ${hanzi}:`, error)
-        results.errors.push({
-          hanzi,
-          error: error instanceof Error ? error.message : 'Unknown error'
-        })
+    // Queue the bulk import job
+    const queue = getBulkImportQueue()
+    const job = await queue.add(
+      'bulk-import',
+      {
+        characters,
+        userId: session.user.id,
+        sessionId,
+        enrichImmediately: enrichImmediately ?? true,
+        aiProvider: aiProvider || 'openai'
+      },
+      {
+        // Job options
+        attempts: 3,
+        backoff: {
+          type: 'exponential',
+          delay: 5000,
+        },
       }
-    }
+    )
 
+    console.log(`📋 Bulk import job queued: ${job.id}`)
+    console.log(`   Characters: ${characters.length}`)
+    console.log(`   Session: ${sessionId}`)
+    console.log(`   Enrich: ${enrichImmediately}`);
+
+    // Return immediately with job information
     return NextResponse.json({
       success: true,
-      summary: {
-        total: characters.length,
-        created: results.created.length,
-        skipped: results.skipped.length,
-        errors: results.errors.length,
-        enrichmentQueued: results.enrichmentJobs.length
-      },
-      results
+      jobId: job.id,
+      sessionId,
+      message: `Bulk import started for ${characters.length} characters`,
+      status: 'queued',
+      totalCharacters: characters.length
     })
   } catch (error) {
     console.error('Bulk import error:', error)
     return NextResponse.json(
-      { error: 'Failed to process bulk import' },
+      { error: 'Failed to start bulk import' },
+      { status: 500 }
+    )
+  }
+}
+
+// New endpoint to check job status
+export async function GET(request: NextRequest) {
+  try {
+    // Check authentication
+    const session = await getServerSession(authOptions)
+    if (!session?.user || session.user.role !== 'admin') {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const { searchParams } = new URL(request.url)
+    const jobId = searchParams.get('jobId')
+
+    if (!jobId) {
+      return NextResponse.json(
+        { error: 'Job ID is required' },
+        { status: 400 }
+      )
+    }
+
+    const queue = getBulkImportQueue()
+    const job = await queue.getJob(jobId)
+
+    if (!job) {
+      return NextResponse.json(
+        { error: 'Job not found' },
+        { status: 404 }
+      )
+    }
+
+    const state = await job.getState()
+    const progress = job.progress
+
+    // Get the result if job is completed
+    let result = null
+    if (state === 'completed') {
+      result = job.returnvalue
+    } else if (state === 'failed') {
+      result = {
+        error: job.failedReason,
+        attemptsMade: job.attemptsMade,
+        attemptsMax: job.opts.attempts
+      }
+    }
+
+    return NextResponse.json({
+      jobId: job.id,
+      state,
+      progress,
+      result,
+      createdAt: job.timestamp,
+      processedOn: job.processedOn,
+      finishedOn: job.finishedOn
+    })
+  } catch (error) {
+    console.error('Error fetching job status:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch job status' },
       { status: 500 }
     )
   }

@@ -5,6 +5,7 @@ import connectDB from '@/lib/db/mongodb';
 import Deck from '@/lib/db/models/Deck';
 import { deckImportQueue } from '@/lib/queue/queues';
 import { extractTraditionalChinese } from '@/lib/utils/chinese-validation';
+import { checkEnrichmentLimit, incrementEnrichmentCount } from '@/lib/enrichment-limits';
 
 export async function POST(request: NextRequest) {
   try {
@@ -94,8 +95,42 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Connect to DB and create deck
+    // Connect to DB
     await connectDB();
+    
+    // Check enrichment limits for non-admin users (temporary until paywall)
+    const isAdmin = session.user.role === 'admin';
+    const limitCheck = await checkEnrichmentLimit(session.user.id, isAdmin);
+    
+    if (!limitCheck.canEnrich) {
+      return NextResponse.json(
+        { 
+          error: 'Daily enrichment limit reached', 
+          message: `You have reached your daily limit of ${limitCheck.limit} card enrichments. Please try again tomorrow or upgrade to Pro for unlimited enrichments.`,
+          remaining: 0,
+          limit: limitCheck.limit,
+          used: limitCheck.used
+        }, 
+        { status: 429 }
+      );
+    }
+    
+    // Check if user has enough enrichments remaining for this deck
+    if (limitCheck.remaining !== -1 && hanziList.length > limitCheck.remaining) {
+      return NextResponse.json(
+        { 
+          error: 'Insufficient enrichments remaining', 
+          message: `This deck contains ${hanziList.length} cards but you only have ${limitCheck.remaining} enrichments remaining today. Please reduce the deck size or try again tomorrow.`,
+          remaining: limitCheck.remaining,
+          limit: limitCheck.limit,
+          used: limitCheck.used,
+          required: hanziList.length
+        }, 
+        { status: 429 }
+      );
+    }
+    
+    // Create deck
     
     const slug = deckName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     
@@ -129,7 +164,18 @@ export async function POST(request: NextRequest) {
       }
     );
     
-    // Return response
+    // Increment enrichment count for non-admin users
+    if (!isAdmin) {
+      await incrementEnrichmentCount(session.user.id, hanziList.length);
+    }
+    
+    // Return response with enrichment info
+    const updatedLimits = isAdmin ? null : {
+      remaining: Math.max(0, limitCheck.remaining - hanziList.length),
+      limit: limitCheck.limit,
+      used: limitCheck.used + hanziList.length
+    };
+    
     return NextResponse.json({
       deck: {
         id: deck._id.toString(),
@@ -142,6 +188,7 @@ export async function POST(request: NextRequest) {
       status: 'importing',
       message: `Deck created. Importing ${hanziList.length} characters...`,
       errors,
+      enrichmentLimits: updatedLimits
     });
     
   } catch (error) {

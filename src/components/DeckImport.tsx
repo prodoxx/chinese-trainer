@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Upload, FileText, AlertCircle, CheckCircle, RefreshCw } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Upload, FileText, AlertCircle, CheckCircle, RefreshCw, Info } from 'lucide-react';
 import DisambiguationModal from './DisambiguationModal';
 
 interface DeckImportProps {
@@ -27,6 +27,30 @@ export default function DeckImport({ onImportComplete }: DeckImportProps) {
     hanziList: string[];
   } | null>(null);
   const [disambiguationData, setDisambiguationData] = useState<MultiMeaningCharacter[] | null>(null);
+  const [enrichmentStats, setEnrichmentStats] = useState<{
+    unlimited: boolean;
+    isAdmin: boolean;
+    used?: number;
+    remaining?: number;
+    limit?: number;
+  } | null>(null);
+  
+  // Fetch enrichment stats on mount
+  useEffect(() => {
+    fetchEnrichmentStats();
+  }, []);
+  
+  const fetchEnrichmentStats = async () => {
+    try {
+      const response = await fetch('/api/user/enrichment-stats');
+      if (response.ok) {
+        const stats = await response.json();
+        setEnrichmentStats(stats);
+      }
+    } catch (error) {
+      console.error('Failed to fetch enrichment stats:', error);
+    }
+  };
   
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -146,6 +170,10 @@ export default function DeckImport({ onImportComplete }: DeckImportProps) {
       const data = await response.json();
       
       if (!response.ok) {
+        // Check if it's an enrichment limit error
+        if (response.status === 429 && data.message) {
+          throw new Error(data.message);
+        }
         throw new Error(data.error || 'Import failed');
       }
       
@@ -156,6 +184,14 @@ export default function DeckImport({ onImportComplete }: DeckImportProps) {
       // Import job has been queued
       console.log(`Import job queued: ${data.jobId}`);
       
+      // Update enrichment stats if returned
+      if (data.enrichmentLimits) {
+        setEnrichmentStats(prev => prev ? {
+          ...prev,
+          ...data.enrichmentLimits
+        } : null);
+      }
+      
       // Deck created successfully
       onImportComplete();
       setIsImporting(false);
@@ -163,6 +199,9 @@ export default function DeckImport({ onImportComplete }: DeckImportProps) {
       // Clear pending import data
       setPendingImport(null);
       setDisambiguationData(null);
+      
+      // Refresh enrichment stats after import
+      fetchEnrichmentStats();
       
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Import failed');
@@ -184,6 +223,46 @@ export default function DeckImport({ onImportComplete }: DeckImportProps) {
   
   return (
     <div className="space-y-4">
+      {/* Enrichment Limit Info */}
+      {enrichmentStats && !enrichmentStats.unlimited && (
+        <div className="bg-blue-900/20 border border-blue-900/30 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <Info className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+            <div className="space-y-2 flex-1">
+              <p className="text-sm text-blue-300 font-medium">
+                Daily Enrichment Limit (Temporary)
+              </p>
+              <div className="flex items-center gap-4">
+                <div className="text-sm text-gray-400">
+                  <span className="text-white font-medium">{enrichmentStats.remaining}</span>
+                  <span> / {enrichmentStats.limit} enrichments remaining today</span>
+                </div>
+                <div className="flex-1 bg-gray-800 rounded-full h-2 overflow-hidden">
+                  <div 
+                    className="bg-gradient-to-r from-[#f7cc48] to-[#f7cc48]/80 h-full transition-all duration-300"
+                    style={{ width: `${((enrichmentStats.remaining || 0) / (enrichmentStats.limit || 20)) * 100}%` }}
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-gray-500">
+                This is a temporary limit while we implement our subscription system. 
+                Limits reset daily at midnight.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Admin Badge */}
+      {enrichmentStats?.isAdmin && (
+        <div className="bg-gradient-to-r from-purple-900/20 to-pink-900/20 border border-purple-500/30 rounded-lg p-3">
+          <div className="flex items-center gap-2">
+            <CheckCircle className="w-4 h-4 text-purple-400" />
+            <span className="text-sm text-purple-300 font-medium">Admin Account - Unlimited Enrichments</span>
+          </div>
+        </div>
+      )}
+      
       <div
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}

@@ -40,6 +40,7 @@ interface InsightsData {
       tonal: number;
       total: number;
     };
+    reasons?: string[];
   }>;
   aiInsights: DeepLinguisticAnalysis | null;
 }
@@ -174,6 +175,107 @@ export default function CharacterInsights({ characterId, character, onClose, car
     if (difficulty < 0.5) return 'text-yellow-400';
     if (difficulty < 0.7) return 'text-orange-400';
     return 'text-red-400';
+  };
+
+  // Generate confusion reason based on the confusion scores
+  const getConfusionReason = (item: any, currentChar: string) => {
+    const reasons = [];
+    
+    // Check for visual similarity
+    if (item.confusion.visual > 0.6) {
+      // Common confusions with specific reasons
+      const specificReasons: Record<string, Record<string, string>> = {
+        '包子': {
+          '房子': 'Both end with 子 (zi) suffix',
+          '餃子': 'Both are food items ending with 子',
+          '饅頭': 'Both are steamed foods'
+        },
+        '房子': {
+          '包子': 'Both end with 子 (zi) suffix',
+          '箱子': 'Both end with 子 and relate to containers/spaces',
+          '孩子': 'Both end with 子 (zi) suffix'
+        },
+        '餃子': {
+          '包子': 'Both are dumpling-type foods ending with 子',
+          '筷子': 'Both end with 子, often used together',
+          '粽子': 'Both are wrapped foods ending with 子'
+        },
+        '饅頭': {
+          '包子': 'Both are steamed buns (one with filling, one without)',
+          '麵包': 'Both are bread-like foods',
+          '饅': 'Shares the same first character'
+        }
+      };
+      
+      // Check for specific known confusion reasons
+      if (specificReasons[currentChar]?.[item.character]) {
+        reasons.push(specificReasons[currentChar][item.character]);
+      } else if (specificReasons[item.character]?.[currentChar]) {
+        reasons.push(specificReasons[item.character][currentChar]);
+      } else {
+        // Generic visual similarity reasons
+        if (item.confusion.visual > 0.8) {
+          reasons.push('Very similar character structure');
+        } else if (item.confusion.visual > 0.6) {
+          reasons.push('Similar visual appearance');
+        }
+        
+        // Check for shared components
+        const currentChars = currentChar.split('');
+        const itemChars = item.character.split('');
+        const shared = currentChars.filter(c => itemChars.includes(c));
+        if (shared.length > 0) {
+          reasons.push(`Share character(s): ${shared.join(', ')}`);
+        }
+      }
+    }
+    
+    // Check for phonetic similarity
+    if (item.confusion.phonetic > 0.5) {
+      if (item.pinyin && insights?.character.pinyin) {
+        const currentPinyin = insights.character.pinyin.toLowerCase().replace(/[0-9āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]/g, '');
+        const itemPinyin = item.pinyin.toLowerCase().replace(/[0-9āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]/g, '');
+        
+        if (currentPinyin === itemPinyin) {
+          reasons.push('Same pronunciation (different tones)');
+        } else if (currentPinyin.includes(itemPinyin) || itemPinyin.includes(currentPinyin)) {
+          reasons.push('Similar pronunciation');
+        }
+      }
+    }
+    
+    // Check for semantic similarity
+    if (item.confusion.semantic > 0.5) {
+      reasons.push('Similar meaning or context');
+    }
+    
+    // Check for tonal confusion
+    if (item.confusion.tonal > 0.5) {
+      reasons.push('Same sound with different tones');
+    }
+    
+    // If no specific reason found, provide a generic one based on highest score
+    if (reasons.length === 0) {
+      const scores = {
+        'visual': item.confusion.visual,
+        'phonetic': item.confusion.phonetic,
+        'semantic': item.confusion.semantic,
+        'tonal': item.confusion.tonal
+      };
+      
+      const highest = Object.entries(scores).reduce((a, b) => a[1] > b[1] ? a : b);
+      if (highest[1] > 0) {
+        const reasonMap = {
+          'visual': 'Similar appearance',
+          'phonetic': 'Similar sound',
+          'semantic': 'Related meaning',
+          'tonal': 'Tone confusion'
+        };
+        reasons.push(reasonMap[highest[0] as keyof typeof reasonMap]);
+      }
+    }
+    
+    return reasons.join('; ');
   };
 
   const getProgressBar = (value: number, max: number = 1) => {
@@ -469,27 +571,44 @@ export default function CharacterInsights({ characterId, character, onClose, car
                 <div className="bg-[#232937] rounded-lg p-4 sm:p-6 border border-[#2d3548]">
                   <h3 className="text-xl font-semibold mb-4 text-[#f7cc48]">Commonly Confused With</h3>
                   <div className="space-y-3">
-                    {insights.confusionAnalysis.map((item, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-[#1a1f2e] rounded-lg border border-[#2d3548]">
-                        <div className="flex items-center gap-4">
-                          <div className="text-2xl font-bold">{item.character}</div>
-                          <div>
-                            <div className="text-sm text-[#f7cc48]/80">{item.pinyin}</div>
-                            <div className="text-xs text-gray-400">{item.meaning}</div>
+                    {insights.confusionAnalysis.map((item, index) => {
+                      // Use AI-generated reasons if available, otherwise fallback to heuristic
+                      const aiReasons = item.reasons && item.reasons.length > 0 ? 
+                        item.reasons.join('; ') : null;
+                      const fallbackReason = !aiReasons ? 
+                        getConfusionReason(item, insights.character.hanzi) : null;
+                      const reason = aiReasons || fallbackReason;
+                      
+                      return (
+                        <div key={index} className="p-3 bg-[#1a1f2e] rounded-lg border border-[#2d3548]">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-4">
+                              <div className="text-2xl font-bold">{item.character}</div>
+                              <div>
+                                <div className="text-sm text-[#f7cc48]/80">{item.pinyin}</div>
+                                <div className="text-xs text-gray-400">{item.meaning}</div>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-sm text-gray-300">Confusion Risk</div>
+                              <div className={`text-lg font-bold ${getDifficultyColor(item.confusion.total)}`}>
+                                {(item.confusion.total * 100).toFixed(0)}%
+                              </div>
+                              <div className="flex gap-2 text-xs text-gray-400">
+                                <span>V:{(item.confusion.visual * 100).toFixed(0)}%</span>
+                                <span>P:{(item.confusion.phonetic * 100).toFixed(0)}%</span>
+                              </div>
+                            </div>
                           </div>
+                          {reason && (
+                            <div className="mt-2 pt-2 border-t border-[#2d3548]/50">
+                              <div className="text-xs text-gray-500">Why confused:</div>
+                              <div className="text-sm text-gray-300 mt-1">{reason}</div>
+                            </div>
+                          )}
                         </div>
-                        <div className="text-right">
-                          <div className="text-sm text-gray-300">Confusion Risk</div>
-                          <div className={`text-lg font-bold ${getDifficultyColor(item.confusion.total)}`}>
-                            {(item.confusion.total * 100).toFixed(0)}%
-                          </div>
-                          <div className="flex gap-2 text-xs text-gray-400">
-                            <span>V:{(item.confusion.visual * 100).toFixed(0)}%</span>
-                            <span>P:{(item.confusion.phonetic * 100).toFixed(0)}%</span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -563,20 +682,45 @@ export default function CharacterInsights({ characterId, character, onClose, car
                   <div className="space-y-4">
                     {insights.aiInsights.commonErrors.similarCharacters?.length > 0 && (
                       <div>
-                        <h4 className="text-sm text-gray-300 mb-2">Commonly Confused With</h4>
+                        <h4 className="text-sm text-gray-300 mb-2">Similar Characters (Often Confused)</h4>
                         <div className="space-y-2">
-                          {insights.aiInsights.commonErrors.similarCharacters.map((char, i) => (
-                            <div key={i} className="flex items-start gap-2">
-                              <span className="text-[#f7cc48] font-bold">•</span>
-                              <span className="text-gray-100">{processTextWithPinyin(char)}</span>
-                            </div>
-                          ))}
+                          {insights.aiInsights.commonErrors.similarCharacters.map((char, i) => {
+                            // Parse the format: "房子 (fáng zi) - house - [Both end with 子 suffix]"
+                            const match = typeof char === 'string' ? 
+                              char.match(/^(.+?)\s*-\s*(.+?)\s*-\s*\[(.+?)\]$/) : null;
+                            
+                            let displayText = processTextWithPinyin(typeof char === 'string' ? char : char.character || '');
+                            let reason = null;
+                            
+                            if (match) {
+                              // Extract the character part and reason
+                              displayText = processTextWithPinyin(match[1] + ' - ' + match[2]);
+                              reason = match[3];
+                            } else if (typeof char === 'object' && char.reason) {
+                              displayText = processTextWithPinyin(char.character || '');
+                              reason = char.reason;
+                            }
+                            
+                            return (
+                              <div key={i} className="flex flex-col gap-1">
+                                <div className="flex items-start gap-2">
+                                  <span className="text-[#f7cc48] font-bold">•</span>
+                                  <span className="text-gray-100">{displayText}</span>
+                                </div>
+                                {reason && (
+                                  <div className="ml-6 text-xs text-gray-400 italic">
+                                    {reason}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
                     {insights.aiInsights.commonErrors.wrongContexts?.length > 0 && (
                       <div>
-                        <h4 className="text-sm text-gray-300 mb-2">Wrong Contexts</h4>
+                        <h4 className="text-sm text-gray-300 mb-2">Common Mistakes in Usage</h4>
                         <ul className="list-disc list-inside space-y-1">
                           {insights.aiInsights.commonErrors.wrongContexts.map((context, i) => (
                             <li key={i} className="text-gray-100">{processTextWithPinyin(context)}</li>

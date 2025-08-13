@@ -12,7 +12,8 @@ import {
   ChevronRight,
   Shield,
   Loader2,
-  BookOpen
+  BookOpen,
+  Activity
 } from 'lucide-react'
 import { useAlert } from '@/hooks/useAlert'
 
@@ -64,6 +65,7 @@ export default function AdminPage() {
     { id: 'users', label: 'Users', icon: Users, description: 'Manage user accounts' },
     { id: 'decks', label: 'Decks', icon: FolderOpen, description: 'View all user decks' },
     { id: 'cards', label: 'Cards', icon: BookOpen, description: 'Manage all cards' },
+    { id: 'workers', label: 'Workers', icon: Activity, description: 'Monitor background jobs' },
   ]
 
   return (
@@ -120,6 +122,19 @@ export default function AdminPage() {
                   >
                     <BookOpen className="w-4 h-4" />
                     Go to Cards Page
+                  </Link>
+                </div>
+              )}
+              {activeTab === 'workers' && (
+                <div className="bg-[#161b22] border border-[#30363d] rounded-lg p-6">
+                  <h2 className="text-xl font-bold text-white mb-4">Worker Monitoring</h2>
+                  <p className="text-gray-400 mb-6">Monitor background job workers, queue health, and system performance.</p>
+                  <Link 
+                    href="/admin/workers"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-[#f7cc48] hover:bg-[#f7cc48]/90 text-black font-medium rounded-lg transition-colors"
+                  >
+                    <Activity className="w-4 h-4" />
+                    Go to Workers Dashboard
                   </Link>
                 </div>
               )}

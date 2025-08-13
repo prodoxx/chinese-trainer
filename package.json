@@ -17,6 +17,7 @@
 		"cron:hourly-reminders": "bun run src/cron/send-review-reminders.ts",
 		"cron:weekly-digest": "bun run src/cron/send-weekly-digests.ts",
 		"empty-queues": "bun run scripts/empty-queues.ts",
+		"clear-queues": "bun run scripts/clear-queues.ts",
 		"migrate-to-r2": "bun run scripts/migrate-to-r2.ts",
 		"migrate-to-r2:dry": "bun run scripts/migrate-to-r2.ts --dry-run",
 		"db:generate": "prisma generate",

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Danbing AI - Learn Chinese 10x Faster</title>
+    <link>https://danbing.ai</link>
+    <description>Master Traditional Chinese with AI-powered flashcards. Science-based learning that actually works.</description>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 13 Jan 2025 00:00:00 GMT</lastBuildDate>
+    <atom:link href="https://danbing.ai/rss.xml" rel="self" type="application/rss+xml"/>
+    
+    <item>
+      <title>Introducing Danbing AI - The Future of Chinese Learning</title>
+      <link>https://danbing.ai/about</link>
+      <description>Learn how we're revolutionizing Chinese language learning with AI and cognitive science.</description>
+      <pubDate>Mon, 13 Jan 2025 00:00:00 GMT</pubDate>
+      <guid>https://danbing.ai/about</guid>
+    </item>
+    
+    <item>
+      <title>The Science Behind 10x Faster Learning</title>
+      <link>https://danbing.ai/science</link>
+      <description>Discover the peer-reviewed research that powers our learning methodology.</description>
+      <pubDate>Mon, 13 Jan 2025 00:00:00 GMT</pubDate>
+      <guid>https://danbing.ai/science</guid>
+    </item>
+    
+    <item>
+      <title>Try Our Interactive Demo - No Signup Required</title>
+      <link>https://danbing.ai/demo</link>
+      <description>Experience AI-powered Chinese flashcards in just 90 seconds.</description>
+      <pubDate>Mon, 13 Jan 2025 00:00:00 GMT</pubDate>
+      <guid>https://danbing.ai/demo</guid>
+    </item>
+  </channel>
+</rss>

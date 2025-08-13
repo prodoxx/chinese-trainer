@@ -125,7 +125,7 @@ Provide a detailed linguistic analysis in JSON format with the following structu
     "components": "How components relate to meaning - use pinyin with tone marks"
   },
   "commonErrors": {
-    "similarCharacters": ["List similar characters with pinyin tone marks - e.g., '房子 (fáng zi) - house'. NEVER include ${character} itself. For multi-character words, list OTHER complete words, not components."],
+    "similarCharacters": ["Format: '房子 (fáng zi) - house - [reason]'", "Max 3 items", "EXCLUDE ${character}"],
     "wrongContexts": ["Common misuse contexts"],
     "toneConfusions": ["Characters with same sound but different tones - use tone marks, e.g., '方 (fāng) - square'. EXCLUDE ${character} itself"]
   },
@@ -163,11 +163,45 @@ Focus on practical learning aids and common confusion points.`;
         },
       ],
       temperature: 0.3,
-      max_tokens: 800,
+      max_tokens: 1500, // Increased to prevent truncation
       response_format: { type: 'json_object' },
     });
 
-    const aiAnalysis = JSON.parse(response.choices[0]?.message?.content || '{}');
+    // Safely parse the response with error handling
+    let aiAnalysis: any = {};
+    try {
+      const content = response.choices[0]?.message?.content;
+      if (content) {
+        // Try to fix common JSON issues
+        let fixedContent = content;
+        
+        // Check if the JSON might be truncated (doesn't end with })
+        if (!fixedContent.trim().endsWith('}')) {
+          console.warn(`OpenAI response appears truncated for ${character}, attempting to fix...`);
+          // Try to close any open structures
+          const openBraces = (fixedContent.match(/{/g) || []).length;
+          const closeBraces = (fixedContent.match(/}/g) || []).length;
+          const openBrackets = (fixedContent.match(/\[/g) || []).length;
+          const closeBrackets = (fixedContent.match(/\]/g) || []).length;
+          
+          // Add missing brackets
+          for (let i = 0; i < openBrackets - closeBrackets; i++) {
+            fixedContent += ']';
+          }
+          // Add missing braces
+          for (let i = 0; i < openBraces - closeBraces; i++) {
+            fixedContent += '}';
+          }
+        }
+        
+        aiAnalysis = JSON.parse(fixedContent);
+      }
+    } catch (parseError) {
+      console.error(`Failed to parse OpenAI response for ${character}:`, parseError);
+      console.error('Raw response:', response.choices[0]?.message?.content?.substring(0, 500));
+      // Return empty analysis rather than throwing
+      aiAnalysis = {};
+    }
     
     // Validate and fix registerLevel
     const validRegisterLevels = ['formal', 'informal', 'neutral', 'literary'];

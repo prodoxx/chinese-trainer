@@ -145,12 +145,13 @@ export async function POST(request: NextRequest) {
             meaning,
             pinyin,
             confusion: {
-              visual: conf.similarity || 0.5,
-              semantic: 0,
-              phonetic: 0,
-              tonal: 0,
+              visual: conf.confusionTypes?.visual || conf.similarity || 0.5,
+              semantic: conf.confusionTypes?.semantic || 0,
+              phonetic: conf.confusionTypes?.phonetic || 0,
+              tonal: conf.confusionTypes?.tonal || 0,
               total: conf.similarity || 0.5
-            }
+            },
+            reasons: conf.reasons || []
           };
         });
         

@@ -5,6 +5,7 @@ import getRedis from './redis';
 let _deckEnrichmentQueue: Queue | null = null;
 let _deckImportQueue: Queue | null = null;
 let _cardEnrichmentQueue: Queue | null = null;
+let _bulkImportQueue: Queue | null = null;
 
 // Queue for deck enrichment jobs
 export function getDeckEnrichmentQueue(): Queue {
@@ -71,10 +72,34 @@ export function getCardEnrichmentQueue(): Queue {
   return _cardEnrichmentQueue;
 }
 
+// Queue for bulk card import jobs
+export function getBulkImportQueue(): Queue {
+  if (!_bulkImportQueue) {
+    _bulkImportQueue = new Queue('bulk-import', {
+      connection: getRedis(),
+      defaultJobOptions: {
+        attempts: 3,
+        backoff: {
+          type: 'exponential',
+          delay: 5000, // Start with 5 second delay for bulk operations
+        },
+        removeOnComplete: {
+          count: 100, // Keep more history for bulk operations
+        },
+        removeOnFail: {
+          count: 50,
+        },
+      },
+    });
+  }
+  return _bulkImportQueue;
+}
+
 // Export getters with the same names for compatibility
 export const deckEnrichmentQueue = getDeckEnrichmentQueue;
 export const deckImportQueue = getDeckImportQueue;
 export const cardEnrichmentQueue = getCardEnrichmentQueue;
+export const bulkImportQueue = getBulkImportQueue;
 
 export interface DeckEnrichmentJobData {
   deckId: string;
@@ -100,5 +125,13 @@ export interface CardEnrichmentJobData {
   deckId: string;
   force: boolean;
   disambiguationSelection?: { pinyin: string; meaning: string };
+  aiProvider?: 'openai';
+}
+
+export interface BulkImportJobData {
+  characters: string[];
+  userId: string;
+  sessionId: string;
+  enrichImmediately: boolean;
   aiProvider?: 'openai';
 }

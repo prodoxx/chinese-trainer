@@ -27,7 +27,10 @@ import {
   List,
   Plus,
   Upload,
-  Trash2
+  Trash2,
+  Edit2,
+  Check,
+  X
 } from 'lucide-react'
 import { useAlert } from '@/hooks/useAlert'
 import AdminCharacterInsights from '@/components/AdminCharacterInsights'
@@ -39,6 +42,8 @@ interface Card {
   meaning: string
   imageUrl?: string | null
   audioUrl?: string | null
+  imagePrompt?: string | null
+  imagePath?: string | null
   createdAt: Date
   updatedAt: Date
 }
@@ -74,6 +79,11 @@ export default function AdminCardsPage() {
   const [previewImage, setPreviewImage] = useState<string | null>(null)
   const [playingAudio, setPlayingAudio] = useState<string | null>(null)
   const [selectedCharacter, setSelectedCharacter] = useState<{ id: string; hanzi: string } | null>(null)
+  const [editingImageCard, setEditingImageCard] = useState<Card | null>(null)
+  const [customImagePrompt, setCustomImagePrompt] = useState('')
+  const [generatingImage, setGeneratingImage] = useState(false)
+  const [savingImage, setSavingImage] = useState(false)
+  const [tempImageUrl, setTempImageUrl] = useState<string | null>(null)
   const [pagination, setPagination] = useState<PaginationInfo>({
     page: 1,
     limit: 50,
@@ -92,6 +102,8 @@ export default function AdminCardsPage() {
   const [showBulkImport, setShowBulkImport] = useState(false)
   const [bulkCharacters, setBulkCharacters] = useState('')
   const [bulkImporting, setBulkImporting] = useState(false)
+  const [bulkImportStartTime, setBulkImportStartTime] = useState<number | null>(null)
+  const [bulkImportElapsed, setBulkImportElapsed] = useState<number>(0)
   const [bulkImportResults, setBulkImportResults] = useState<{
     success: boolean;
     summary: {
@@ -110,6 +122,9 @@ export default function AdminCardsPage() {
       enrichmentJobs: { hanzi: string; cardId: string; jobId: string }[];
     };
   } | null>(null)
+  const [bulkImportJobId, setBulkImportJobId] = useState<string | null>(null)
+  const [bulkImportProgress, setBulkImportProgress] = useState<any>(null)
+  const bulkImportPollRef = useRef<NodeJS.Timeout | null>(null)
   const [enrichImmediately, setEnrichImmediately] = useState(true)
   // const [isDevelopment, setIsDevelopment] = useState(false)
   const [deleteConfirmation, setDeleteConfirmation] = useState<{ cardId: string; hanzi: string } | null>(null)
@@ -140,6 +155,21 @@ export default function AdminCardsPage() {
     fetchCards()
   }, [session, status, router, showAlert])
 
+  // Track elapsed time during bulk import
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null
+    
+    if (bulkImporting && bulkImportStartTime) {
+      interval = setInterval(() => {
+        setBulkImportElapsed(Math.floor((Date.now() - bulkImportStartTime) / 1000))
+      }, 1000)
+    }
+    
+    return () => {
+      if (interval) clearInterval(interval)
+    }
+  }, [bulkImporting, bulkImportStartTime])
+
   // Cleanup polling intervals on unmount
   useEffect(() => {
     return () => {
@@ -148,6 +178,11 @@ export default function AdminCardsPage() {
         clearInterval(interval)
       })
       pollIntervalsRef.current.clear()
+      
+      // Clear bulk import polling
+      if (bulkImportPollRef.current) {
+        clearInterval(bulkImportPollRef.current)
+      }
     }
   }, [])
 
@@ -534,7 +569,10 @@ export default function AdminCardsPage() {
     }
 
     setBulkImporting(true)
+    setBulkImportStartTime(Date.now())
+    setBulkImportElapsed(0)
     setBulkImportResults(null)
+    setBulkImportProgress(null)
 
     try {
       const response = await fetch('/api/admin/cards/bulk-import', {
@@ -553,34 +591,36 @@ export default function AdminCardsPage() {
 
       const data = await response.json()
       
-      // Update the summary to show 0 initially for enrichment queued items
-      if (data.summary.enrichmentQueued > 0) {
-        data.summary.pendingEnrichment = data.summary.enrichmentQueued
-        data.summary.completedEnrichment = 0
+      if (data.jobId) {
+        // New async system - start polling for progress
+        setBulkImportJobId(data.jobId)
+        showAlert(`Import started for ${data.totalCharacters} characters`, { type: 'info' })
+        
+        // Start polling for job status
+        pollBulkImportJob(data.jobId)
+      } else {
+        // Fallback to old synchronous response (shouldn't happen)
+        setBulkImportResults(data)
+        setBulkImporting(false)
+        setBulkImportStartTime(null)
+        fetchCards()
       }
       
-      setBulkImportResults(data)
-
-      // Track enrichment jobs
-      if (data.results.enrichmentJobs.length > 0) {
-        data.results.enrichmentJobs.forEach((job: any) => {
-          pollEnrichmentJob(job.jobId, job.cardId, job.hanzi)
-        })
-      }
-
-      // Refresh cards list
-      fetchCards()
-      
-      // Clear form if all successful
-      if (data.summary.errors === 0) {
-        setBulkCharacters('')
-      }
     } catch (error) {
       console.error('Bulk import error:', error)
       showAlert('Failed to import characters', { type: 'error' })
-    } finally {
       setBulkImporting(false)
+      setBulkImportStartTime(null)
     }
+  }
+
+  const formatElapsedTime = (seconds: number): string => {
+    const minutes = Math.floor(seconds / 60)
+    const remainingSeconds = seconds % 60
+    if (minutes > 0) {
+      return `${minutes}m ${remainingSeconds}s`
+    }
+    return `${seconds}s`
   }
 
   const updateEnrichmentCount = (increment: boolean = false) => {
@@ -593,6 +633,116 @@ export default function AdminCardsPage() {
       }
       return updated
     })
+  }
+
+  const pollBulkImportJob = (jobId: string) => {
+    // Clear any existing poll
+    if (bulkImportPollRef.current) {
+      clearInterval(bulkImportPollRef.current)
+    }
+
+    let pollCount = 0
+    const maxPolls = 300 // 5 minutes maximum
+
+    const poll = async () => {
+      pollCount++
+      
+      try {
+        const response = await fetch(`/api/admin/cards/bulk-import?jobId=${jobId}`)
+        if (!response.ok) {
+          throw new Error('Failed to fetch job status')
+        }
+        
+        const jobStatus = await response.json()
+        
+        // Update progress
+        if (jobStatus.progress) {
+          setBulkImportProgress(jobStatus.progress)
+        }
+        
+        // Check if job is complete
+        if (jobStatus.state === 'completed') {
+          if (bulkImportPollRef.current) {
+            clearInterval(bulkImportPollRef.current)
+            bulkImportPollRef.current = null
+          }
+          
+          setBulkImporting(false)
+          setBulkImportJobId(null)
+          setBulkImportStartTime(null)
+          
+          if (jobStatus.result) {
+            // Initialize enrichment tracking counts
+            const enrichmentCount = jobStatus.result.results?.enrichmentJobs?.length || 0
+            const resultWithTracking = {
+              ...jobStatus.result,
+              summary: {
+                ...jobStatus.result.summary,
+                pendingEnrichment: enrichmentCount,
+                completedEnrichment: 0
+              }
+            }
+            setBulkImportResults(resultWithTracking)
+            
+            // Track individual enrichment jobs if any
+            if (jobStatus.result.results?.enrichmentJobs?.length > 0) {
+              jobStatus.result.results.enrichmentJobs.forEach((job: any) => {
+                pollEnrichmentJob(job.jobId, job.cardId, job.hanzi)
+              })
+            }
+          }
+          
+          fetchCards()
+          showAlert('Bulk import completed successfully', { type: 'success' })
+          
+        } else if (jobStatus.state === 'failed') {
+          if (bulkImportPollRef.current) {
+            clearInterval(bulkImportPollRef.current)
+            bulkImportPollRef.current = null
+          }
+          
+          setBulkImporting(false)
+          setBulkImportJobId(null)
+          setBulkImportStartTime(null)
+          
+          const errorMsg = jobStatus.result?.error || 'Import failed'
+          showAlert(`Bulk import failed: ${errorMsg}`, { type: 'error' })
+          
+        } else if (pollCount >= maxPolls) {
+          // Timeout
+          if (bulkImportPollRef.current) {
+            clearInterval(bulkImportPollRef.current)
+            bulkImportPollRef.current = null
+          }
+          
+          setBulkImporting(false)
+          setBulkImportJobId(null)
+          setBulkImportStartTime(null)
+          showAlert('Import timed out. Please check the admin panel later.', { type: 'warning' })
+        }
+      } catch (error) {
+        console.error('Error polling bulk import job:', error)
+        
+        if (pollCount >= 10) {
+          // Give up after 10 failed attempts
+          if (bulkImportPollRef.current) {
+            clearInterval(bulkImportPollRef.current)
+            bulkImportPollRef.current = null
+          }
+          
+          setBulkImporting(false)
+          setBulkImportJobId(null)
+          setBulkImportStartTime(null)
+          showAlert('Failed to check import status', { type: 'error' })
+        }
+      }
+    }
+    
+    // Start polling immediately
+    poll()
+    
+    // Then poll every second
+    bulkImportPollRef.current = setInterval(poll, 1000)
   }
 
   const pollEnrichmentJob = (jobId: string, cardId: string, hanzi: string) => {
@@ -987,13 +1137,33 @@ export default function AdminCardsPage() {
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-2">
                               {card.imageUrl && (
-                                <button
-                                  onClick={() => setPreviewImage(card.imageUrl || null)}
-                                  className="p-1 hover:bg-[#21262d] rounded transition-colors"
-                                  title="Click to preview image"
-                                >
-                                  <ImageIcon className="w-4 h-4 text-green-500" />
-                                </button>
+                                <>
+                                  <button
+                                    onClick={() => setPreviewImage(card.imageUrl || null)}
+                                    className="p-1 hover:bg-[#21262d] rounded transition-colors"
+                                    title="Click to preview image"
+                                  >
+                                    <ImageIcon className="w-4 h-4 text-green-500" />
+                                  </button>
+                                  <button
+                                    onClick={async () => {
+                                      setEditingImageCard(card)
+                                      // If card has an existing prompt, use it; otherwise optimize
+                                      if (card.imagePrompt) {
+                                        setCustomImagePrompt(card.imagePrompt)
+                                      } else {
+                                        const { optimizeImagePrompt } = await import('@/lib/enrichment/prompt-optimization-service')
+                                        const result = await optimizeImagePrompt(card.hanzi, card.meaning, card.pinyin, card.imagePrompt)
+                                        setCustomImagePrompt(result.prompt)
+                                      }
+                                      setTempImageUrl(null)
+                                    }}
+                                    className="p-1 hover:bg-[#21262d] rounded transition-colors"
+                                    title="Edit image prompt"
+                                  >
+                                    <Edit2 className="w-4 h-4 text-blue-500" />
+                                  </button>
+                                </>
                               )}
                               {card.audioUrl && (
                                 <button
@@ -1126,24 +1296,48 @@ export default function AdminCardsPage() {
                         
                         {/* Actions */}
                         <div className="p-3 border-t border-[#30363d] flex flex-col gap-2">
-                          {card.audioUrl ? (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                playAudio(card.audioUrl!)
-                              }}
-                              className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-[#21262d] hover:bg-[#30363d] rounded-lg transition-colors"
-                              title="Play audio"
-                            >
-                              <Volume2 className={`w-4 h-4 ${playingAudio === card.audioUrl ? 'text-[#f7cc48]' : 'text-gray-400'}`} />
-                              <span className="text-sm text-gray-400">Audio</span>
-                            </button>
-                          ) : (
-                            <div className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-[#161b22] rounded-lg cursor-not-allowed">
-                              <Volume2 className="w-4 h-4 text-gray-600" />
-                              <span className="text-sm text-gray-600">No audio</span>
-                            </div>
-                          )}
+                          <div className="flex gap-2">
+                            {card.audioUrl ? (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  playAudio(card.audioUrl!)
+                                }}
+                                className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-[#21262d] hover:bg-[#30363d] rounded-lg transition-colors"
+                                title="Play audio"
+                              >
+                                <Volume2 className={`w-4 h-4 ${playingAudio === card.audioUrl ? 'text-[#f7cc48]' : 'text-gray-400'}`} />
+                                <span className="text-sm text-gray-400">Audio</span>
+                              </button>
+                            ) : (
+                              <div className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-[#161b22] rounded-lg cursor-not-allowed">
+                                <Volume2 className="w-4 h-4 text-gray-600" />
+                                <span className="text-sm text-gray-600">No audio</span>
+                              </div>
+                            )}
+                            
+                            {card.imageUrl && (
+                              <button
+                                onClick={async (e) => {
+                                  e.stopPropagation()
+                                  setEditingImageCard(card)
+                                  // If card has an existing prompt, use it; otherwise optimize
+                                  if (card.imagePrompt) {
+                                    setCustomImagePrompt(card.imagePrompt)
+                                  } else {
+                                    const { optimizeImagePrompt } = await import('@/lib/enrichment/prompt-optimization-service')
+                                    const result = await optimizeImagePrompt(card.hanzi, card.meaning, card.pinyin, card.imagePrompt)
+                                    setCustomImagePrompt(result.prompt)
+                                  }
+                                  setTempImageUrl(null)
+                                }}
+                                className="flex items-center justify-center gap-1 px-2 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                                title="Edit image"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
                           
                           <div className="flex gap-2">
                             <button
@@ -1424,13 +1618,68 @@ export default function AdminCardsPage() {
               setShowBulkImport(false)
               setBulkCharacters('')
               setBulkImportResults(null)
+              setBulkImportProgress(null)
+              setBulkImportStartTime(null)
+              setBulkImportElapsed(0)
             }
           }}
         >
           <div className="bg-[#161b22] rounded-2xl p-6 max-w-2xl w-full border border-[#30363d] shadow-2xl max-h-[90vh] overflow-y-auto">
             <h2 className="text-2xl font-bold text-[#f7cc48] mb-4">Bulk Import Characters</h2>
             
-            {!bulkImportResults ? (
+            {/* Show progress if importing */}
+            {bulkImporting && bulkImportProgress && (
+              <div className="mb-6 bg-[#21262d] rounded-lg p-4 border border-[#30363d]">
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="text-lg font-semibold">Import Progress</h3>
+                  <span className="text-sm text-[#f7cc48]">
+                    Time elapsed: {formatElapsedTime(bulkImportElapsed)}
+                  </span>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <div className="flex justify-between text-sm text-gray-400 mb-1">
+                      <span>{bulkImportProgress.message || 'Processing...'}</span>
+                      <span>
+                        {bulkImportProgress.processed || 0} / {bulkImportProgress.total || 0}
+                      </span>
+                    </div>
+                    <div className="w-full bg-[#0d1117] rounded-full h-2.5">
+                      <div 
+                        className="bg-[#f7cc48] h-2.5 rounded-full transition-all duration-300"
+                        style={{ 
+                          width: `${bulkImportProgress.total > 0 
+                            ? (bulkImportProgress.processed / bulkImportProgress.total) * 100 
+                            : 0}%` 
+                        }}
+                      />
+                    </div>
+                  </div>
+                  
+                  {bulkImportProgress.batchIndex && (
+                    <p className="text-sm text-gray-400">
+                      Batch {bulkImportProgress.batchIndex} of {bulkImportProgress.totalBatches}
+                    </p>
+                  )}
+                  
+                  {bulkImportProgress.results && (
+                    <div className="grid grid-cols-3 gap-2 text-sm">
+                      <div className="text-green-400">
+                        Created: {bulkImportProgress.results.created}
+                      </div>
+                      <div className="text-yellow-400">
+                        Skipped: {bulkImportProgress.results.skipped}
+                      </div>
+                      <div className="text-red-400">
+                        Errors: {bulkImportProgress.results.errors}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            
+            {!bulkImportResults && !bulkImporting ? (
               // Input form
               <div className="space-y-4">
                 <div>
@@ -1497,6 +1746,8 @@ export default function AdminCardsPage() {
                         setShowBulkImport(false)
                         setBulkCharacters('')
                         setBulkImportResults(null)
+                        setBulkImportStartTime(null)
+                        setBulkImportElapsed(0)
                       }
                     }}
                     disabled={bulkImporting}
@@ -1506,7 +1757,7 @@ export default function AdminCardsPage() {
                   </button>
                 </div>
               </div>
-            ) : (
+            ) : bulkImportResults ? (
               // Results display
               <div className="space-y-4">
                 <div className="bg-[#21262d] rounded-lg p-4 border border-[#30363d]">
@@ -1550,7 +1801,10 @@ export default function AdminCardsPage() {
                           <>
                             <span className="text-gray-400">Enrichment Completed:</span>
                             <span className="ml-2 font-semibold text-green-400">
-                              {bulkImportResults.summary.enrichmentQueued}
+                              {bulkImportResults.summary.completedEnrichment || 0}
+                            </span>
+                            <span className="text-gray-400 ml-1">
+                              / {bulkImportResults.summary.enrichmentQueued}
                             </span>
                           </>
                         )}
@@ -1633,6 +1887,8 @@ export default function AdminCardsPage() {
                       setShowBulkImport(false)
                       setBulkCharacters('')
                       setBulkImportResults(null)
+                      setBulkImportStartTime(null)
+                      setBulkImportElapsed(0)
                       fetchCards() // Refresh the cards list
                     }}
                     className="flex-1 py-3 bg-[#21262d] hover:bg-[#30363d] text-white rounded-lg transition-colors"
@@ -1641,7 +1897,199 @@ export default function AdminCardsPage() {
                   </button>
                 </div>
               </div>
-            )}
+            ) : null}
+          </div>
+        </div>
+      )}
+      
+      {/* Image Prompt Edit Modal */}
+      {editingImageCard && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#161b22] rounded-2xl p-6 max-w-4xl w-full border border-[#30363d] shadow-2xl max-h-[90vh] overflow-y-auto">
+            <h2 className="text-2xl font-bold text-[#f7cc48] mb-4">
+              Edit Image for {editingImageCard.hanzi}
+            </h2>
+            
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Current Image */}
+              <div>
+                <h3 className="text-lg font-semibold mb-3">Current Image</h3>
+                {editingImageCard.imageUrl ? (
+                  <img 
+                    src={editingImageCard.imageUrl} 
+                    alt={editingImageCard.hanzi}
+                    className="w-full rounded-lg border border-[#30363d]"
+                  />
+                ) : (
+                  <div className="aspect-square bg-gray-900 rounded-lg flex items-center justify-center">
+                    <ImageIcon className="w-16 h-16 text-gray-600" />
+                  </div>
+                )}
+                {/* Removed duplicate prompt display since it's now in the editable field */}
+              </div>
+              
+              {/* New Image Preview */}
+              <div>
+                <h3 className="text-lg font-semibold mb-3">New Image Preview</h3>
+                {tempImageUrl ? (
+                  <img 
+                    src={tempImageUrl} 
+                    alt="Preview"
+                    className="w-full rounded-lg border border-[#30363d]"
+                  />
+                ) : (
+                  <div className="aspect-square bg-gray-900 rounded-lg flex items-center justify-center">
+                    {generatingImage ? (
+                      <Loader2 className="w-8 h-8 text-[#f7cc48] animate-spin" />
+                    ) : (
+                      <span className="text-gray-500 text-center px-4">
+                        Generate a new image to see preview
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {/* Prompt Editor */}
+            <div className="mt-6">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Image Generation Prompt
+              </label>
+              <textarea
+                value={customImagePrompt}
+                onChange={(e) => setCustomImagePrompt(e.target.value)}
+                className="w-full px-4 py-3 bg-[#0d1117] border border-[#30363d] rounded-lg text-white focus:outline-none focus:border-[#f7cc48] h-24 resize-none"
+                placeholder="Enter a detailed prompt for image generation..."
+              />
+              <p className="text-xs text-gray-400 mt-2">
+                Tip: Be specific about style, composition, and visual elements. The AI will create an illustration based on this prompt.
+              </p>
+            </div>
+            
+            {/* Action Buttons */}
+            <div className="flex justify-between mt-6">
+              <div className="flex gap-3">
+                <button
+                  onClick={async () => {
+                    if (!customImagePrompt.trim()) {
+                      showAlert('Please enter a prompt', { type: 'error' })
+                      return
+                    }
+                    
+                    setGeneratingImage(true)
+                    try {
+                      const response = await fetch('/api/admin/cards/generate-image', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          cardId: editingImageCard._id,
+                          prompt: customImagePrompt,
+                          preview: true
+                        })
+                      })
+                      
+                      const data = await response.json()
+                      if (data.success && data.imageUrl) {
+                        setTempImageUrl(data.imageUrl)
+                        showAlert('Preview image generated!', { type: 'success' })
+                      } else {
+                        showAlert(data.error || 'Failed to generate image', { type: 'error' })
+                      }
+                    } catch (error) {
+                      console.error('Error generating image:', error)
+                      showAlert('Failed to generate image', { type: 'error' })
+                    } finally {
+                      setGeneratingImage(false)
+                    }
+                  }}
+                  disabled={generatingImage || !customImagePrompt.trim()}
+                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center gap-2"
+                >
+                  {generatingImage ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Generating Preview...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="w-4 h-4" />
+                      Generate Preview
+                    </>
+                  )}
+                </button>
+                
+                {tempImageUrl && (
+                  <button
+                    onClick={async () => {
+                      setSavingImage(true)
+                      try {
+                        const response = await fetch('/api/admin/cards/save-image', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            cardId: editingImageCard._id,
+                            imageUrl: tempImageUrl,
+                            prompt: customImagePrompt
+                          })
+                        })
+                        
+                        const data = await response.json()
+                        if (data.success) {
+                          showAlert('Image saved successfully!', { type: 'success' })
+                          // Update the card in the local state with new image URL and path
+                          setCards(cards.map(c => 
+                            c._id === editingImageCard._id 
+                              ? { 
+                                  ...c, 
+                                  imageUrl: data.imageUrl, 
+                                  imagePath: data.imagePath,
+                                  imagePrompt: customImagePrompt 
+                                }
+                              : c
+                          ))
+                          setEditingImageCard(null)
+                          setCustomImagePrompt('')
+                          setTempImageUrl(null)
+                        } else {
+                          showAlert(data.error || 'Failed to save image', { type: 'error' })
+                        }
+                      } catch (error) {
+                        console.error('Error saving image:', error)
+                        showAlert('Failed to save image', { type: 'error' })
+                      } finally {
+                        setSavingImage(false)
+                      }
+                    }}
+                    disabled={savingImage}
+                    className="px-6 py-3 bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center gap-2"
+                  >
+                    {savingImage ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Check className="w-4 h-4" />
+                        Accept & Save
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+              
+              <button
+                onClick={() => {
+                  setEditingImageCard(null)
+                  setCustomImagePrompt('')
+                  setTempImageUrl(null)
+                }}
+                className="px-6 py-3 bg-[#21262d] hover:bg-[#30363d] text-white rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}

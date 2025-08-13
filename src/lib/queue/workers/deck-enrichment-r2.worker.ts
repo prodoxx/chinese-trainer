@@ -1,17 +1,15 @@
 import { Worker, Job } from "bullmq";
 import getRedis from "../redis";
-import { DeckEnrichmentJobData } from "../queues";
+import { DeckEnrichmentJobData, getCardEnrichmentQueue } from "../queues";
 import connectDB from "@/lib/db/mongodb";
 import Card from "@/lib/db/models/Card";
 import Deck from "@/lib/db/models/Deck";
 import DeckCard from "@/lib/db/models/DeckCard";
 import Dictionary from "@/lib/db/models/Dictionary";
-// Removed unused imports:
-// import { generateTTSAudioR2 } from "@/lib/enrichment/azure-tts-r2";
-// import { generateDALLEImageR2 } from "@/lib/enrichment/openai-dalle-r2";
 import {
 	generateSharedAudio,
 	generateSharedImage,
+	checkSharedMediaExists,
 } from "@/lib/enrichment/shared-media";
 import { interpretChinese } from "@/lib/enrichment/openai-interpret";
 import {
@@ -20,10 +18,66 @@ import {
 } from "@/lib/utils/pinyin";
 import { getPreferredEntry } from "@/lib/enrichment/multi-pronunciation-handler";
 import { analyzeCharacterComplexity } from "@/lib/enrichment/character-complexity-analyzer";
-// Removed unused import:
-// import { EnhancedCharacterComplexity } from "@/lib/analytics/enhanced-linguistic-complexity";
 import { analyzeCharacterWithAI } from "@/lib/ai/ai-provider";
 import { registerWorker } from "../worker-monitor";
+import {
+	BATCH_CONFIG,
+	PARALLEL_CONFIG,
+	WORKER_CONCURRENCY,
+	JOB_CONFIG,
+	getWorkerConcurrency,
+} from "../config";
+
+// Rate limiter class for API calls
+class RateLimiter {
+	private tokens: number;
+	private maxTokens: number;
+	private refillRate: number;
+	private lastRefill: number;
+
+	constructor(tokensPerSecond: number) {
+		this.maxTokens = tokensPerSecond * 2; // Allow burst of 2x the rate
+		this.tokens = this.maxTokens;
+		this.refillRate = tokensPerSecond;
+		this.lastRefill = Date.now();
+	}
+
+	async acquire(count: number = 1): Promise<void> {
+		// Refill tokens based on elapsed time
+		const now = Date.now();
+		const elapsed = (now - this.lastRefill) / 1000;
+		this.tokens = Math.min(
+			this.maxTokens,
+			this.tokens + elapsed * this.refillRate
+		);
+		this.lastRefill = now;
+
+		// Wait if not enough tokens
+		while (this.tokens < count) {
+			const waitTime = ((count - this.tokens) / this.refillRate) * 1000;
+			await new Promise(resolve => setTimeout(resolve, Math.min(waitTime, 100)));
+			
+			// Refill again after waiting
+			const now = Date.now();
+			const elapsed = (now - this.lastRefill) / 1000;
+			this.tokens = Math.min(
+				this.maxTokens,
+				this.tokens + elapsed * this.refillRate
+			);
+			this.lastRefill = now;
+		}
+
+		this.tokens -= count;
+	}
+}
+
+// Create rate limiters for different services
+const openAIRateLimiter = new RateLimiter(2); // 2 calls per second
+const falRateLimiter = new RateLimiter(1); // 1 call per second
+const azureTTSRateLimiter = new RateLimiter(5); // 5 calls per second
+
+// Cache for dictionary lookups to reduce database queries
+const dictionaryCache = new Map<string, any[]>();
 
 export const deckEnrichmentR2Worker = new Worker<DeckEnrichmentJobData>(
 	"deck-enrichment",
@@ -35,17 +89,13 @@ export const deckEnrichmentR2Worker = new Worker<DeckEnrichmentJobData>(
 		const singleCardId = (job.data as any).cardId;
 		const singleCardHanzi = (job.data as any).hanzi;
 
-		if (isSingleCard) {
-			console.log(
-				`\n🚀 Starting single card enrichment for "${singleCardHanzi}" in deck "${deckName}"`,
-			);
-		} else {
-			console.log(
-				`\n🚀 Starting deck enrichment (R2) for "${deckName}" (${deckId})`,
-			);
-			console.log(`   Force mode: ${force}`);
-			console.log(`   Session: ${sessionId}`);
-		}
+		console.log(
+			`\n🚀 Starting ${isSingleCard ? 'single card' : 'deck'} enrichment (OPTIMIZED) for "${deckName}" (${deckId})`
+		);
+		console.log(`   Force mode: ${force}`);
+		console.log(`   Session: ${sessionId}`);
+		console.log(`   Batch size: ${BATCH_CONFIG.DECK_ENRICHMENT_BATCH_SIZE}`);
+		console.log(`   Parallel enrichment: ${PARALLEL_CONFIG.DECK_ENRICHMENT_PARALLEL}`);
 
 		try {
 			await connectDB();
@@ -61,7 +111,7 @@ export const deckEnrichmentR2Worker = new Worker<DeckEnrichmentJobData>(
 				cards = [card];
 				console.log(`   Found single card: ${card.hanzi}`);
 			} else {
-				// Full deck enrichment
+				// Full deck enrichment - fetch all cards
 				console.log("📋 Fetching cards from deck...");
 				const deckCards = await DeckCard.find({ deckId }).populate("cardId");
 				cards = deckCards.map((dc) => dc.cardId).filter((card) => card);
@@ -90,6 +140,7 @@ export const deckEnrichmentR2Worker = new Worker<DeckEnrichmentJobData>(
 
 			const totalCards = cards.length;
 			let processedCards = 0;
+			let failedCards = 0;
 
 			if (totalCards === 0) {
 				console.log("✅ No cards need enrichment");
@@ -113,344 +164,97 @@ export const deckEnrichmentR2Worker = new Worker<DeckEnrichmentJobData>(
 				enrichmentProgress: {
 					totalCards,
 					processedCards,
-					currentOperation: "Starting enrichment...",
+					currentOperation: "Starting optimized enrichment...",
 				},
 			});
 
-			for (const card of cards) {
-				try {
-					console.log(
-						`\n🔄 Processing card ${processedCards + 1}/${totalCards}: ${card.hanzi}`,
-					);
-					// cardId variable removed as it was unused
-				// const cardId = card._id.toString();
-
-					// Update deck status - dictionary lookup
-					await Deck.findByIdAndUpdate(deckId, {
-						enrichmentProgress: {
-							totalCards,
-							processedCards,
-							currentCard: card.hanzi,
-							currentOperation: "Looking up dictionary...",
-						},
-					});
-
-					// Check if card was already disambiguated
-					if (card.disambiguated && card.meaning && card.pinyin) {
-						console.log(
-							`   ✓ Using pre-selected meaning: ${card.pinyin} - ${card.meaning}`,
-						);
-
-						// Convert tone numbers to marks if needed
-						if (!hasToneMarks(card.pinyin)) {
-							card.pinyin = convertPinyinToneNumbersToMarks(card.pinyin);
-						}
-					} else {
-						// Look up in CEDICT for meaning only
-						const dictEntries = await Dictionary.find({
-							traditional: card.hanzi,
-						});
-
-						if (dictEntries.length > 0) {
-							console.log(`   ✓ Found in dictionary`);
-
-							// Get meaning from dictionary
-							if (dictEntries.length > 1) {
-								const preferredEntry = getPreferredEntry(
-									card.hanzi,
-									dictEntries,
-								);
-								card.meaning = preferredEntry.definitions[0] || "No definition";
-								console.log(
-									`   Multiple entries found, selected meaning: ${card.meaning}`,
-								);
-							} else {
-								// Single entry
-								card.meaning = dictEntries[0].definitions[0] || "No definition";
-							}
-
-							// Don't use dictionary pinyin - we'll get Taiwan pronunciation from AI
-							console.log(`   Will use AI for Taiwan-specific pronunciation`);
-						} else {
-							console.log(`   ✗ Not in dictionary, will use AI interpretation`);
-						}
+			// Pre-fetch all dictionary entries in batches for better performance
+			console.log("📚 Pre-fetching dictionary entries...");
+			const uniqueHanzi = [...new Set(cards.map(c => c.hanzi))];
+			
+			for (let i = 0; i < uniqueHanzi.length; i += BATCH_CONFIG.DICTIONARY_BATCH_SIZE) {
+				const batch = uniqueHanzi.slice(i, i + BATCH_CONFIG.DICTIONARY_BATCH_SIZE);
+				const dictEntries = await Dictionary.find({
+					traditional: { $in: batch }
+				});
+				
+				// Group by hanzi and cache
+				for (const entry of dictEntries) {
+					if (!dictionaryCache.has(entry.traditional)) {
+						dictionaryCache.set(entry.traditional, []);
 					}
+					dictionaryCache.get(entry.traditional)!.push(entry);
+				}
+			}
+			console.log(`   Cached dictionary entries for ${dictionaryCache.size} characters`);
 
-					// Always use AI interpretation for student-friendly meanings and Taiwan pronunciation unless already disambiguated
-					const needsInterpretation =
-						!card.disambiguated ||
-						!card.pinyin ||
-						!card.meaning ||
-						card.meaning === "Unknown character";
+			// Process cards in batches
+			const totalBatches = Math.ceil(cards.length / BATCH_CONFIG.DECK_ENRICHMENT_BATCH_SIZE);
 
-					if (needsInterpretation) {
-						console.log(
-							`   🤖 Using AI interpretation for student-friendly meaning...`,
-						);
+			for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
+				const start = batchIndex * BATCH_CONFIG.DECK_ENRICHMENT_BATCH_SIZE;
+				const end = Math.min(start + BATCH_CONFIG.DECK_ENRICHMENT_BATCH_SIZE, cards.length);
+				const batch = cards.slice(start, end);
 
-						await Deck.findByIdAndUpdate(deckId, {
-							enrichmentProgress: {
-								totalCards,
-								processedCards,
-								currentCard: card.hanzi,
-								currentOperation: "AI interpretation...",
-							},
-						});
+				console.log(`\n📦 Processing batch ${batchIndex + 1}/${totalBatches} (${batch.length} cards)`);
 
-						const interpretation = await interpretChinese(card.hanzi);
+				// Update deck status for batch
+				await Deck.findByIdAndUpdate(deckId, {
+					enrichmentProgress: {
+						totalCards,
+						processedCards,
+						currentOperation: `Processing batch ${batchIndex + 1}/${totalBatches}`,
+					},
+				});
 
-						if (interpretation) {
-							// Always use AI meaning for clearer, student-friendly explanations
-							card.meaning = interpretation.meaning || card.meaning;
-							card.pinyin = interpretation.pinyin || card.pinyin;
-							
-							// Save the interpretation prompt
-							if (interpretation.interpretationPrompt) {
-								card.interpretationPrompt = interpretation.interpretationPrompt;
-							}
-							
-							console.log(`   ✓ AI provided: ${card.pinyin} - ${card.meaning}`);
-						} else {
-							// Final fallback
-							card.meaning = card.meaning || "Unknown character";
-							card.pinyin = card.pinyin || "Unknown";
-							console.log(`   ⚠️ AI interpretation failed, using fallback`);
-						}
-					}
-
-					// Generate character complexity analysis
-					console.log(`   📊 Analyzing character complexity...`);
-					await Deck.findByIdAndUpdate(deckId, {
-						enrichmentProgress: {
-							totalCards,
-							processedCards,
-							currentCard: card.hanzi,
-							currentOperation: "Analyzing character...",
-						},
-					});
-
-					const complexityAnalysis = await analyzeCharacterComplexity(
-						card.hanzi,
-						card.pinyin,
-						card.meaning
-					);
-
-					// Apply analysis results to card
-					if (complexityAnalysis.semanticCategory) card.semanticCategory = complexityAnalysis.semanticCategory;
-					if (complexityAnalysis.tonePattern) card.tonePattern = complexityAnalysis.tonePattern;
-					if (complexityAnalysis.strokeCount) card.strokeCount = complexityAnalysis.strokeCount;
-					if (complexityAnalysis.componentCount) card.componentCount = complexityAnalysis.componentCount;
-					if (complexityAnalysis.visualComplexity !== undefined) card.visualComplexity = complexityAnalysis.visualComplexity;
-					if (complexityAnalysis.overallDifficulty !== undefined) card.overallDifficulty = complexityAnalysis.overallDifficulty;
-					if (complexityAnalysis.radicals) card.radicals = complexityAnalysis.radicals;
-					if (complexityAnalysis.semanticFields) card.semanticFields = complexityAnalysis.semanticFields;
-					if (complexityAnalysis.conceptType) card.conceptType = complexityAnalysis.conceptType;
-					if (complexityAnalysis.frequency) card.frequency = complexityAnalysis.frequency;
-					if (complexityAnalysis.contextExamples) card.contextExamples = complexityAnalysis.contextExamples;
-					if (complexityAnalysis.collocations) card.collocations = complexityAnalysis.collocations;
-
-					console.log(`   ✓ Character analysis saved: ${card.semanticCategory}, difficulty: ${card.overallDifficulty}`);
-
-					// Generate image with R2
-					console.log(`   🎨 Generating image...`);
-					await Deck.findByIdAndUpdate(deckId, {
-						enrichmentProgress: {
-							totalCards,
-							processedCards,
-							currentCard: card.hanzi,
-							currentOperation: "Generating image...",
-						},
-					});
-
-					const image = await generateSharedImage(
-						card.hanzi,
-						card.meaning,
-						card.pinyin,
-						force,
-						card.imagePath, // Pass existing path for deletion if force regenerating
-					);
-
-					if (image.imageUrl) {
-						card.imageUrl = image.imageUrl;
-						card.imagePath = image.imagePath; // Save the R2 storage path
-						card.imageSource = "dalle";
-						card.imageSourceId = image.cached ? "cached" : "generated";
-						card.imageAttribution = "AI Generated";
-						card.imageAttributionUrl = "";
-						// Save the image prompt if available
-						if (image.prompt) {
-							card.imagePrompt = image.prompt;
-						}
-						console.log(
-							`   ✓ Image ${image.cached ? "retrieved from cache" : "generated"}`,
-						);
-					} else {
-						// Clear image fields if generation failed
-						card.imageUrl = "";
-						card.imageSource = undefined;
-						card.imageSourceId = undefined;
-						card.imageAttribution = undefined;
-						card.imageAttributionUrl = undefined;
-						card.imagePrompt = undefined;
-						console.log(`   ⚠️ Image generation skipped or failed`);
-					}
-
-					// Generate TTS audio with R2
-					console.log(`   🔊 Generating audio...`);
-					await Deck.findByIdAndUpdate(deckId, {
-						enrichmentProgress: {
-							totalCards,
-							processedCards,
-							currentCard: card.hanzi,
-							currentOperation: "Generating audio...",
-						},
-					});
-
-					// Ensure we have pinyin before generating audio
-					if (!card.pinyin) {
-						console.error(
-							`   ✗ Cannot generate audio without pinyin for ${card.hanzi}`,
-						);
-						card.audioUrl = "";
-					} else {
+				// Process cards within batch in parallel (with concurrency limit)
+				const batchResults = await processCardsInParallel(
+					batch,
+					async (card) => {
 						try {
-							const ttsResult = await generateSharedAudio(
-								card.hanzi,
-								card.pinyin,
-								false,
-								card.meaning,
-								card.audioPath, // Pass existing path (though not forcing regeneration)
-							); // Never force regenerate audio
-							card.audioUrl = ttsResult.audioUrl;
-							card.audioPath = ttsResult.audioPath; // Save the R2 storage path
-							console.log(
-								`   ✓ Audio ${ttsResult.cached ? "retrieved from cache" : "generated"}`,
+							await enrichSingleCard(
+								card,
+								force,
+								deckId,
+								totalCards,
+								processedCards
 							);
-						} catch (ttsError) {
-							console.error(`   ✗ TTS generation failed:`, ttsError);
-							card.audioUrl = "";
+							processedCards++;
+							
+							// Update progress
+							await job.updateProgress(
+								Math.round((processedCards / totalCards) * 100)
+							);
+							
+							return { success: true };
+						} catch (error) {
+							console.error(`   ❌ Error enriching card ${card.hanzi}:`, error);
+							failedCards++;
+							return { success: false, error };
 						}
-					}
+					},
+					PARALLEL_CONFIG.DECK_ENRICHMENT_PARALLEL
+				);
 
-					// Generate AI insights if they don't exist, are empty, or if forced
-					console.log(`   🧠 Checking AI insights for ${card.hanzi}...`);
-					
-					// Check if AI insights have actual content (not just empty structure)
-					const hasValidAIInsights = card.aiInsights && 
-						card.aiInsights.etymology?.origin && 
-						card.aiInsights.mnemonics?.visual && 
-						card.aiInsights.learningTips?.forBeginners?.length > 0;
-					
-					console.log(`   Current AI insights: ${hasValidAIInsights ? 'VALID' : 'EMPTY/MISSING'}`);
-					console.log(`   Force regeneration: ${force}`);
-					
-					if (!hasValidAIInsights || force) {
-						console.log(`   🚀 Starting AI insights generation for ${card.hanzi}...`);
-						await Deck.findByIdAndUpdate(deckId, {
-							enrichmentProgress: {
-								totalCards,
-								processedCards,
-								currentCard: card.hanzi,
-								currentOperation: "Creating AI insights...",
-							},
-						});
+				// Save all cards in batch at once (bulk update)
+				const successfulCards = batch.filter((_, index) => batchResults[index].success);
+				if (successfulCards.length > 0) {
+					await Card.bulkSave(successfulCards);
+					console.log(`   💾 Batch saved: ${successfulCards.length} cards`);
+				}
 
-						try {
-							// Use OpenAI for AI insights
-							const aiConfig = {
-								provider: 'openai' as const,
-								enabled: true
-							};
-							
-							console.log(`   📋 Using OpenAI for AI insights generation`);
-							
-							const aiInsights = await analyzeCharacterWithAI(card.hanzi, aiConfig);
-							
-							console.log(`   ✨ AI insights received:`, {
-								hasEtymology: !!aiInsights?.etymology,
-								hasMnemonics: !!aiInsights?.mnemonics,
-								hasLearningTips: !!aiInsights?.learningTips,
-								hasCommonErrors: !!aiInsights?.commonErrors,
-								hasUsage: !!aiInsights?.usage
-							});
-							
-							// Validate that AI insights have actual content
-							const isValidInsights = aiInsights && 
-								aiInsights.etymology?.origin && 
-								aiInsights.mnemonics?.visual && 
-								aiInsights.learningTips?.forBeginners?.length > 0;
-							
-							if (isValidInsights) {
-								card.aiInsights = aiInsights;
-								card.aiInsightsGeneratedAt = new Date();
-								console.log(`   ✅ Valid AI insights saved to card`);
-							} else {
-								console.warn(`   ⚠️ AI insights returned but were empty or invalid`);
-								console.warn(`   Details:`, {
-									etymologyOrigin: aiInsights?.etymology?.origin || 'MISSING',
-									mnemonicsVisual: aiInsights?.mnemonics?.visual || 'MISSING',
-									learningTipsCount: aiInsights?.learningTips?.forBeginners?.length || 0
-								});
-								// Don't save invalid insights
-								card.aiInsights = undefined;
-							}
-							
-							// Save the linguistic analysis prompt
-							if (aiInsights.linguisticAnalysisPrompt) {
-								card.linguisticAnalysisPrompt = aiInsights.linguisticAnalysisPrompt;
-							}
-							
-							console.log(`   ✓ AI insights generated with OpenAI`);
-							console.log(`   📝 AI insights will be saved to database`);
-						} catch (aiError) {
-							console.error(`   ✗ AI insights generation failed:`, aiError);
-							console.error(`   Error details:`, {
-								message: aiError instanceof Error ? aiError.message : 'Unknown error',
-								stack: aiError instanceof Error ? aiError.stack : undefined
-							});
-							
-							// IMPORTANT: Don't save empty AI insights structure
-							// If generation failed, either keep existing insights or set to null
-							if (!card.aiInsights || !card.aiInsights.etymology?.origin) {
-								console.log(`   ⚠️ Preventing save of empty AI insights structure`);
-								card.aiInsights = undefined; // Remove empty structure
-							}
-						}
-					} else {
-						console.log(`   ⏭️ Skipping AI insights generation (already exists or not forced)`);
-					}
-
-					// Mark as cached and save
-					card.cached = true;
-					await card.save();
-
-					processedCards++;
-					console.log(
-						`   ✅ Card enriched successfully (${processedCards}/${totalCards})`,
-					);
-
-					// Update progress
-					await Deck.findByIdAndUpdate(deckId, {
-						enrichmentProgress: {
-							totalCards,
-							processedCards,
-							currentCard: card.hanzi,
-							currentOperation: `Enriched ${card.hanzi}`,
-						},
-					});
-
-					// Report progress
-					await job.updateProgress(
-						Math.round((processedCards / totalCards) * 100),
-					);
-				} catch (cardError) {
-					console.error(`   ❌ Error enriching card ${card.hanzi}:`, cardError);
-					// Continue with next card
+				// Add delay between batches to prevent overwhelming the system
+				if (batchIndex < totalBatches - 1) {
+					console.log(`   ⏱️ Waiting ${BATCH_CONFIG.DECK_ENRICHMENT_BATCH_DELAY}ms before next batch...`);
+					await new Promise(resolve => setTimeout(resolve, BATCH_CONFIG.DECK_ENRICHMENT_BATCH_DELAY));
 				}
 			}
 
+			// Clear dictionary cache to free memory
+			dictionaryCache.clear();
+
 			// Update deck to ready status
-			console.log("\n✅ Deck enrichment completed!");
+			console.log(`\n✅ Deck enrichment completed! Processed: ${processedCards}, Failed: ${failedCards}`);
 			await Deck.findByIdAndUpdate(deckId, {
 				status: "ready",
 				enrichmentProgress: {
@@ -464,6 +268,7 @@ export const deckEnrichmentR2Worker = new Worker<DeckEnrichmentJobData>(
 				success: true,
 				totalCards,
 				processedCards,
+				failedCards,
 				message: `Successfully enriched ${processedCards} out of ${totalCards} cards`,
 			};
 		} catch (error) {
@@ -482,9 +287,248 @@ export const deckEnrichmentR2Worker = new Worker<DeckEnrichmentJobData>(
 	},
 	{
 		connection: getRedis(),
-		concurrency: 2, // Process 2 decks at a time
+		concurrency: getWorkerConcurrency('DECK_ENRICHMENT'),
+		lockDuration: JOB_CONFIG.DECK_ENRICHMENT_LOCK,
+		lockRenewTime: JOB_CONFIG.LOCK_RENEW_TIME,
 	},
 );
 
+// Helper function to process cards in parallel with concurrency limit
+async function processCardsInParallel<T>(
+	items: T[],
+	processor: (item: T) => Promise<any>,
+	concurrency: number
+): Promise<any[]> {
+	const results: any[] = [];
+	const executing: Promise<void>[] = [];
+
+	for (let i = 0; i < items.length; i++) {
+		const promise = processor(items[i]).then(result => {
+			results[i] = result;
+		});
+
+		executing.push(promise);
+
+		if (executing.length >= concurrency) {
+			await Promise.race(executing);
+			// Remove completed promises
+			executing.splice(
+				executing.findIndex(p => p === promise),
+				1
+			);
+		}
+	}
+
+	await Promise.all(executing);
+	return results;
+}
+
+// Enrichment function for a single card
+async function enrichSingleCard(
+	card: any,
+	force: boolean,
+	deckId: string,
+	totalCards: number,
+	processedCards: number
+): Promise<void> {
+	console.log(`   🔄 Processing card: ${card.hanzi}`);
+
+	// Check if shared media already exists (to skip unnecessary API calls)
+	const { audioExists, imageExists } = await checkSharedMediaExists(card.hanzi);
+
+	// Check if card was already disambiguated
+	if (card.disambiguated && card.meaning && card.pinyin) {
+		console.log(`      ✓ Using pre-selected meaning: ${card.pinyin} - ${card.meaning}`);
+
+		// Convert tone numbers to marks if needed
+		if (!hasToneMarks(card.pinyin)) {
+			card.pinyin = convertPinyinToneNumbersToMarks(card.pinyin);
+		}
+	} else {
+		// Look up in cached dictionary entries
+		const dictEntries = dictionaryCache.get(card.hanzi) || [];
+
+		if (dictEntries.length > 0) {
+			console.log(`      ✓ Found in dictionary cache`);
+
+			// Get meaning from dictionary
+			if (dictEntries.length > 1) {
+				const preferredEntry = getPreferredEntry(card.hanzi, dictEntries);
+				card.meaning = preferredEntry.definitions[0] || "No definition";
+			} else {
+				card.meaning = dictEntries[0].definitions[0] || "No definition";
+			}
+		}
+	}
+
+	// Use AI interpretation if needed (with rate limiting)
+	const needsInterpretation =
+		!card.disambiguated ||
+		!card.pinyin ||
+		!card.meaning ||
+		card.meaning === "Unknown character";
+
+	if (needsInterpretation) {
+		console.log(`      🤖 Using AI interpretation...`);
+		
+		// Acquire rate limit token before calling OpenAI
+		await openAIRateLimiter.acquire();
+		
+		const interpretation = await interpretChinese(card.hanzi);
+
+		if (interpretation) {
+			card.meaning = interpretation.meaning || card.meaning;
+			card.pinyin = interpretation.pinyin || card.pinyin;
+			
+			if (interpretation.interpretationPrompt) {
+				card.interpretationPrompt = interpretation.interpretationPrompt;
+			}
+		} else {
+			card.meaning = card.meaning || "Unknown character";
+			card.pinyin = card.pinyin || "Unknown";
+		}
+	}
+
+	// Generate character complexity analysis (lightweight, no API calls)
+	if (!card.semanticCategory || force) {
+		const complexityAnalysis = await analyzeCharacterComplexity(
+			card.hanzi,
+			card.pinyin,
+			card.meaning
+		);
+
+		// Apply analysis results to card
+		Object.assign(card, {
+			semanticCategory: complexityAnalysis.semanticCategory,
+			tonePattern: complexityAnalysis.tonePattern,
+			strokeCount: complexityAnalysis.strokeCount,
+			componentCount: complexityAnalysis.componentCount,
+			visualComplexity: complexityAnalysis.visualComplexity,
+			overallDifficulty: complexityAnalysis.overallDifficulty,
+			radicals: complexityAnalysis.radicals,
+			semanticFields: complexityAnalysis.semanticFields,
+			conceptType: complexityAnalysis.conceptType,
+			frequency: complexityAnalysis.frequency,
+			contextExamples: complexityAnalysis.contextExamples,
+			collocations: complexityAnalysis.collocations,
+		});
+	}
+
+	// Generate image with rate limiting (only if needed)
+	if (!imageExists || force) {
+		console.log(`      🎨 Generating image...`);
+		
+		// Acquire rate limit token before calling fal.ai
+		await falRateLimiter.acquire();
+		
+		const image = await generateSharedImage(
+			card.hanzi,
+			card.meaning,
+			card.pinyin,
+			force,
+			card.imagePath,
+		);
+
+		if (image.imageUrl) {
+			card.imageUrl = image.imageUrl;
+			card.imagePath = image.imagePath;
+			card.imageSource = "dalle";
+			card.imageSourceId = image.cached ? "cached" : "generated";
+			card.imageAttribution = "AI Generated";
+			card.imageAttributionUrl = "";
+			if (image.prompt) {
+				card.imagePrompt = image.prompt;
+			}
+		}
+	} else {
+		console.log(`      ⏭️ Skipping image (already exists)`);
+	}
+
+	// Generate TTS audio with rate limiting (only if needed)
+	if (!audioExists || !card.audioUrl || force) {
+		if (!card.pinyin) {
+			console.error(`      ✗ Cannot generate audio without pinyin`);
+			card.audioUrl = "";
+		} else {
+			console.log(`      🔊 Generating audio...`);
+			
+			// Acquire rate limit token before calling Azure TTS
+			await azureTTSRateLimiter.acquire();
+			
+			try {
+				const ttsResult = await generateSharedAudio(
+					card.hanzi,
+					card.pinyin,
+					false,
+					card.meaning,
+					card.audioPath,
+				);
+				card.audioUrl = ttsResult.audioUrl;
+				card.audioPath = ttsResult.audioPath;
+			} catch (ttsError) {
+				console.error(`      ✗ TTS generation failed:`, ttsError);
+				card.audioUrl = "";
+			}
+		}
+	} else {
+		console.log(`      ⏭️ Skipping audio (already exists)`);
+	}
+
+	// Generate AI insights if needed (with rate limiting)
+	const hasValidAIInsights = card.aiInsights && 
+		card.aiInsights.etymology?.origin && 
+		card.aiInsights.mnemonics?.visual && 
+		card.aiInsights.learningTips?.forBeginners?.length > 0;
+
+	if (!hasValidAIInsights || force) {
+		console.log(`      🧠 Generating AI insights...`);
+		
+		// Acquire rate limit token before calling OpenAI
+		await openAIRateLimiter.acquire();
+		
+		try {
+			const aiConfig = {
+				provider: 'openai' as const,
+				enabled: true
+			};
+			
+			const aiInsights = await analyzeCharacterWithAI(card.hanzi, aiConfig);
+			
+			const isValidInsights = aiInsights && 
+				aiInsights.etymology?.origin && 
+				aiInsights.mnemonics?.visual && 
+				aiInsights.learningTips?.forBeginners?.length > 0;
+			
+			if (isValidInsights) {
+				card.aiInsights = aiInsights;
+				card.aiInsightsGeneratedAt = new Date();
+				
+				if (aiInsights.linguisticAnalysisPrompt) {
+					card.linguisticAnalysisPrompt = aiInsights.linguisticAnalysisPrompt;
+				}
+			}
+		} catch (aiError) {
+			console.error(`      ✗ AI insights generation failed:`, aiError);
+		}
+	} else {
+		console.log(`      ⏭️ Skipping AI insights (already exists)`);
+	}
+
+	// Mark as cached
+	card.cached = true;
+	console.log(`      ✅ Card enriched successfully`);
+}
+
 // Register worker for monitoring
 registerWorker(deckEnrichmentR2Worker, "deck-enrichment");
+
+// Handle graceful shutdown
+process.on('SIGTERM', async () => {
+	console.log('SIGTERM received, closing deck enrichment worker...');
+	await deckEnrichmentR2Worker.close();
+});
+
+process.on('SIGINT', async () => {
+	console.log('SIGINT received, closing deck enrichment worker...');
+	await deckEnrichmentR2Worker.close();
+});

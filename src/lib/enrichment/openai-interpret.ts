@@ -49,12 +49,15 @@ Important:
 - Use tone MARKS (ā á ǎ à), not tone numbers
 - Be clear and specific - avoid vague or overly formal meanings
 - For imagePrompt: CRITICAL - Determine the semantic category first:
+  * PEOPLE (family, relatives, professions): Show FULL BODY or three-quarter view, avoid close-ups of hands/feet, use culturally appropriate context
   * OBJECTS (coffee, food, items): Show ONLY the object in detail, NO people holding or using it
   * EMOTIONS/FEELINGS: Focus on human expressions and body language
   * ACTIONS/VERBS: Show people performing the action
   * PLACES: Show the environment or location
   * ABSTRACT CONCEPTS: Use symbolic representations
   Examples: 
+  - 奶奶 (grandmother): "Warm elderly Asian grandmother sitting in living room, full body view, traditional setting"
+  - 老人 (elderly person): "Dignified elderly Asian person on park bench, full body, peaceful expression"
   - 咖啡 (coffee): "Close-up of steaming hot coffee in a ceramic cup, rich brown crema on top, coffee beans scattered around"
   - 快樂 (happy): "Person with genuine bright smile, eyes crinkled with joy, radiating happiness"
   - 跑步 (run): "Athletic person mid-stride running in park, dynamic motion"
@@ -66,7 +69,7 @@ Important:
 				{
 					role: "system",
 					content:
-						"You are a Taiwan Mandarin teacher creating flash cards for language learners. Use SIMPLE, COMMON English words that everyone knows (avoid advanced vocabulary). Keep meanings SHORT (2-5 words max). For emotion/feeling characters, focus on the emotional state (e.g., 煩='annoyed' not 'trouble'). For image prompts: CRITICAL - First identify if the word is an OBJECT (物品/東西), EMOTION (情緒/感覺), ACTION (動作), PLACE (地方), or ABSTRACT concept. For OBJECTS like 咖啡, 書, 電腦, 水果 etc., describe ONLY the object itself in detail - no people, just the item. For EMOTIONS, show human expressions. For ACTIONS, show people doing the action. Focus on creating memorable visual associations that help students recall meanings.",
+						"You are a Taiwan Mandarin teacher creating flash cards for language learners. Use SIMPLE, COMMON English words that everyone knows (avoid advanced vocabulary). Keep meanings SHORT (2-5 words max). For emotion/feeling characters, focus on the emotional state (e.g., 煩='annoyed' not 'trouble'). For image prompts: CRITICAL - First identify if the word is a PERSON (人/家人/職業), OBJECT (物品/東西), EMOTION (情緒/感覺), ACTION (動作), PLACE (地方), or ABSTRACT concept. For PEOPLE like 奶奶, 爺爺, 老人, 朋友, 老師 etc., show FULL BODY or three-quarter view in appropriate settings, avoid close-ups of hands/feet to prevent AI anomalies, use culturally appropriate context for Asian family terms. For OBJECTS like 咖啡, 書, 電腦, 水果 etc., describe ONLY the object itself in detail - no people, just the item. For EMOTIONS, show human expressions. For ACTIONS, show people doing the action. Focus on creating memorable visual associations that help students recall meanings.",
 				},
 				{
 					role: "user",

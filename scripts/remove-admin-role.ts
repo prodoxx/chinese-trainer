@@ -1,13 +1,13 @@
 import { prisma } from '@/lib/db'
 
-async function setAdminRole(email?: string) {
-  // Get email from command line argument or use default
+async function removeAdminRole(email?: string) {
+  // Get email from command line argument
   const targetEmail = email || process.argv[2];
   
   if (!targetEmail) {
     console.error('❌ Please provide an email address as an argument')
-    console.log('Usage: bun run scripts/set-admin-role.ts <email>')
-    console.log('Example: bun run scripts/set-admin-role.ts user@example.com')
+    console.log('Usage: bun run scripts/remove-admin-role.ts <email>')
+    console.log('Example: bun run scripts/remove-admin-role.ts user@example.com')
     process.exit(1)
   }
   
@@ -29,23 +29,23 @@ async function setAdminRole(email?: string) {
       process.exit(1)
     }
     
-    // Check if already admin
-    if (existingUser.role === 'admin') {
-      console.log(`ℹ️ User ${targetEmail} is already an admin`)
+    // Check if not admin
+    if (existingUser.role !== 'admin') {
+      console.log(`ℹ️ User ${targetEmail} is not an admin (current role: ${existingUser.role})`)
       process.exit(0)
     }
     
-    // Update user role to admin
+    // Update user role to regular user
     const user = await prisma.user.update({
       where: {
         email: targetEmail
       },
       data: {
-        role: 'admin'
+        role: 'user'
       }
     })
     
-    console.log(`✅ Successfully updated user role to admin for ${user.email}`)
+    console.log(`✅ Successfully removed admin role from ${user.email}`)
     console.log('User details:', {
       id: user.id,
       name: user.name,
@@ -61,4 +61,4 @@ async function setAdminRole(email?: string) {
 }
 
 // Run the script with command line argument
-setAdminRole()
+removeAdminRole()

@@ -6,6 +6,7 @@ import "./cursor-fix.css";
 import { AlertProvider } from "@/hooks/useAlert";
 import { AudioProvider } from "@/contexts/AudioContext";
 import { Providers } from "./providers";
+import StructuredData from "@/components/StructuredData";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -88,6 +89,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <StructuredData />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${nunito.variable} antialiased`}
       >

@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
       .sort(sort)
       .skip(skip)
       .limit(limit)
-      .select('_id hanzi pinyin meaning imageUrl audioUrl createdAt updatedAt')
+      .select('_id hanzi pinyin meaning imageUrl audioUrl imagePrompt imagePath createdAt updatedAt')
       .lean();
 
     // Get enrichment stats

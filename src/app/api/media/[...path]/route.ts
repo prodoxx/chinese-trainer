@@ -24,8 +24,8 @@ export async function GET(
     const { path } = await context.params;
     const fullPath = path.join('/');
     
-    // Only allow access to shared paths
-    if (!fullPath.startsWith('shared/')) {
+    // Only allow access to shared paths or cards paths
+    if (!fullPath.startsWith('shared/') && !fullPath.startsWith('cards/')) {
       return NextResponse.json(
         { error: 'Invalid media path' }, 
         { status: 403 }

@@ -60,6 +60,7 @@ model User {
   settings          UserSettings?
   reminderPreferences UserReminderPreferences?
   reminderLogs      ReminderLog[]
+  enrichmentUsage   DailyEnrichmentUsage?
 }
 
 model VerificationToken {
@@ -129,6 +130,19 @@ model ReminderLog {
   status                String   @default("sent") // sent, failed
   error                 String?
   createdAt             DateTime @default(now())
+
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+
+// Daily enrichment usage tracking (temporary until paywall is implemented)
+model DailyEnrichmentUsage {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  enrichmentsToday      Int      @default(0)
+  lastResetDate         DateTime @default(now())
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 
   user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

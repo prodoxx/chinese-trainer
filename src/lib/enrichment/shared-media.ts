@@ -332,6 +332,9 @@ export async function generateSharedImage(
 			}
 		}
 
+		// Import our prompt optimization service
+		const { optimizeImagePrompt } = await import('@/lib/enrichment/prompt-optimization-service');
+		
 		// Generate mnemonic-focused prompt using AI interpretation
 		let prompt = "";
 		let queryProvider: string | undefined;
@@ -339,85 +342,100 @@ export async function generateSharedImage(
 		let queryResult: string | undefined;
 
 		try {
-			// Use AI interpretation to get a better image prompt
-			// Pass the disambiguated meaning as context for accurate image generation
-			const aiConfig = {
-				provider: 'openai' as const,
-				enabled: true
-			};
+			// Use the optimization service to generate the best prompt
+			const optimizationResult = await optimizeImagePrompt(hanzi, meaning, pinyin);
 			
-			const interpretation = await interpretChineseWithProvider(hanzi, aiConfig, meaning);
-			
-			// Store query information
-			queryProvider = 'OpenAI';
-			queryPrompt = interpretation?.interpretationPrompt || '';
-			queryResult = interpretation?.imagePrompt || '';
-			
-			if (interpretation && interpretation.imagePrompt) {
-				// Clean any Chinese characters or text references from the prompt
-				const cleanedPrompt = interpretation.imagePrompt
-					.replace(/[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]/g, '') // Remove Chinese chars
-					// Remove phrases that reference text/characters
-					.replace(/\bwith[^,.]*(written|text|characters|words|letters|labeled)[^,.]*[,.]?/gi, '')
-					.replace(/\b(the )?(character|text|word|letter|writing|label)[^,.]*(showing|displaying|above|below|beside)[^,.]*[,.]?/gi, '')
-					.replace(/\bto emphasize that[^,.]*means[^,.]*[,.]?/gi, '') // Remove "to emphasize that X means Y"
-					.replace(/\bmeans "[^"]*"/gi, '') // Remove 'means "something"'
-					.replace(/\bmeans '[^']*'/gi, '') // Remove "means 'something'"
-					.replace(/\b(written|labeled|marked|showing|displaying) (in|with|as)[^,.]*[,.]?/gi, '')
-					.replace(/\bin bold\b/gi, '')
-					.replace(/\bwith.*written\b/gi, '')
-					.replace(/\bcharacters.*showing\b/gi, '')
-					.replace(/\btext.*displaying\b/gi, '')
-					.replace(/\bwords.*on\b/gi, '')
-					.replace(/\bwith.*characters\b/gi, '')
-					.replace(/\bthe character.*above\b/gi, '')
-					.replace(/\bwritten in bold\b/gi, '')
-					.replace(/\bare written\b/gi, '')
-					.replace(/\bwith text\b/gi, '')
-					.replace(/\bshowing text\b/gi, '')
-					.replace(/\bdisplaying words\b/gi, '')
-					.replace(/\blabeled\b/gi, '')
-					// Clean up the result
-					.replace(/\s+/g, ' ')
-					.replace(/\s+([,.])/g, '$1')
-					.replace(/,\s*,/g, ',')
-					.replace(/\.\s*\./g, '.')
-					.replace(/^\s*[,.]/, '') // Remove leading punctuation
-					.trim();
+			if (optimizationResult.prompt) {
+				prompt = optimizationResult.prompt;
+				queryProvider = 'Intelligent Optimizer';
+				queryPrompt = `Optimizations: ${optimizationResult.metadata.optimizations.join(', ') || 'none'}`;
+				queryResult = optimizationResult.prompt;
 				
-				// Adapt the prompt for fal.ai - focus on mnemonic visual association
-				const basePrompt = cleanedPrompt
-					.replace(/CRITICAL.*$/, "")
-					.trim();
-				
-				// If the prompt is too short or generic after cleaning, generate a better one
-				if (!basePrompt || basePrompt.length < 30 || 
-					basePrompt.includes("illustration of a gray cloud") ||
-					basePrompt.includes("clear illustration representing")) {
-					// Generate a specific prompt based on the meaning
-					const meaningLower = meaning.toLowerCase();
-					if (meaningLower === "rain" || meaningLower.includes("rain")) {
-						prompt = `Dark storm cloud with heavy rain falling onto wet ground, raindrops creating ripples in puddles. Photorealistic, moody weather scene. No text anywhere.`;
-					} else {
-						// Fall back to meaning-based generation
-						prompt = `Photorealistic visual for "${meaning}": Simple, clear scene with minimal elements. Professional photography, no text anywhere.`;
-					}
-				} else {
-					// Prefer simpler scenes to reduce AI artifacts - maximum 3 people
-					const simplificationHint =
-						meaning.toLowerCase().includes("play") ||
-						meaning.toLowerCase().includes("group")
-							? " Show MAXIMUM 3 people only for clarity."
-							: " Prefer single person or object when possible.";
-
-					prompt = `Mnemonic visual aid for learning: ${basePrompt} Photorealistic image that helps students remember the meaning "${meaning}" through real-life association.${simplificationHint} No text, letters, numbers, or written characters anywhere. Professional photography style, natural lighting, high quality, web-friendly resolution.`;
+				// Log optimization details
+				if (optimizationResult.metadata.warnings.length > 0) {
+					console.log(`   Warnings: ${optimizationResult.metadata.warnings.join(', ')}`);
 				}
-				console.log(
-					`Using AI-generated mnemonic prompt (${queryProvider}) for ${hanzi}: "${meaning}"`,
-				);
+				console.log(`   Confidence: ${(optimizationResult.confidence * 100).toFixed(0)}%`);
 			} else {
-				throw new Error("No AI image prompt available");
-			}
+				// Fall back to AI interpretation if needed
+				const aiConfig = {
+					provider: 'openai' as const,
+					enabled: true
+				};
+				
+				const interpretation = await interpretChineseWithProvider(hanzi, aiConfig, meaning);
+				
+				// Store query information
+				queryProvider = 'OpenAI';
+				queryPrompt = interpretation?.interpretationPrompt || '';
+				queryResult = interpretation?.imagePrompt || '';
+				
+					if (interpretation && interpretation.imagePrompt) {
+						// Clean any Chinese characters or text references from the prompt
+						const cleanedPrompt = interpretation.imagePrompt
+							.replace(/[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]/g, '') // Remove Chinese chars
+							// Remove phrases that reference text/characters
+							.replace(/\bwith[^,.]*(written|text|characters|words|letters|labeled)[^,.]*[,.]?/gi, '')
+							.replace(/\b(the )?(character|text|word|letter|writing|label)[^,.]*(showing|displaying|above|below|beside)[^,.]*[,.]?/gi, '')
+							.replace(/\bto emphasize that[^,.]*means[^,.]*[,.]?/gi, '') // Remove "to emphasize that X means Y"
+							.replace(/\bmeans "[^"]*"/gi, '') // Remove 'means "something"'
+							.replace(/\bmeans '[^']*'/gi, '') // Remove "means 'something'"
+							.replace(/\b(written|labeled|marked|showing|displaying) (in|with|as)[^,.]*[,.]?/gi, '')
+							.replace(/\bin bold\b/gi, '')
+							.replace(/\bwith.*written\b/gi, '')
+							.replace(/\bcharacters.*showing\b/gi, '')
+							.replace(/\btext.*displaying\b/gi, '')
+							.replace(/\bwords.*on\b/gi, '')
+							.replace(/\bwith.*characters\b/gi, '')
+							.replace(/\bthe character.*above\b/gi, '')
+							.replace(/\bwritten in bold\b/gi, '')
+							.replace(/\bare written\b/gi, '')
+							.replace(/\bwith text\b/gi, '')
+							.replace(/\bshowing text\b/gi, '')
+							.replace(/\bdisplaying words\b/gi, '')
+							.replace(/\blabeled\b/gi, '')
+							// Clean up the result
+							.replace(/\s+/g, ' ')
+							.replace(/\s+([,.])/g, '$1')
+							.replace(/,\s*,/g, ',')
+							.replace(/\.\s*\./g, '.')
+							.replace(/^\s*[,.]/, '') // Remove leading punctuation
+							.trim();
+						
+						// Adapt the prompt for fal.ai - focus on mnemonic visual association
+						const basePrompt = cleanedPrompt
+							.replace(/CRITICAL.*$/, "")
+							.trim();
+						
+						// If the prompt is too short or generic after cleaning, generate a better one
+						if (!basePrompt || basePrompt.length < 30 || 
+							basePrompt.includes("illustration of a gray cloud") ||
+							basePrompt.includes("clear illustration representing")) {
+							// Generate a specific prompt based on the meaning
+							const meaningLower = meaning.toLowerCase();
+							if (meaningLower === "rain" || meaningLower.includes("rain")) {
+								prompt = `Dark storm cloud with heavy rain falling onto wet ground, raindrops creating ripples in puddles. Photorealistic, moody weather scene. No text anywhere.`;
+							} else {
+								// Fall back to meaning-based generation
+								prompt = `Photorealistic visual for "${meaning}": Simple, clear scene with minimal elements. Professional photography, no text anywhere.`;
+							}
+						} else {
+							// Prefer simpler scenes to reduce AI artifacts - maximum 3 people
+							const simplificationHint =
+								meaning.toLowerCase().includes("play") ||
+								meaning.toLowerCase().includes("group")
+									? " Show MAXIMUM 3 people only for clarity."
+									: " Prefer single person or object when possible.";
+
+							prompt = `Mnemonic visual aid for learning: ${basePrompt} Photorealistic image that helps students remember the meaning "${meaning}" through real-life association.${simplificationHint} No text, letters, numbers, or written characters anywhere. Professional photography style, natural lighting, high quality, web-friendly resolution.`;
+						}
+						console.log(
+							`Using AI-generated mnemonic prompt (${queryProvider}) for ${hanzi}: "${meaning}"`,
+						);
+					} else {
+						throw new Error("No AI image prompt available");
+					}
+				}
 		} catch {
 			// Fallback to dynamic prompt generation
 			console.log(
