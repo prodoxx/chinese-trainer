@@ -13,7 +13,7 @@ Danbing integrates OpenAI's GPT-4 for text analysis and Fal.ai's Flux-Krea-Lora 
 - **Error analysis**: Common mistakes and confusion patterns
 - **Contextual examples**: Level-appropriate sentences and collocations
 
-### Fal.ai Flux-Pro for Visual Content
+### Fal.ai Imagen4/Preview for Visual Content
 - **Mnemonic visuals**: Memory-enhancing images that help students associate meanings
 - **Educational design**: Photorealistic images optimized for memory retention
 - **Learning enhancement**: Visual associations that improve character retention
@@ -189,7 +189,7 @@ For the character "愛" (love):
 
 ### Mnemonic Visual Generation
 
-Fal.ai's Flux-Pro model generates photorealistic mnemonic images with automatic validation:
+Fal.ai's Imagen4/Preview model generates high-quality mnemonic images with automatic validation:
 
 ```typescript
 import { fal } from '@fal-ai/client';
@@ -201,16 +201,14 @@ let currentPrompt = mnemonicPrompt;
 
 for (let attempt = 1; attempt <= 3; attempt++) {
   // Generate image
-  const result = await fal.run("fal-ai/flux-pro", {
+  const result = await fal.run("fal-ai/imagen4/preview", {
     input: {
       prompt: currentPrompt,
-      image_size: "square_hd",
-      num_inference_steps: 28,
-      guidance_scale: 3.5,
-      num_images: 1,
-      safety_tolerance: 2,
-      output_format: "jpeg"
-    }
+      negative_prompt: "No text, letters, numbers, or written characters. No stereotypes or inappropriate content.",
+      steps: 20,
+      cfg_scale: 7.5,
+      seed: Math.floor(Math.random() * 1000000),
+    } as any
   });
 
   // Validate for AI artifacts
@@ -454,7 +452,7 @@ export async function getDailyAICosts(date: string) {
 | OpenAI GPT-4 | Character Interpretation | ~$0.003 | Pronunciation, meaning, pinyin |
 | OpenAI GPT-4 | Deep Linguistic Analysis | ~$0.015 | Etymology, mnemonics, learning tips |
 | OpenAI GPT-4o-mini | Image Validation | ~$0.002 | Per validation attempt |
-| Fal.ai Flux-Pro | Image Generation | ~$0.005 | Per image attempt |
+| Fal.ai Imagen4/Preview | Image Generation | ~$0.005 | Per image attempt |
 | Azure TTS | Audio Generation | ~$0.001 | Per character audio |
 
 **Total per character (first time)**: ~$0.026 - $0.036 (depending on validation retries)

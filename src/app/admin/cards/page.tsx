@@ -18,6 +18,7 @@ import {
   Loader2,
   Shield,
   Zap,
+  Brain,
   XCircle,
   CheckCircle,
   AlertCircle,
@@ -151,9 +152,14 @@ export default function AdminCardsPage() {
 
     // Check if we're in development mode
     // setIsDevelopment(process.env.NODE_ENV === 'development')
-
-    fetchCards()
   }, [session, status, router, showAlert])
+
+  // Initial fetch when auth is ready
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user?.role === 'admin') {
+      fetchCards()
+    }
+  }, [status, session?.user?.role])
 
   // Track elapsed time during bulk import
   useEffect(() => {
@@ -188,6 +194,8 @@ export default function AdminCardsPage() {
 
   // Debounced search
   useEffect(() => {
+    if (status !== 'authenticated' || session?.user?.role !== 'admin') return
+    
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current)
     }
@@ -205,21 +213,14 @@ export default function AdminCardsPage() {
         clearTimeout(searchTimeoutRef.current)
       }
     }
-  }, [searchTerm])
+  }, [searchTerm, status, session?.user?.role])
 
-  // Re-fetch when filters change
+  // Re-fetch when filters or pagination change
   useEffect(() => {
-    if (pagination.page !== 1) {
-      setPagination(prev => ({ ...prev, page: 1 }))
-    } else {
-      fetchCards()
-    }
-  }, [filterStatus, sortBy, sortOrder])
-
-  // Re-fetch when page changes
-  useEffect(() => {
+    if (status !== 'authenticated' || session?.user?.role !== 'admin') return
+    
     fetchCards()
-  }, [pagination.page])
+  }, [filterStatus, sortBy, sortOrder, pagination.page])
 
   const fetchCards = async () => {
     try {
@@ -337,6 +338,45 @@ export default function AdminCardsPage() {
       showAlert('Failed to delete cards', { type: 'error' })
     } finally {
       setBulkDeleting(false)
+    }
+  }
+
+  const handleRegenerateAIInsights = async (cardId: string) => {
+    try {
+      setReEnrichingCards(prev => new Set(prev).add(cardId))
+      setEnrichmentStatus(prev => new Map(prev).set(cardId, 'Regenerating AI insights...'))
+      
+      const response = await fetch(`/api/admin/cards/${cardId}/regenerate-ai-insights`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to regenerate AI insights')
+      }
+
+      const result = await response.json()
+      
+      showAlert(`AI insights regenerated for ${result.card.hanzi}`, { type: 'success' })
+      
+      // Refresh the cards list to show updated data
+      await fetchCards()
+      
+    } catch (error) {
+      console.error('Failed to regenerate AI insights:', error)
+      showAlert(error instanceof Error ? error.message : 'Failed to regenerate AI insights', { type: 'error' })
+    } finally {
+      setReEnrichingCards(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(cardId)
+        return newSet
+      })
+      setEnrichmentStatus(prev => {
+        const newMap = new Map(prev)
+        newMap.delete(cardId)
+        return newMap
+      })
     }
   }
 
@@ -1270,11 +1310,30 @@ export default function AdminCardsPage() {
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-2">
                               <button
+                                onClick={() => handleRegenerateAIInsights(card._id)}
+                                disabled={reEnrichingCards.has(card._id)}
+                                className="flex items-center gap-1 px-2 py-1 bg-[#1a1f2e] hover:bg-[#21262d] text-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                                title="Regenerate AI insights only (keeps media)"
+                              >
+                                {reEnrichingCards.has(card._id) && enrichmentStatus.get(card._id)?.includes('AI insights') ? (
+                                  <div className="flex items-center gap-1">
+                                    <RefreshCw className="w-3 h-3 animate-spin" />
+                                    <span className="text-xs">AI...</span>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <Brain className="w-3 h-3" />
+                                    <span className="text-xs">AI</span>
+                                  </>
+                                )}
+                              </button>
+                              <button
                                 onClick={() => handleReEnrichCard(card._id)}
                                 disabled={reEnrichingCards.has(card._id)}
                                 className="flex items-center gap-2 px-3 py-1 bg-[#21262d] hover:bg-[#30363d] text-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                                title="Full re-enrichment (AI + media)"
                               >
-                                {reEnrichingCards.has(card._id) ? (
+                                {reEnrichingCards.has(card._id) && !enrichmentStatus.get(card._id)?.includes('AI insights') ? (
                                   <div className="flex items-center gap-2">
                                     <RefreshCw className="w-3 h-3 animate-spin" />
                                     <span className="text-xs">{enrichmentStatus.get(card._id) || 'Processing...'}</span>
@@ -1428,6 +1487,25 @@ export default function AdminCardsPage() {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
+                                handleRegenerateAIInsights(card._id)
+                              }}
+                              disabled={isReEnriching}
+                              className={`flex items-center justify-center gap-1 px-2 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                isReEnriching 
+                                  ? 'bg-gray-700 text-gray-400 cursor-not-allowed' 
+                                  : 'bg-purple-600 hover:bg-purple-700 text-white'
+                              }`}
+                              title="Regenerate AI insights only"
+                            >
+                              {isReEnriching && enrichmentStatus.get(card._id)?.includes('AI insights') ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : (
+                                <Brain className="w-3 h-3" />
+                              )}
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
                                 handleReEnrichCard(card._id)
                               }}
                               disabled={isReEnriching}
@@ -1436,8 +1514,9 @@ export default function AdminCardsPage() {
                                   ? 'bg-gray-700 text-gray-400 cursor-not-allowed' 
                                   : 'bg-[#f7cc48] hover:bg-[#f7cc48]/90 text-black'
                               }`}
+                              title="Full re-enrichment (AI + media)"
                             >
-                              {isReEnriching ? (
+                              {isReEnriching && !enrichmentStatus.get(card._id)?.includes('AI insights') ? (
                                 <>
                                   <Loader2 className="w-3 h-3 animate-spin" />
                                   <span className="text-xs">Enriching...</span>
@@ -1445,7 +1524,7 @@ export default function AdminCardsPage() {
                               ) : (
                                 <>
                                   <Zap className="w-3 h-3" />
-                                  <span>Re-enrich</span>
+                                  <span>Full</span>
                                 </>
                               )}
                             </button>

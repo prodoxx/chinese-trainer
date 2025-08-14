@@ -157,7 +157,7 @@ Validation results are stored in R2 metadata:
 ```javascript
 metadata: {
   generatedAt: new Date().toISOString(),
-  source: 'fal-flux-pro',
+  source: 'fal-imagen4-preview',
   validated: 'true',  // or 'false'
   validationAttempts: '3'
 }

@@ -26,11 +26,11 @@ We've implemented a sophisticated image prompt generation system that creates be
 ## Implementation Details
 
 ### New Files Created
-1. **`src/lib/enrichment/image-prompt-generator.ts`**
+1. **`src/lib/enrichment/intelligent-prompt-generator.ts`**
    - Core logic for semantic analysis
    - Special case handling for specific characters
    - Educational prompt generation
-   - Skip logic for grammatical particles
+   - Symbolic representation for grammatical particles
 
 ### Files Updated
 1. **`src/lib/enrichment/shared-media.ts`**
