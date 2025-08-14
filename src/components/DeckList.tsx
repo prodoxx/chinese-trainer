@@ -21,7 +21,7 @@ interface Deck {
 	id: string;
 	name: string;
 	cardsCount: number;
-	status: "importing" | "enriching" | "ready";
+	status: "importing" | "enriching" | "ready" | "error";
 	enrichmentProgress?: {
 		totalCards: number;
 		processedCards: number;
@@ -74,7 +74,7 @@ export default function DeckList({ onSelectDeck }: DeckListProps) {
 
 	useEffect(() => {
 		// Poll for deck updates every 2 seconds if any deck is importing/enriching
-		const hasNonReadyDecks = decks.some((d) => d.status !== "ready");
+		const hasNonReadyDecks = decks.some((d) => d.status === "importing" || d.status === "enriching");
 
 		if (hasNonReadyDecks) {
 			const interval = setInterval(fetchDecks, 2000);
@@ -296,10 +296,14 @@ export default function DeckList({ onSelectDeck }: DeckListProps) {
 													className={`text-xs px-2 py-0.5 rounded-full ${
 														deck.status === "importing"
 															? "bg-blue-900/50 text-blue-300"
-															: "bg-yellow-900/50 text-yellow-300"
+															: deck.status === "enriching"
+															? "bg-yellow-900/50 text-yellow-300"
+															: deck.status === "error"
+															? "bg-red-900/50 text-red-300"
+															: "bg-gray-900/50 text-gray-300"
 													}`}
 												>
-													{deck.status}
+													{deck.status === "error" ? "Enrichment failed" : deck.status}
 												</span>
 											)}
 										</p>
@@ -386,7 +390,7 @@ export default function DeckList({ onSelectDeck }: DeckListProps) {
 							<div className="absolute top-4 right-4">
 									<button
 										onClick={(e) => handleDelete(e, deck.id, deck.name)}
-										disabled={deletingDeck === deck.id || deck.status !== "ready"}
+										disabled={deletingDeck === deck.id || (deck.status !== "ready" && deck.status !== "error")}
 										className="p-2 text-gray-400 hover:text-red-400 hover:bg-white/5 rounded-xl transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed backdrop-blur-sm"
 										title="Delete deck"
 									>
@@ -400,7 +404,7 @@ export default function DeckList({ onSelectDeck }: DeckListProps) {
 							</div>
 						
 						{/* Enrichment progress - full width */}
-						{deck.status !== "ready" && deck.enrichmentProgress && (
+						{(deck.status === "importing" || deck.status === "enriching") && deck.enrichmentProgress && (
 							<div className="mt-4 p-4 bg-[#161b22] rounded-xl border border-[#30363d]">
 								<div className="flex justify-between text-xs text-gray-400 mb-2">
 									<span className="flex items-center gap-1.5">
@@ -428,10 +432,17 @@ export default function DeckList({ onSelectDeck }: DeckListProps) {
 								)}
 							</div>
 						)}
-						{deck.status !== "ready" && !deck.enrichmentProgress && (
+						{(deck.status === "importing" || deck.status === "enriching") && !deck.enrichmentProgress && (
 							<div className="mt-4 p-4 bg-[#161b22] rounded-xl border border-[#30363d]">
 								<div className="text-sm text-gray-500 text-center">
 									{deck.status === "importing" ? "Importing cards..." : "Preparing deck..."}
+								</div>
+							</div>
+						)}
+						{deck.status === "error" && (
+							<div className="mt-4 p-4 bg-red-900/20 rounded-xl border border-red-900/50">
+								<div className="text-sm text-red-400 text-center">
+									{deck.enrichmentProgress?.currentOperation || "Enrichment failed"}
 								</div>
 							</div>
 						)}

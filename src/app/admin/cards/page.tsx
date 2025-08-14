@@ -240,9 +240,12 @@ export default function AdminCardsPage() {
 		fetchCards();
 	}, [filterStatus, sortBy, sortOrder, pagination.page]);
 
-	const fetchCards = async () => {
+	const fetchCards = async (isRefresh: boolean = false) => {
 		try {
-			setLoading(true);
+			// Only show loading indicator for initial load, not for refreshes
+			if (!isRefresh) {
+				setLoading(true);
+			}
 			const params = new URLSearchParams({
 				page: pagination.page.toString(),
 				limit: pagination.limit.toString(),
@@ -270,7 +273,7 @@ export default function AdminCardsPage() {
 
 	const handleRefresh = () => {
 		setRefreshing(true);
-		fetchCards();
+		fetchCards(true);
 	};
 
 	const handleDeleteCard = async () => {
@@ -301,7 +304,7 @@ export default function AdminCardsPage() {
 				: `Card "${deleteConfirmation.hanzi}" deleted successfully`;
 			showAlert(message, { type: "success" });
 			setDeleteConfirmation(null);
-			fetchCards(); // Refresh the list
+			fetchCards(true); // Refresh the list
 		} catch (error) {
 			console.error("Error deleting card:", error);
 			showAlert("Failed to delete card", { type: "error" });
@@ -349,7 +352,7 @@ export default function AdminCardsPage() {
 			// Clear selection and refresh
 			setSelectedCards(new Set());
 			setBulkDeleteConfirmation(false);
-			fetchCards();
+			fetchCards(true);
 		} catch (error) {
 			console.error("Error during bulk delete:", error);
 			showAlert("Failed to delete cards", { type: "error" });
@@ -385,7 +388,7 @@ export default function AdminCardsPage() {
 			});
 
 			// Refresh the cards list to show updated data
-			await fetchCards();
+			await fetchCards(true);
 		} catch (error) {
 			console.error("Failed to regenerate AI insights:", error);
 			showAlert(
@@ -480,7 +483,7 @@ export default function AdminCardsPage() {
 							next.delete(cardId);
 							return next;
 						});
-						fetchCards(); // Refresh to show updated data
+						fetchCards(true); // Refresh to show updated data
 
 						if (jobStatus.state === "failed") {
 							const failureReason = jobStatus.failedReason || "Unknown error";
@@ -626,7 +629,7 @@ export default function AdminCardsPage() {
 
 									if (jobStatus.state === "completed") {
 										// Refresh the card in the list
-										fetchCards();
+										fetchCards(true);
 									} else if (jobStatus.state === "failed") {
 										const failureReason =
 											jobStatus.failedReason || "Unknown error";
@@ -735,6 +738,7 @@ export default function AdminCardsPage() {
 	const handlePageChange = (newPage: number) => {
 		setPagination((prev) => ({ ...prev, page: newPage }));
 		window.scrollTo({ top: 0, behavior: "smooth" });
+		// Note: fetchCards will be called automatically by the useEffect that watches pagination.page
 	};
 
 	const handleBulkImport = async () => {
@@ -791,7 +795,7 @@ export default function AdminCardsPage() {
 				setBulkImportResults(data);
 				setBulkImporting(false);
 				setBulkImportStartTime(null);
-				fetchCards();
+				fetchCards(true);
 			}
 		} catch (error) {
 			console.error("Bulk import error:", error);
@@ -886,7 +890,7 @@ export default function AdminCardsPage() {
 						}
 					}
 
-					fetchCards();
+					fetchCards(true);
 					showAlert("Bulk import completed successfully", { type: "success" });
 				} else if (jobStatus.state === "failed") {
 					if (bulkImportPollRef.current) {
@@ -974,7 +978,7 @@ export default function AdminCardsPage() {
 						return newMap;
 					});
 					updateEnrichmentCount(true); // Increment completed count
-					fetchCards();
+					fetchCards(true);
 				} else if (jobStatus.state === "failed" || attempts >= maxAttempts) {
 					clearInterval(pollInterval);
 					pollIntervalsRef.current.delete(cardId);
@@ -990,7 +994,7 @@ export default function AdminCardsPage() {
 					});
 
 					updateEnrichmentCount(true); // Still count as completed even if failed
-					fetchCards();
+					fetchCards(true);
 				} else if (jobStatus.progress?.message) {
 					setEnrichmentStatus((prev) =>
 						new Map(prev).set(cardId, jobStatus.progress.message),
@@ -1012,7 +1016,7 @@ export default function AdminCardsPage() {
 						return newMap;
 					});
 					updateEnrichmentCount(true); // Count as completed even on error
-					fetchCards();
+					fetchCards(true);
 				}
 			}
 		}, 1000);
@@ -1064,6 +1068,12 @@ export default function AdminCardsPage() {
 							</div>
 
 							<div className="flex gap-3">
+								{bulkImporting && (
+									<div className="flex items-center gap-2 px-4 py-2 bg-[#0d1117] border border-[#30363d] rounded-lg text-sm text-[#f7cc48]">
+										<Loader2 className="w-4 h-4 animate-spin" />
+										Importing...
+									</div>
+								)}
 								<button
 									onClick={() => setShowBulkImport(true)}
 									className="flex items-center gap-2 px-4 py-2 bg-[#f7cc48] hover:bg-[#f7cc48]/90 text-black font-medium rounded-lg transition-colors"
@@ -1079,13 +1089,19 @@ export default function AdminCardsPage() {
 									<RefreshCw
 										className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`}
 									/>
-									Refresh
+									{refreshing ? "Refreshing..." : "Refresh"}
 								</button>
 							</div>
 						</div>
 
 						{/* Stats */}
 						<div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+							{refreshing && (
+								<div className="col-span-4 flex items-center justify-center gap-2 py-2 text-sm text-[#f7cc48]">
+									<RefreshCw className="w-4 h-4 animate-spin" />
+									Updating card statistics...
+								</div>
+							)}
 							<button
 								onClick={() => setFilterStatus("all")}
 								className={`bg-[#161b22] border rounded-lg p-4 text-left transition-all ${
@@ -1173,10 +1189,18 @@ export default function AdminCardsPage() {
 
 					{/* Cards Section */}
 					<div className="space-y-6">
-						<h2 className="text-xl font-bold text-white flex items-center gap-2">
-							<Shield className="w-5 h-5 text-[#f7cc48]" />
-							Cards Management
-						</h2>
+						<div className="flex items-center justify-between">
+							<h2 className="text-xl font-bold text-white flex items-center gap-2">
+								<Shield className="w-5 h-5 text-[#f7cc48]" />
+								Cards Management
+							</h2>
+							{refreshing && (
+								<div className="flex items-center gap-2 text-sm text-[#f7cc48]">
+									<RefreshCw className="w-4 h-4 animate-spin" />
+									Updating cards...
+								</div>
+							)}
+						</div>
 
 						{/* Controls */}
 						<div className="bg-[#161b22] border border-[#30363d] rounded-lg p-4">
@@ -1192,6 +1216,10 @@ export default function AdminCardsPage() {
 											onChange={(e) => setSearchTerm(e.target.value)}
 											className="w-full pl-10 pr-4 py-2 bg-[#0d1117] border border-[#30363d] rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#f7cc48] focus:ring-1 focus:ring-[#f7cc48]"
 										/>
+										{/* Show loading indicator when searching */}
+										{loading && !refreshing && (
+											<Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 animate-spin text-[#f7cc48]" />
+										)}
 									</div>
 								</div>
 
@@ -1208,6 +1236,10 @@ export default function AdminCardsPage() {
 										<option value="pending">Not Enriched</option>
 										<option value="partial">Partially Enriched</option>
 									</select>
+									{/* Show loading indicator when filter changes */}
+									{loading && !refreshing && (
+										<Loader2 className="w-4 h-4 animate-spin text-[#f7cc48]" />
+									)}
 								</div>
 
 								{/* Sort */}
@@ -1229,6 +1261,10 @@ export default function AdminCardsPage() {
 										<option value="hanzi-asc">Character (A-Z)</option>
 										<option value="hanzi-desc">Character (Z-A)</option>
 									</select>
+									{/* Show loading indicator when sort changes */}
+									{loading && !refreshing && (
+										<Loader2 className="w-4 h-4 animate-spin text-[#f7cc48]" />
+									)}
 								</div>
 
 								{/* View Toggle */}
@@ -1292,6 +1328,16 @@ export default function AdminCardsPage() {
 
 						{/* Cards Table */}
 						<div className="bg-[#161b22] border border-[#30363d] rounded-lg overflow-hidden">
+							{/* Re-enrichment Status */}
+							{reEnrichingCards.size > 0 && (
+								<div className="bg-[#0d1117] border-b border-[#30363d] px-6 py-3">
+									<div className="flex items-center gap-2 text-sm text-[#f7cc48]">
+										<RefreshCw className="w-4 h-4 animate-spin" />
+										Re-enriching {reEnrichingCards.size} card
+										{reEnrichingCards.size > 1 ? "s" : ""}...
+									</div>
+								</div>
+							)}
 							{cards.length === 0 ? (
 								<div className="flex flex-col items-center justify-center p-8 text-center">
 									<Hash className="w-12 h-12 text-gray-600 mb-3" />
@@ -1504,6 +1550,16 @@ export default function AdminCardsPage() {
 							) : (
 								/* Grid View */
 								<div className="flex flex-wrap gap-4 p-6 justify-center">
+									{/* Re-enrichment Status for Grid */}
+									{reEnrichingCards.size > 0 && (
+										<div className="w-full text-center mb-4">
+											<div className="inline-flex items-center gap-2 px-4 py-2 bg-[#0d1117] border border-[#30363d] rounded-lg text-sm text-[#f7cc48]">
+												<RefreshCw className="w-4 h-4 animate-spin" />
+												Re-enriching {reEnrichingCards.size} card
+												{reEnrichingCards.size > 1 ? "s" : ""}...
+											</div>
+										</div>
+									)}
 									{cards.map((card) => {
 										const enrichStatus = getEnrichmentStatus(card);
 										const isReEnriching = reEnrichingCards.has(card._id);
@@ -1738,13 +1794,22 @@ export default function AdminCardsPage() {
 						{/* Pagination */}
 						{pagination.totalPages > 1 && (
 							<div className="flex items-center justify-between bg-[#161b22] border border-[#30363d] rounded-lg p-4">
-								<div className="text-sm text-gray-400">
-									Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
-									{Math.min(
-										pagination.page * pagination.limit,
-										pagination.totalCount,
-									)}{" "}
-									of {pagination.totalCount} cards
+								<div className="flex items-center gap-3">
+									<div className="text-sm text-gray-400">
+										Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
+										{Math.min(
+											pagination.page * pagination.limit,
+											pagination.totalCount,
+										)}{" "}
+										of {pagination.totalCount} cards
+									</div>
+									{/* Show loading indicator when pagination changes */}
+									{loading && !refreshing && (
+										<div className="flex items-center gap-2 text-sm text-[#f7cc48]">
+											<Loader2 className="w-4 h-4 animate-spin" />
+											Loading page...
+										</div>
+									)}
 								</div>
 								<div className="flex items-center gap-2">
 									<button
@@ -2308,7 +2373,7 @@ export default function AdminCardsPage() {
 											setBulkImportResults(null);
 											setBulkImportStartTime(null);
 											setBulkImportElapsed(0);
-											fetchCards(); // Refresh the cards list
+											fetchCards(true); // Refresh the cards list
 										}}
 										className="flex-1 py-3 bg-[#21262d] hover:bg-[#30363d] text-white rounded-lg transition-colors"
 									>

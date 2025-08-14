@@ -299,26 +299,32 @@ async function processCardsInParallel<T>(
 	processor: (item: T) => Promise<any>,
 	concurrency: number
 ): Promise<any[]> {
-	const results: any[] = [];
-	const executing: Promise<void>[] = [];
+	const results: any[] = new Array(items.length);
+	const executing: Set<Promise<void>> = new Set();
 
 	for (let i = 0; i < items.length; i++) {
-		const promise = processor(items[i]).then(result => {
-			results[i] = result;
-		});
+		const index = i; // Capture index in closure
+		const promise = processor(items[index])
+			.then(result => {
+				results[index] = result;
+			})
+			.catch(error => {
+				// Ensure errors are captured in results
+				results[index] = { success: false, error };
+			})
+			.finally(() => {
+				executing.delete(promise);
+			});
 
-		executing.push(promise);
+		executing.add(promise);
 
-		if (executing.length >= concurrency) {
+		// Wait if we've reached concurrency limit
+		if (executing.size >= concurrency) {
 			await Promise.race(executing);
-			// Remove completed promises
-			executing.splice(
-				executing.findIndex(p => p === promise),
-				1
-			);
 		}
 	}
 
+	// Wait for remaining promises
 	await Promise.all(executing);
 	return results;
 }
