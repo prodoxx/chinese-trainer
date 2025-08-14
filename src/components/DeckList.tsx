@@ -409,12 +409,12 @@ export default function DeckList({ onSelectDeck }: DeckListProps) {
 								<div className="flex justify-between text-xs text-gray-400 mb-2">
 									<span className="flex items-center gap-1.5">
 										<RefreshCw className="w-3 h-3 animate-spin" />
-										{deck.enrichmentProgress.currentOperation ||
-											"Processing..."}
+										{deck.status === "importing" 
+											? "Importing characters..." 
+											: "Enriching characters with images and audio..."}
 									</span>
-									<span>
-										{deck.enrichmentProgress.processedCards}/
-										{deck.enrichmentProgress.totalCards}
+									<span className="font-medium text-gray-300">
+										{deck.enrichmentProgress.processedCards} of {deck.enrichmentProgress.totalCards}
 									</span>
 								</div>
 								<div className="w-full bg-gray-900 rounded-full h-2 overflow-hidden">
@@ -425,9 +425,9 @@ export default function DeckList({ onSelectDeck }: DeckListProps) {
 										}}
 									/>
 								</div>
-								{deck.enrichmentProgress.currentCard && (
+								{deck.enrichmentProgress.currentCard && deck.status === "enriching" && (
 									<p className="text-xs text-gray-500 mt-2 truncate">
-										Current: {deck.enrichmentProgress.currentCard}
+										Currently processing: {deck.enrichmentProgress.currentCard}
 									</p>
 								)}
 							</div>

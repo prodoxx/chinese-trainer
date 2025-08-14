@@ -120,18 +120,21 @@ export const deckEnrichmentR2Worker = new Worker<DeckEnrichmentJobData>(
 				// Filter cards that need enrichment
 				if (!force) {
 					const beforeFilter = cards.length;
-					cards = cards.filter(
-						(card) =>
-							!card.cached ||
-							card.imageSource === "placeholder" ||
-							!card.imageUrl ||
-							!card.audioUrl ||
-							// Check if URLs are R2 URLs
-							(card.imageUrl &&
-								!card.imageUrl.includes(process.env.R2_PUBLIC_URL)) ||
-							(card.audioUrl &&
-								!card.audioUrl.includes(process.env.R2_PUBLIC_URL)),
-					);
+					cards = cards.filter((card) => {
+						// Skip if card is already fully enriched
+						const hasValidImage = card.imageUrl && 
+							card.imageUrl.startsWith('/api/media/') &&
+							card.imageSource !== "placeholder";
+						const hasValidAudio = card.audioUrl && 
+							card.audioUrl.startsWith('/api/media/');
+						const isFullyEnriched = card.cached && hasValidImage && hasValidAudio && card.meaning && card.pinyin;
+						
+						if (isFullyEnriched) {
+							console.log(`      ⏭️ Skipping already enriched card: ${card.hanzi} (${card.pinyin})`);
+							return false;
+						}
+						return true;
+					});
 					console.log(
 						`   Filtered to ${cards.length} cards needing enrichment (${beforeFilter - cards.length} already enriched)`,
 					);
@@ -164,7 +167,7 @@ export const deckEnrichmentR2Worker = new Worker<DeckEnrichmentJobData>(
 				enrichmentProgress: {
 					totalCards,
 					processedCards,
-					currentOperation: "Starting optimized enrichment...",
+					currentOperation: "Enriching characters...",
 				},
 			});
 
@@ -198,12 +201,13 @@ export const deckEnrichmentR2Worker = new Worker<DeckEnrichmentJobData>(
 
 				console.log(`\n📦 Processing batch ${batchIndex + 1}/${totalBatches} (${batch.length} cards)`);
 
-				// Update deck status for batch
+				// Update deck status showing character progress
 				await Deck.findByIdAndUpdate(deckId, {
 					enrichmentProgress: {
 						totalCards,
 						processedCards,
-						currentOperation: `Processing batch ${batchIndex + 1}/${totalBatches}`,
+						currentOperation: `Enriching characters...`,
+						currentCard: batch[0].hanzi,
 					},
 				});
 
@@ -221,7 +225,17 @@ export const deckEnrichmentR2Worker = new Worker<DeckEnrichmentJobData>(
 							);
 							processedCards++;
 							
-							// Update progress
+							// Update progress in database
+							await Deck.findByIdAndUpdate(deckId, {
+								enrichmentProgress: {
+									totalCards,
+									processedCards,
+									currentOperation: `Enriching characters...`,
+									currentCard: card.hanzi,
+								},
+							});
+							
+							// Update job progress
 							await job.updateProgress(
 								Math.round((processedCards / totalCards) * 100)
 							);
@@ -338,6 +352,20 @@ async function enrichSingleCard(
 	processedCards: number
 ): Promise<void> {
 	console.log(`   🔄 Processing card: ${card.hanzi}`);
+
+	// Early exit if card is already fully enriched and not forcing
+	if (!force && card.cached) {
+		const hasValidImage = card.imageUrl && 
+			card.imageUrl.startsWith('/api/media/') &&
+			card.imageSource !== "placeholder";
+		const hasValidAudio = card.audioUrl && 
+			card.audioUrl.startsWith('/api/media/');
+		
+		if (hasValidImage && hasValidAudio && card.meaning && card.pinyin) {
+			console.log(`      ⏭️ Card already fully enriched, skipping: ${card.hanzi} (${card.pinyin})`);
+			return;
+		}
+	}
 
 	// Check if shared media already exists (to skip unnecessary API calls)
 	const { audioExists, imageExists } = await checkSharedMediaExists(card.hanzi);

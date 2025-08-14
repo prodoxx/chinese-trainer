@@ -35,16 +35,7 @@ export const deckImportWorker = new Worker<DeckImportJobData>(
       for (let i = 0; i < hanziList.length; i += BATCH_SIZE) {
         const batch = hanziList.slice(i, i + BATCH_SIZE);
         
-        // Update deck status in database
-        await Deck.findByIdAndUpdate(deckId, {
-          enrichmentProgress: {
-            totalCards: hanziList.length,
-            processedCards,
-            currentOperation: `Processing characters ${i + 1}-${Math.min(i + BATCH_SIZE, hanziList.length)}...`,
-          }
-        });
-        
-        const batchPromises = batch.map(async (hanzi) => {
+        const batchPromises = batch.map(async (hanzi, index) => {
           // Check if we have disambiguation selection for this character
           const disambiguationSelection = disambiguationSelections?.[hanzi];
           
@@ -58,7 +49,15 @@ export const deckImportWorker = new Worker<DeckImportJobData>(
             });
           } else {
             // No disambiguation, look for any card with this hanzi
-            card = await Card.findOne({ hanzi });
+            // Prefer enriched cards over non-enriched ones
+            card = await Card.findOne({ 
+              hanzi,
+              $or: [
+                { cached: true },
+                { imageUrl: { $exists: true } },
+                { audioUrl: { $exists: true } }
+              ]
+            }) || await Card.findOne({ hanzi });
           }
           
           if (!card) {
@@ -75,8 +74,10 @@ export const deckImportWorker = new Worker<DeckImportJobData>(
             
             card = await Card.create(cardData);
             newCardsCount++;
+            console.log(`      ✨ Created new card: ${hanzi}`);
           } else {
             existingCardsCount++;
+            console.log(`      ♻️ Reusing existing card: ${hanzi} (${card.pinyin || 'no pinyin yet'})`);
           }
           
           // Create or update review record for this user
@@ -103,7 +104,16 @@ export const deckImportWorker = new Worker<DeckImportJobData>(
         await Promise.all(batchPromises);
         processedCards += batch.length;
         
-        // Update progress
+        // Update deck status in database with current progress
+        await Deck.findByIdAndUpdate(deckId, {
+          enrichmentProgress: {
+            totalCards: hanziList.length,
+            processedCards,
+            currentOperation: `Importing characters...`,
+          }
+        });
+        
+        // Update job progress
         const progress = Math.round((processedCards / hanziList.length) * 100);
         await job.updateProgress(progress);
         
