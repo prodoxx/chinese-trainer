@@ -415,50 +415,48 @@ export async function enhancePromptSmart(
 	meaning: string,
 	pinyin: string,
 ): Promise<SmartPromptResult> {
-	// TEMPORARILY DISABLED: First validate the existing prompt
-	// const validation = await validatePrompt(existingPrompt, hanzi, meaning);
+	const validation = await validatePrompt(existingPrompt, hanzi, meaning);
 
-	// if (validation.quality === "excellent") {
-	// 	// Convert existing prompt to SmartPromptResult format
-	// 	return {
-	// 		prompt: existingPrompt,
-	// 		negativePrompt:
-	// 			"No text, letters, numbers, or written characters. No stereotypes or inappropriate content.",
-	// 		confidence: 0.9,
-	// 			culturalAccuracy: validation.culturalAccuracy,
-	// 			educationalValue: validation.educationalValue,
-	// 			clarity: validation.clarity,
-	// 			metadata: {
-	// 				culturalContext: "Existing prompt",
-	// 				visualStrategy: "Enhanced existing",
-	// 				targetAudience: "Chinese language learners",
-	// 				learningObjective: "Visual vocabulary association",
-	// 			},
-	// 		};
-	// }
+	if (validation.quality === "excellent") {
+		// Convert existing prompt to SmartPromptResult format
+		return {
+			prompt: existingPrompt,
+			negativePrompt:
+				"No text, letters, numbers, or written characters. No stereotypes or inappropriate content.",
+			confidence: 0.9,
+			culturalAccuracy: validation.culturalAccuracy,
+			educationalValue: validation.educationalValue,
+			clarity: validation.clarity,
+			metadata: {
+				culturalContext: "Existing prompt",
+				visualStrategy: "Enhanced existing",
+				targetAudience: "Chinese language learners",
+				learningObjective: "Visual vocabulary association",
+			},
+		};
+	}
 
-	// TEMPORARILY DISABLED: Generate a new, better prompt
-	// return await generateSmartPrompt(
-	// 	hanzi,
-	// 	meaning,
-	// 	pinyin,
-	// 	`Original prompt had issues: ${validation.issues.join(", ")}`,
-	// );
+	return await generateSmartPrompt(
+		hanzi,
+		meaning,
+		pinyin,
+		`Original prompt had issues: ${validation.issues.join(", ")}`,
+	);
 
-	// For now, just return the existing prompt with default values
-	return {
-		prompt: existingPrompt,
-		negativePrompt:
-			"No text, letters, numbers, or written characters. No stereotypes or inappropriate content.",
-		confidence: 0.8,
-		culturalAccuracy: 0.8,
-		educationalValue: 0.8,
-		clarity: 0.8,
-		metadata: {
-			culturalContext: "Existing prompt",
-			visualStrategy: "Enhanced existing",
-			targetAudience: "Chinese language learners",
-			learningObjective: "Visual vocabulary association",
-		},
-	};
+	// // For now, just return the existing prompt with default values
+	// return {
+	// 	prompt: existingPrompt,
+	// 	negativePrompt:
+	// 		"No text, letters, numbers, or written characters. No stereotypes or inappropriate content.",
+	// 	confidence: 0.8,
+	// 	culturalAccuracy: 0.8,
+	// 	educationalValue: 0.8,
+	// 	clarity: 0.8,
+	// 	metadata: {
+	// 		culturalContext: "Existing prompt",
+	// 		visualStrategy: "Enhanced existing",
+	// 		targetAudience: "Chinese language learners",
+	// 		learningObjective: "Visual vocabulary association",
+	// 	},
+	// };
 }
