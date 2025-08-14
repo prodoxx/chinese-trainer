@@ -110,6 +110,7 @@ async function generateDemoImage(
 		}
 
 		// Generate image with fal.ai imagen4/preview model for high-quality images
+		// Reduced image size for smaller file sizes (512x512 instead of 1024x1024)
 		const result = (await fal.run("fal-ai/imagen4/preview", {
 			input: {
 				prompt,
@@ -118,6 +119,9 @@ async function generateDemoImage(
 				steps: 20,
 				cfg_scale: 7.5,
 				seed: Math.floor(Math.random() * 1000000),
+				// Reduce image dimensions for smaller file sizes
+				width: 512,
+				height: 512,
 			} as any,
 		})) as any;
 
@@ -249,7 +253,10 @@ async function generateDemoMedia() {
 
 	// Force regenerate specific characters only
 	const regenerateOnly = process.argv.includes("--regenerate-only")
-		? null // Regenerate all when not specified
+		? process.argv
+				.find((arg) => arg.startsWith("--regenerate-only="))
+				?.split("=")[1]
+				?.split(",") || null
 		: null;
 
 	// Option to only regenerate images

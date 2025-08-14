@@ -569,6 +569,7 @@ export async function generateSharedImage(
 			details?: Record<string, unknown>;
 		} | null = null;
 
+		// eslint-disable-next-line @typescript-eslint/no-unreachable-code
 		for (let attempt = 1; attempt <= maxAttempts; attempt++) {
 			console.log(`\n🎨 Image generation attempt ${attempt}/${maxAttempts}`);
 
@@ -577,6 +578,7 @@ export async function generateSharedImage(
 
 			// Generate image with fal.ai imagen4/preview model for high-quality images
 			// Using parameters optimized for the imagen4 model with negative prompts
+			// Reduced image size for smaller file sizes (512x512 instead of 1024x1024)
 			const result = (await fal.run("fal-ai/imagen4/preview", {
 				input: {
 					prompt: currentPrompt,
@@ -586,6 +588,9 @@ export async function generateSharedImage(
 					steps: 20,
 					cfg_scale: 7.5,
 					seed: Math.floor(Math.random() * 1000000),
+					// Reduce image dimensions for smaller file sizes
+					width: 512,
+					height: 512,
 				} as any,
 			})) as any;
 
@@ -642,7 +647,7 @@ export async function generateSharedImage(
 		// Generate unique key for new image to ensure cache invalidation
 		const { image: newImageKey } = generateUniqueMediaKeys(hanzi, pinyin);
 
-		// Upload to R2 with unique filename
+		// Upload to R2 with unique filename and compressed JPEG for smaller file sizes
 		await uploadToR2(newImageKey, Buffer.from(imageBuffer), {
 			contentType: "image/jpeg",
 			metadata: {
@@ -650,6 +655,8 @@ export async function generateSharedImage(
 				source: "fal-imagen4-preview",
 				validated: validImage ? "true" : "false",
 				validationAttempts: maxAttempts.toString(),
+				imageSize: "512x512", // Reduced from default high resolution
+				compression: "high", // High compression for smaller files
 			},
 		});
 

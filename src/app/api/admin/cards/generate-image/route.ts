@@ -58,6 +58,7 @@ export async function POST(req: NextRequest) {
 		};
 
 		// Generate the image using the prompt with negative prompts
+		// Reduced image size for smaller file sizes (512x512 instead of 1024x1024)
 		const result = (await fal.run("fal-ai/imagen4/preview", {
 			input: {
 				prompt,
@@ -66,6 +67,9 @@ export async function POST(req: NextRequest) {
 				steps: 20,
 				cfg_scale: 7.5,
 				seed: Math.floor(Math.random() * 1000000),
+				// Reduce image dimensions for smaller file sizes
+				width: 512,
+				height: 512,
 			} as any,
 		})) as any;
 

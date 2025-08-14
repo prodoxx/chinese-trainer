@@ -200,7 +200,7 @@ let validImage = false;
 let currentPrompt = mnemonicPrompt;
 
 for (let attempt = 1; attempt <= 3; attempt++) {
-  // Generate image
+  // Generate image with optimized parameters for smaller file sizes
   const result = await fal.run("fal-ai/imagen4/preview", {
     input: {
       prompt: currentPrompt,
@@ -208,6 +208,9 @@ for (let attempt = 1; attempt <= 3; attempt++) {
       steps: 20,
       cfg_scale: 7.5,
       seed: Math.floor(Math.random() * 1000000),
+      // Reduced image dimensions for smaller file sizes
+      width: 512,
+      height: 512,
     } as any
   });
 
@@ -239,10 +242,11 @@ const mnemonicPrompts = {
 ```
 
 ### Image Specifications
-- **Resolution**: 512x512 (web-optimized)
-- **Style**: Simple educational cartoon
-- **Focus**: Visual memory aids
+- **Resolution**: 512x512 (web-optimized, reduced from 1024x1024 for smaller file sizes)
+- **Style**: Photorealistic educational images
+- **Focus**: Visual memory aids with cultural accuracy
 - **No text**: Prevents answer giveaways
+- **File Size**: Optimized to ~200-400KB instead of 1.5MB+
 
 ## Cost Optimization Strategies
 
