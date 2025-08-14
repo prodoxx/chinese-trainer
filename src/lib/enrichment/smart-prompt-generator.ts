@@ -141,12 +141,11 @@ IMPORTANT: Respond with ONLY valid JSON. Do not include any markdown formatting,
 			result = extractPromptFromText(responseText, hanzi, meaning);
 		}
 
-		// TEMPORARILY DISABLED: Validate the generated prompt
-		// const validation = await validatePrompt(result.prompt, hanzi, meaning);
-		// if (!validation.isValid) {
-		// 	console.warn("Generated prompt has issues, regenerating...");
-		// 	return await generateSmartPrompt(hanzi, meaning, pinyin, context);
-		// }
+		const validation = await validatePrompt(result.prompt, hanzi, meaning);
+		if (!validation.isValid) {
+			console.warn("Generated prompt has issues, regenerating...");
+			return await generateSmartPrompt(hanzi, meaning, pinyin, context);
+		}
 
 		return result;
 	} catch (error) {
