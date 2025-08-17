@@ -31,6 +31,8 @@ export default withAuth(
             req.nextUrl.pathname === "/privacy" ||
             req.nextUrl.pathname === "/terms" ||
             req.nextUrl.pathname === "/demo" ||
+            req.nextUrl.pathname === "/sitemap.xml" ||
+            req.nextUrl.pathname === "/robots.txt" ||
             req.nextUrl.pathname.startsWith("/_next")) {
           return true;
         }
