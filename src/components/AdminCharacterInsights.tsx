@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { EnhancedCharacterComplexity } from '@/lib/analytics/enhanced-linguistic-complexity';
 import { DeepLinguisticAnalysis } from '@/lib/analytics/openai-linguistic-analysis';
+import { Check, X, Edit2 } from 'lucide-react';
 interface AdminCharacterInsightsProps {
   characterId: string;
   character: string;
@@ -45,6 +46,10 @@ interface InsightsData {
 export default function AdminCharacterInsights({ characterId, character, userId, onClose }: AdminCharacterInsightsProps) {
   const [insights, setInsights] = useState<InsightsData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isEditingMeaning, setIsEditingMeaning] = useState(false);
+  const [editedMeaning, setEditedMeaning] = useState('');
+  const [isSavingMeaning, setIsSavingMeaning] = useState(false);
+  const meaningInputRef = useRef<HTMLInputElement>(null);
 
   const fetchInsights = async () => {
     setLoading(true);
@@ -74,6 +79,67 @@ export default function AdminCharacterInsights({ characterId, character, userId,
   useEffect(() => {
     fetchInsights();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Focus input when editing starts
+  useEffect(() => {
+    if (isEditingMeaning && meaningInputRef.current) {
+      meaningInputRef.current.focus();
+      meaningInputRef.current.select();
+    }
+  }, [isEditingMeaning]);
+
+  const handleStartEditMeaning = () => {
+    setEditedMeaning(insights?.character.meaning || '');
+    setIsEditingMeaning(true);
+  };
+
+  const handleCancelEditMeaning = () => {
+    setIsEditingMeaning(false);
+    setEditedMeaning('');
+  };
+
+  const handleSaveMeaning = async () => {
+    if (!editedMeaning.trim() || !insights) return;
+    
+    setIsSavingMeaning(true);
+    try {
+      const response = await fetch(`/api/admin/cards/${characterId}/update-meaning`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ meaning: editedMeaning.trim() }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Update local state
+        setInsights({
+          ...insights,
+          character: {
+            ...insights.character,
+            meaning: data.card.meaning,
+          },
+        });
+        setIsEditingMeaning(false);
+        setEditedMeaning('');
+      } else {
+        console.error('Failed to update meaning:', data.error);
+      }
+    } catch (error) {
+      console.error('Error updating meaning:', error);
+    } finally {
+      setIsSavingMeaning(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSaveMeaning();
+    } else if (e.key === 'Escape') {
+      handleCancelEditMeaning();
+    }
+  };
 
   const getDifficultyColor = (difficulty: number) => {
     if (difficulty < 0.3) return 'text-green-400';
@@ -261,7 +327,48 @@ export default function AdminCharacterInsights({ characterId, character, userId,
                   <div className="flex-1">
                     <div className="text-2xl text-[#f7cc48] mb-1">{insights.character.pinyin}</div>
                     <div className="text-5xl font-bold mb-2">{insights.character.hanzi}</div>
-                    <div className="text-lg text-gray-300">{insights.character.meaning}</div>
+                    <div className="flex items-center gap-2">
+                      {isEditingMeaning ? (
+                        <>
+                          <input
+                            ref={meaningInputRef}
+                            type="text"
+                            value={editedMeaning}
+                            onChange={(e) => setEditedMeaning(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            className="text-lg bg-[#1a1f2e] border border-[#f7cc48] rounded px-3 py-1 text-white focus:outline-none focus:ring-2 focus:ring-[#f7cc48] flex-1"
+                            disabled={isSavingMeaning}
+                          />
+                          <button
+                            onClick={handleSaveMeaning}
+                            disabled={isSavingMeaning || !editedMeaning.trim()}
+                            className="p-1.5 hover:bg-[#2d3548] rounded-lg transition-colors text-green-400 hover:text-green-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Save (Enter)"
+                          >
+                            <Check className="w-5 h-5" />
+                          </button>
+                          <button
+                            onClick={handleCancelEditMeaning}
+                            disabled={isSavingMeaning}
+                            className="p-1.5 hover:bg-[#2d3548] rounded-lg transition-colors text-red-400 hover:text-red-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Cancel (Escape)"
+                          >
+                            <X className="w-5 h-5" />
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <div className="text-lg text-gray-300">{insights.character.meaning}</div>
+                          <button
+                            onClick={handleStartEditMeaning}
+                            className="p-1.5 hover:bg-[#2d3548] rounded-lg transition-colors text-gray-400 hover:text-white"
+                            title="Edit meaning"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
