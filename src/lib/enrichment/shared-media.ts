@@ -576,10 +576,10 @@ export async function generateSharedImage(
 			// Rate limit fal.ai API calls
 			await rateLimit("fal-ai", 1000); // 1 second between calls
 
-			// Generate image with fal.ai imagen4/preview model for high-quality images
+			// Generate image with fal.ai imagen4/preview/fast model for faster generation
 			// Using parameters optimized for the imagen4 model with negative prompts
 			// Reduced image size for smaller file sizes (512x512 instead of 1024x1024)
-			const result = (await fal.run("fal-ai/imagen4/preview", {
+			const result = (await fal.run("fal-ai/imagen4/preview/fast", {
 				input: {
 					prompt: currentPrompt,
 					negative_prompt:
@@ -652,7 +652,7 @@ export async function generateSharedImage(
 			contentType: "image/jpeg",
 			metadata: {
 				generatedAt: new Date().toISOString(),
-				source: "fal-imagen4-preview",
+				source: "fal-imagen4-preview-fast",
 				validated: validImage ? "true" : "false",
 				validationAttempts: maxAttempts.toString(),
 				imageSize: "512x512", // Reduced from default high resolution

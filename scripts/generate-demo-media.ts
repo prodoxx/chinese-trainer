@@ -109,9 +109,9 @@ async function generateDemoImage(
 			throw new Error("fal.ai not configured");
 		}
 
-		// Generate image with fal.ai imagen4/preview model for high-quality images
+		// Generate image with fal.ai imagen4/preview/fast model for faster generation
 		// Reduced image size for smaller file sizes (512x512 instead of 1024x1024)
-		const result = (await fal.run("fal-ai/imagen4/preview", {
+		const result = (await fal.run("fal-ai/imagen4/preview/fast", {
 			input: {
 				prompt,
 				negative_prompt:
