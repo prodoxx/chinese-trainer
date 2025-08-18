@@ -80,7 +80,12 @@ export async function GET(request: NextRequest) {
     );
     
     // Calculate overall stats
-    const totalCards = await Card.countDocuments();
+    // Get total cards across all user's decks
+    const userDecks = await Deck.find({ userId: session.user.id });
+    const userDeckIds = userDecks.map(deck => deck._id);
+    const userDeckCards = await DeckCard.find({ deckId: { $in: userDeckIds } }).distinct('cardId');
+    const totalCards = userDeckCards.length; // Count unique cards across all user's decks
+    
     const totalReviews = reviews.reduce((sum, r) => sum + (r.seen || 0), 0);
     const correctReviews = reviews.reduce((sum, r) => sum + (r.correct || 0), 0);
     
@@ -115,8 +120,8 @@ export async function GET(request: NextRequest) {
     }
     longestStreak = Math.max(longestStreak, tempStreak);
     
-    // Get deck performance for current user
-    const decks = await Deck.find({ userId: session.user.id });
+    // Get deck performance for current user (reuse userDecks from above)
+    const decks = userDecks;
     const deckStats = await Promise.all(decks.map(async (deck) => {
       const deckCards = await DeckCard.find({ deckId: deck._id }).populate('cardId');
       const cardIds = deckCards.map(dc => dc.cardId._id);
